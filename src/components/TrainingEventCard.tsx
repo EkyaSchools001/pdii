@@ -20,16 +20,16 @@ interface TrainingEventCardProps {
 
 export function TrainingEventCard({ event, onRegister, className }: TrainingEventCardProps) {
   return (
-    <div className={cn("dashboard-card p-5 animate-fade-in", className)}>
+    <div className={cn("dashboard-card p-5", className)}>
       <div className="flex items-start justify-between mb-3">
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-info/10 text-info">
           {event.topic}
         </span>
         <PriorityBadge priority={1} showLabel={false} />
       </div>
-      
+
       <h3 className="font-semibold text-foreground mb-3">{event.title}</h3>
-      
+
       <div className="space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
@@ -48,7 +48,7 @@ export function TrainingEventCard({ event, onRegister, className }: TrainingEven
           <span>{event.spotsLeft} spots left</span>
         </div>
       </div>
-      
+
       <div className="mt-4 pt-4 border-t">
         {event.isRegistered ? (
           <Button variant="outline" className="w-full" disabled>

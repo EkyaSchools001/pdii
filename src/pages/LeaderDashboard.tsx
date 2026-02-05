@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, Routes, Route, useParams } from "react-router-dom";
+import { Observation } from "@/types/observation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +27,9 @@ const teamMembers = [
 ];
 
 const recentObservations = [
-  { id: "1", teacher: "Emily Rodriguez", domain: "Instruction", date: "Jan 15", score: 4 },
-  { id: "2", teacher: "James Wilson", domain: "Assessment", date: "Jan 12", score: 3 },
-  { id: "3", teacher: "Maria Santos", domain: "Classroom Management", date: "Jan 10", score: 4 },
+  { id: "1", teacher: "Emily Rodriguez", domain: "Instruction", date: "Jan 15", score: 4, notes: "Excellent engagement strategies used.", hasReflection: true, reflection: "I will focus on pacing next time." },
+  { id: "2", teacher: "James Wilson", domain: "Assessment", date: "Jan 12", score: 3, notes: "Good formative assessment, but check for understanding more frequently.", hasReflection: false, reflection: "" },
+  { id: "3", teacher: "Maria Santos", domain: "Classroom Management", date: "Jan 10", score: 4, notes: "Classroom transitions were smooth.", hasReflection: true, reflection: "Thank you for the feedback." },
 ];
 
 const domainAverages = [
@@ -52,9 +55,21 @@ const initialTrainingEvents = [
 
 export default function LeaderDashboard() {
   const [team, setTeam] = useState(teamMembers);
-  const [observations, setObservations] = useState(recentObservations);
+  const [observations, setObservations] = useState<Observation[]>(() => {
+    try {
+      const saved = localStorage.getItem('observations_data');
+      return saved ? JSON.parse(saved) : recentObservations;
+    } catch (e) {
+      console.error("Failed to parse observations", e);
+      return recentObservations;
+    }
+  });
   const [goals, setGoals] = useState(initialGoals);
   const [training, setTraining] = useState(initialTrainingEvents);
+
+  useEffect(() => {
+    localStorage.setItem('observations_data', JSON.stringify(observations));
+  }, [observations]);
 
   return (
     <DashboardLayout role="leader" userName="Dr. Sarah Johnson">
@@ -76,7 +91,7 @@ export default function LeaderDashboard() {
   );
 }
 
-function DashboardOverview({ team, observations }: { team: typeof teamMembers, observations: typeof recentObservations }) {
+function DashboardOverview({ team, observations }: { team: typeof teamMembers, observations: Observation[] }) {
   const navigate = useNavigate();
 
   return (
@@ -435,7 +450,7 @@ function TeamManagementView({ team }: { team: typeof teamMembers }) {
   );
 }
 
-function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMembers, observations: typeof recentObservations, goals: typeof initialGoals }) {
+function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMembers, observations: Observation[], goals: typeof initialGoals }) {
   const { teacherId } = useParams();
   const navigate = useNavigate();
   const teacher = team.find(t => t.id === teacherId);
@@ -1430,7 +1445,7 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
   );
 }
 
-function ObservationReportView({ observations, team }: { observations: typeof recentObservations, team: typeof teamMembers }) {
+function ObservationReportView({ observations, team }: { observations: Observation[], team: typeof teamMembers }) {
   const { obsId } = useParams();
   const navigate = useNavigate();
   const observation = observations.find(o => o.id === obsId);
@@ -1459,6 +1474,84 @@ function ObservationReportView({ observations, team }: { observations: typeof re
           />
         </div>
         <div className="flex items-center gap-2">
+          {(observation.hasReflection || observation.detailedReflection) && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="default" size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm ring-1 ring-indigo-500">
+                  <MessageSquare className="w-4 h-4" />
+                  Reflection by Teacher
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-xl">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    Teacher Reflection
+                  </DialogTitle>
+                  <DialogDescription>
+                    Submitted by {observation.teacher} on {observation.detailedReflection ? new Date(observation.detailedReflection.submissionDate).toLocaleDateString() : observation.date}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {observation.detailedReflection ? (
+                  <div className="space-y-6 pt-4">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card className="bg-muted/30 border-none">
+                        <CardContent className="p-4">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Strengths</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.strengths}</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-muted/30 border-none">
+                        <CardContent className="p-4">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Growth Areas</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.improvements}</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-muted/30 border-none">
+                        <CardContent className="p-4">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Goal</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.goal}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="space-y-6">
+                      {Object.entries(observation.detailedReflection.sections).map(([key, section]) => (
+                        <div key={key} className="space-y-3 border p-4 rounded-lg bg-background">
+                          <h4 className="font-semibold text-base flex items-center gap-2 pb-2 border-b">
+                            <span className="w-1.5 h-4 rounded-full bg-primary inline-block" />
+                            {section.title}
+                          </h4>
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              {section.ratings.map(r => (
+                                <div key={r.indicator} className="flex justify-between items-center text-sm">
+                                  <span className="text-muted-foreground flex-1 pr-4 text-xs font-medium uppercase tracking-wide">{r.indicator}</span>
+                                  <Badge variant={r.rating === "Highly Effective" ? "default" : r.rating === "Effective" ? "secondary" : "outline"}>
+                                    {r.rating}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="bg-muted/10 p-3 rounded-md text-sm italic border-l-2 border-primary/20">
+                              <p className="font-bold text-[10px] text-primary uppercase not-italic mb-1">Evidence</p>
+                              "{section.evidence}"
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-xl bg-muted/20 border text-foreground leading-relaxed">
+                    "{observation.reflection}"
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
           <Button variant="outline" size="sm" className="gap-2">
             <Printer className="w-4 h-4" />
             Print
@@ -1518,9 +1611,11 @@ function ObservationReportView({ observations, team }: { observations: typeof re
                   Observation Summary & Evidence
                 </h3>
                 <div className="p-6 rounded-2xl bg-muted/20 border border-muted-foreground/10 text-foreground leading-relaxed italic">
-                  "The lesson demonstrated strong alignment with the curriculum standards. Student engagement remained high throughout the activity, particularly during the collaborative problem-solving phase. Feedback provided to students was timely and specific, helping them navigate complex concepts with confidence."
+                  "{observation.notes || "The lesson demonstrated strong alignment with the curriculum standards. Student engagement remained high throughout the activity, particularly during the collaborative problem-solving phase. Feedback provided to students was timely and specific, helping them navigate complex concepts with confidence."}"
                 </div>
               </div>
+
+              {/* Reflection content moved to Dialog */}
 
               <div className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2 text-success">
@@ -1601,7 +1696,7 @@ function ObservationReportView({ observations, team }: { observations: typeof re
   );
 }
 
-function ObservationsManagementView({ observations }: { observations: typeof recentObservations }) {
+function ObservationsManagementView({ observations }: { observations: Observation[] }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -1728,21 +1823,33 @@ function ObservationsManagementView({ observations }: { observations: typeof rec
 }
 
 function ObserveView({ setObservations, setTeam, team, observations }: {
-  setObservations: React.Dispatch<React.SetStateAction<typeof recentObservations>>,
+  setObservations: React.Dispatch<React.SetStateAction<Observation[]>>,
   setTeam: React.Dispatch<React.SetStateAction<typeof teamMembers>>,
   team: typeof teamMembers,
-  observations: typeof recentObservations
+  observations: Observation[]
 }) {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+
   const [formData, setFormData] = useState({
     teacherName: "",
     teacherEmail: "",
     observerName: "Dr. Sarah Johnson",
     observerRole: "Head of School",
     observationDate: new Date().toISOString().split('T')[0],
+    // Classroom Details
+    block: "",
+    grade: "",
+    section: "",
+    learningArea: "",
+    // Assessment
     domain: "",
     score: 0,
-    notes: ""
+    notes: "",
+    // Extended Details
+    strengths: "",
+    areasForImprovement: "",
+    teachingStrategies: [] as string[]
   });
 
   const roles = [
@@ -1754,10 +1861,39 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
     "Other"
   ];
 
+  const blocks = ["Early Years", "Primary", "Middle", "Senior", "Specialist"];
+  const grades = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+  const learningAreas = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Technology", "Languages"];
+
+  const validateStep1 = () => {
+    if (!formData.teacherName || !formData.teacherEmail || !formData.observerName || !formData.observationDate || !formData.observerRole) {
+      toast.error("Please fill in all required fields marked with *");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    if (!formData.block || !formData.grade || !formData.learningArea) {
+      toast.error("Please complete all required classroom details marked with *");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && validateStep1()) setStep(2);
+    if (step === 2 && validateStep2()) setStep(3);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.teacherName || !formData.teacherEmail || !formData.domain || formData.score === 0) {
-      toast.error("Please fill in all required fields marked with *");
+    if (!formData.domain || formData.score === 0) {
+      toast.error("Please complete the assessment scoring");
       return;
     }
 
@@ -1767,8 +1903,26 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
       teacher: formData.teacherName,
       domain: formData.domain,
       date: new Date(formData.observationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      score: formData.score
-    };
+      score: formData.score,
+      notes: formData.notes,
+      observerName: formData.observerName,
+      observerRole: formData.observerRole,
+      // Add new fields to observation object if needed for storage/display later
+      classroom: {
+        block: formData.block,
+        grade: formData.grade,
+        section: formData.section,
+        learningArea: formData.learningArea
+      },
+      hasReflection: false,
+      reflection: "",
+      // Extended fields
+      learningArea: formData.learningArea,
+      strengths: formData.strengths,
+      improvements: formData.areasForImprovement,
+      teachingStrategies: formData.teachingStrategies,
+    } as Observation;
+
 
     setObservations(prev => [newObs, ...prev]);
 
@@ -1800,6 +1954,10 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
     navigate("/leader");
   };
 
+  if (!team || !observations) {
+    return <div className="p-8 text-center text-muted-foreground">Loading dashboard data...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -1814,161 +1972,296 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm overflow-visible">
+          <Card className="border-none shadow-xl bg-background overflow-visible">
             <CardHeader className="bg-primary/5 border-b mb-6 py-8">
-              <CardTitle className="text-2xl font-bold">Observation Details</CardTitle>
-              <CardDescription className="text-base">Please complete all fields to finalize the instructional review.</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold">Observation Details</CardTitle>
+                  <CardDescription className="text-base">Step {step} of 3: {step === 1 ? "Basic Info" : step === 2 ? "Classroom Context" : "Assessment"}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map(s => (
+                    <div key={s} className={cn("w-3 h-3 rounded-full transition-colors", step >= s ? "bg-primary" : "bg-muted")} />
+                  ))}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-10 px-2 lg:px-4">
-                {/* Teacher Details Section */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                    <Users className="w-5 h-5" />
-                    Teacher Information
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <Label htmlFor="teacherName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Name of the Teacher <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="teacherName"
-                        placeholder="Enter teacher's full name"
-                        value={formData.teacherName}
-                        onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
-                        className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="teacherEmail" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Teacher Email ID <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="teacherEmail"
-                        type="email"
-                        placeholder="teacher@school.com"
-                        value={formData.teacherEmail}
-                        onChange={(e) => setFormData({ ...formData, teacherEmail: e.target.value })}
-                        className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Observer Details Section */}
-                <div className="space-y-6 pt-6 border-t border-dashed">
-                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                    <Eye className="w-5 h-5" />
-                    Observer Information
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <Label htmlFor="observerName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Name <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="observerName"
-                        value={formData.observerName}
-                        onChange={(e) => setFormData({ ...formData, observerName: e.target.value })}
-                        className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="obsDate" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Date of Observation <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="obsDate"
-                        type="date"
-                        value={formData.observationDate}
-                        onChange={(e) => setFormData({ ...formData, observationDate: e.target.value })}
-                        className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-5 pt-4">
-                    <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Role <span className="text-destructive">*</span></Label>
-                    <RadioGroup
-                      value={formData.observerRole}
-                      onValueChange={(val) => setFormData({ ...formData, observerRole: val })}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                    >
-                      {roles.map((role) => (
-                        <div key={role} className="flex items-center space-x-3 p-4 rounded-xl border bg-background hover:bg-muted/30 transition-all cursor-pointer group has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-2 has-[:checked]:ring-primary/10">
-                          <RadioGroupItem value={role} id={role} className="w-5 h-5" />
-                          <Label htmlFor={role} className="flex-1 cursor-pointer font-semibold group-hover:text-primary transition-colors text-base">
-                            {role}
-                          </Label>
+                {/* Step 1: Basic Info */}
+                {step === 1 && (
+                  <div className="space-y-8">
+                    {/* Teacher Details Section */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
+                        <Users className="w-5 h-5" />
+                        Teacher Information
+                      </h3>
+                      <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <Label htmlFor="teacherName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Name of the Teacher <span className="text-destructive">*</span></Label>
+                          <Input
+                            id="teacherName"
+                            placeholder="Enter teacher's full name"
+                            value={formData.teacherName}
+                            onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
+                            className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
+                            autoFocus
+                          />
                         </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="teacherEmail" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Teacher Email ID <span className="text-destructive">*</span></Label>
+                          <Input
+                            id="teacherEmail"
+                            type="email"
+                            placeholder="teacher@school.com"
+                            value={formData.teacherEmail}
+                            onChange={(e) => setFormData({ ...formData, teacherEmail: e.target.value })}
+                            className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Assessment Section */}
-                <div className="space-y-6 pt-10 border-t items-start">
-                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                    <Target className="w-5 h-5" />
-                    Instructional Assessment
-                  </h3>
-                  <div className="space-y-3">
-                    <Label htmlFor="domain" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Domain <span className="text-destructive">*</span></Label>
-                    <select
-                      id="domain"
-                      className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all disabled:cursor-not-allowed disabled:opacity-50 font-medium"
-                      value={formData.domain}
-                      onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                    >
-                      <option value="">Select a domain...</option>
-                      {domainAverages.map(d => (
-                        <option key={d.domain} value={d.domain}>{d.domain}</option>
-                      ))}
-                    </select>
-                  </div>
+                    {/* Observer Details Section */}
+                    <div className="space-y-6 pt-6 border-t border-dashed">
+                      <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
+                        <Eye className="w-5 h-5" />
+                        Observer Information
+                      </h3>
+                      <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <Label htmlFor="observerName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Name <span className="text-destructive">*</span></Label>
+                          <Input
+                            id="observerName"
+                            value={formData.observerName}
+                            onChange={(e) => setFormData({ ...formData, observerName: e.target.value })}
+                            className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="obsDate" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Date of Observation <span className="text-destructive">*</span></Label>
+                          <Input
+                            id="obsDate"
+                            type="date"
+                            value={formData.observationDate}
+                            onChange={(e) => setFormData({ ...formData, observationDate: e.target.value })}
+                            className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-4 pt-4">
-                    <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Performance Score <span className="text-destructive">*</span></Label>
-                    <div className="flex items-center gap-3 p-5 rounded-2xl bg-muted/20 border border-muted/50">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, score: s })}
-                          className={cn(
-                            "w-14 h-14 rounded-2xl font-bold transition-all flex items-center justify-center text-xl",
-                            formData.score === s
-                              ? "bg-primary text-primary-foreground scale-110 shadow-xl ring-4 ring-primary/20"
-                              : "bg-background border text-muted-foreground hover:border-primary/50 hover:text-primary"
-                          )}
+                      <div className="space-y-5 pt-4">
+                        <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Role <span className="text-destructive">*</span></Label>
+                        <RadioGroup
+                          value={formData.observerRole}
+                          onValueChange={(val) => setFormData({ ...formData, observerRole: val })}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
                         >
-                          {s}
-                        </button>
-                      ))}
-                      <div className="ml-auto text-base font-bold text-muted-foreground">
-                        {formData.score > 0 ? (
-                          <span className="flex items-center gap-2 text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-                            <Star className="w-5 h-5 fill-current" />
-                            {formData.score === 5 ? "Distinguished" : formData.score === 4 ? "Proficient" : formData.score === 3 ? "Developing" : "Needs Improvement"}
-                          </span>
-                        ) : "Select score"}
+                          {roles.map((role) => (
+                            <div key={role} className="flex items-center space-x-3 p-4 rounded-xl border bg-background hover:bg-muted/30 transition-all cursor-pointer group has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-2 has-[:checked]:ring-primary/10">
+                              <RadioGroupItem value={role} id={role} className="w-5 h-5" />
+                              <Label htmlFor={role} className="flex-1 cursor-pointer font-semibold group-hover:text-primary transition-colors text-base">
+                                {role}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="space-y-3 pt-4">
-                    <Label htmlFor="notes" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Notes & Feedback</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Provide specific, actionable feedback based on class observation..."
-                      className="min-h-[200px] text-base p-6 bg-background resize-none focus:ring-4 focus:ring-primary/10 rounded-2xl border-muted-foreground/20 leading-relaxed"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    />
+                {/* Step 2: Classroom Details */}
+                {step === 2 && (
+                  <div className="space-y-8">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
+                      <Book className="w-5 h-5" />
+                      Classroom Details
+                    </h3>
+
+                    <div className="space-y-5">
+                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Block <span className="text-destructive">*</span></Label>
+                      <RadioGroup
+                        value={formData.block}
+                        onValueChange={(val) => setFormData({ ...formData, block: val })}
+                        className="space-y-3"
+                      >
+                        {blocks.map((block) => (
+                          <div key={block} className="flex items-center space-x-3">
+                            <RadioGroupItem value={block} id={block} className="w-5 h-5" />
+                            <Label htmlFor={block} className="cursor-pointer text-base font-medium">{block}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label htmlFor="grade" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Grade <span className="text-destructive">*</span></Label>
+                      <select
+                        id="grade"
+                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium"
+                        value={formData.grade}
+                        onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                      >
+                        <option value="">Choose</option>
+                        {grades.map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label htmlFor="section" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Section</Label>
+                      <Input
+                        id="section"
+                        placeholder="Your answer"
+                        value={formData.section}
+                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                        className="h-14 bg-background border-muted-foreground/20 border-t-0 border-x-0 border-b-2 rounded-none px-0 focus:ring-0 focus:border-primary transition-all text-base"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label htmlFor="learningArea" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Learning Area <span className="text-destructive">*</span></Label>
+                      <select
+                        id="learningArea"
+                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium"
+                        value={formData.learningArea}
+                        onChange={(e) => setFormData({ ...formData, learningArea: e.target.value })}
+                      >
+                        <option value="">Choose</option>
+                        {learningAreas.map(area => (
+                          <option key={area} value={area}>{area}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                )}
+
+
+                {/* Step 3: Assessment */}
+                {step === 3 && (
+                  <div className="space-y-8">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
+                      <Target className="w-5 h-5" />
+                      Instructional Assessment
+                    </h3>
+                    <div className="space-y-3">
+                      <Label htmlFor="domain" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Domain <span className="text-destructive">*</span></Label>
+                      <select
+                        id="domain"
+                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all disabled:cursor-not-allowed disabled:opacity-50 font-medium"
+                        value={formData.domain}
+                        onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                        autoFocus
+                      >
+                        <option value="">Select a domain...</option>
+                        {domainAverages.map(d => (
+                          <option key={d.domain} value={d.domain}>{d.domain}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Performance Score <span className="text-destructive">*</span></Label>
+                      <div className="flex items-center gap-3 p-5 rounded-2xl bg-muted/20 border border-muted/50">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, score: s })}
+                            className={cn(
+                              "w-14 h-14 rounded-2xl font-bold transition-all flex items-center justify-center text-xl",
+                              formData.score === s
+                                ? "bg-primary text-primary-foreground scale-110 shadow-xl ring-4 ring-primary/20"
+                                : "bg-background border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                            )}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                        <div className="ml-auto text-base font-bold text-muted-foreground">
+                          {formData.score > 0 ? (
+                            <span className="flex items-center gap-2 text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+                              <Star className="w-5 h-5 fill-current" />
+                              {formData.score === 5 ? "Distinguished" : formData.score === 4 ? "Proficient" : formData.score === 3 ? "Developing" : "Needs Improvement"}
+                            </span>
+                          ) : "Select score"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4">
+                      <Label htmlFor="notes" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Notes & Feedback</Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Provide specific, actionable feedback based on class observation..."
+                        className="min-h-[120px] text-base p-6 bg-background resize-none focus:ring-4 focus:ring-primary/10 rounded-2xl border-muted-foreground/20 leading-relaxed"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6 pt-4">
+                      <div className="space-y-3">
+                        <Label htmlFor="strengths" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Strengths Observed</Label>
+                        <Textarea
+                          id="strengths"
+                          placeholder="What went well?"
+                          className="min-h-[100px] bg-background resize-none focus:ring-4 focus:ring-success/10 rounded-xl border-muted-foreground/20"
+                          value={formData.strengths}
+                          onChange={(e) => setFormData({ ...formData, strengths: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label htmlFor="improvements" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Areas for Growth</Label>
+                        <Textarea
+                          id="improvements"
+                          placeholder="What needs improvement?"
+                          className="min-h-[100px] bg-background resize-none focus:ring-4 focus:ring-orange-500/10 rounded-xl border-muted-foreground/20"
+                          value={formData.areasForImprovement}
+                          onChange={(e) => setFormData({ ...formData, areasForImprovement: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4">
+                      <Label htmlFor="strategies" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Teaching Strategies (Comma separated)</Label>
+                      <Input
+                        id="strategies"
+                        placeholder="e.g., Differentiation, Group Work, Scaffolding"
+                        className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
+                        value={formData.teachingStrategies.join(", ")}
+                        onChange={(e) => setFormData({ ...formData, teachingStrategies: e.target.value.split(",").map(s => s.trim()) })}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-8 border-t flex justify-end gap-5 pb-6">
-                  <Button variant="outline" type="button" size="lg" onClick={() => navigate("/leader")} className="h-14 px-10 text-base font-semibold rounded-xl">
-                    Discard
-                  </Button>
-                  <Button type="submit" size="lg" className="h-14 px-10 gap-3 text-base font-bold rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0">
-                    <Save className="w-6 h-6" />
-                    Complete Observation
-                  </Button>
+                  {step > 1 ? (
+                    <Button variant="outline" type="button" size="lg" onClick={handleBack} className="h-14 px-10 text-base font-semibold rounded-xl">
+                      Back
+                    </Button>
+                  ) : (
+                    <Button variant="outline" type="button" size="lg" onClick={() => navigate("/leader")} className="h-14 px-10 text-base font-semibold rounded-xl">
+                      Cancel
+                    </Button>
+                  )}
+
+                  {step < 3 ? (
+                    <Button type="button" size="lg" onClick={handleNext} className="h-14 px-10 gap-3 text-base font-bold rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0">
+                      Next
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
+                  ) : (
+                    <Button type="submit" size="lg" className="h-14 px-10 gap-3 text-base font-bold rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0 text-white">
+                      <Save className="w-6 h-6" />
+                      Complete Observation
+                    </Button>
+                  )}
                 </div>
               </form>
             </CardContent>
@@ -2034,7 +2327,7 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

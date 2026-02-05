@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Users, FileText, BookOpen, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
+import { Users, FileText, Book, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -40,7 +40,7 @@ const adminModules = [
   {
     title: "Course Catalogue",
     description: "Manage courses, prerequisites, and PD hour assignments",
-    icon: BookOpen,
+    icon: Book,
     path: "/admin/courses",
     priority: 3 as const,
     stats: "34 courses",
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
           title="Courses"
           value="34"
           subtitle="5 new this quarter"
-          icon={BookOpen}
+          icon={Book}
           priority={3}
         />
         <StatCard
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
               <Link to="/admin/audit">View Audit Log</Link>
             </Button>
           </div>
-          
+
           <div className="dashboard-card divide-y">
             {recentActivity.map((activity) => (
               <div key={activity.id} className="p-4 hover:bg-muted/30 transition-colors">
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
               <PriorityBadge priority={1} showLabel={false} />
             </div>
           </div>
-          
+
           <div className="dashboard-card p-6 space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-3 h-3 rounded-full bg-success animate-pulse" />
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-muted-foreground">Last checked: 2 minutes ago</p>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Database</span>
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                 <span className="text-sm font-medium text-success">Healthy</span>
               </div>
             </div>
-            
+
             <div className="pt-4 border-t">
               <Button variant="outline" className="w-full" asChild>
                 <Link to="/admin/settings">

@@ -234,3 +234,46 @@
     to { opacity: 1; transform: scale(1); }
   }
 }
+
+@media print {
+  /* Hide all interactive elements and navigation */
+  header, nav, button, .no-print {
+    display: none !important;
+  }
+  
+  /* Reset layout for print */
+  body, #root, .grid {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Specific Report Styling */
+  .observation-report {
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure cards look like document sections */
+  .card {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    margin-bottom: 2rem !important;
+  }
+
+  /* Typography for print */
+  h1, h2, h3 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+  
+  p, span, div {
+    color: black !important;
+  }
+}

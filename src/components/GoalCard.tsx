@@ -18,7 +18,7 @@ interface GoalCardProps {
 
 export function GoalCard({ goal, className }: GoalCardProps) {
   return (
-    <div className={cn("dashboard-card p-5 animate-fade-in", className)}>
+    <div className={cn("dashboard-card p-5", className)}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-lg bg-accent/10">
@@ -32,10 +32,10 @@ export function GoalCard({ goal, className }: GoalCardProps) {
           )}
         </div>
       </div>
-      
+
       <h3 className="font-semibold text-foreground mb-2">{goal.title}</h3>
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{goal.description}</p>
-      
+
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Progress</span>
@@ -43,7 +43,7 @@ export function GoalCard({ goal, className }: GoalCardProps) {
         </div>
         <Progress value={goal.progress} className="h-2" />
       </div>
-      
+
       <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4" />

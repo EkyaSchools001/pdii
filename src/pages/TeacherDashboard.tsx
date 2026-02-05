@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Routes, Route, Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -12,7 +12,7 @@ import {
   Target,
   Calendar,
   TrendingUp,
-  BookOpen,
+  Book,
   Lightbulb,
   CheckCircle2,
   ChevronRight,
@@ -31,7 +31,8 @@ import {
   Sparkles,
   ArrowUpRight,
   ShieldCheck,
-  Flag
+  Flag,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,25 +73,35 @@ import {
   Area
 } from "recharts";
 
-const mockObservations = [
+
+import { Observation, DetailedReflection } from "@/types/observation";
+import { ReflectionForm } from "@/components/ReflectionForm";
+
+// Removed local Observation interface in favor of shared type
+
+
+const mockObservations: Observation[] = [
   {
     id: "1",
+    teacher: "Emily Rodriguez",
     date: "Jan 15, 2024",
     observerName: "Dr. Sarah Johnson",
-    observerRole: "Principal",
-    domain: "Classroom Management",
+    observerRole: "Head of School",
+    domain: "Instruction",
     score: 4,
-    notes: "Excellent use of positive reinforcement strategies. Students were engaged throughout the lesson.",
+    notes: "Excellent engagement strategies used. Student participation was very high.",
     hasReflection: true,
+    reflection: "I will focus on pacing next time.",
   },
   {
-    id: "2",
-    date: "Jan 8, 2024",
-    observerName: "Michael Chen",
-    observerRole: "Department Head",
-    domain: "Instruction",
+    id: "new-demo-1",
+    teacher: "Emily Rodriguez",
+    date: "Feb 5, 2024",
+    observerName: "Dr. Sarah Johnson",
+    observerRole: "Head of School",
+    domain: "Assessment",
     score: 3,
-    notes: "Good pacing of the lesson. Consider incorporating more differentiation for advanced learners.",
+    notes: "Good formative assessment, but check for understanding more frequently.",
     hasReflection: false,
   },
 ];
@@ -244,18 +255,20 @@ const mockInsights = {
   ]
 };
 
-function DashboardOverview({
+const DashboardOverview = ({
   goals,
   events,
+  observations,
   onRegister
 }: {
   goals: typeof initialGoals,
   events: typeof initialEvents,
+  observations: Observation[],
   onRegister: (id: string) => void
-}) {
+}) => {
   const navigate = useNavigate();
   const schoolAlignedGoals = goals.filter(g => g.isSchoolAligned).length;
-  const reflectionsCount = mockObservations.filter(o => o.hasReflection).length;
+  const reflectionsCount = observations.filter(o => o.hasReflection).length;
   const upcomingTrainings = events.filter(e => !e.isRegistered).length;
 
   return (
@@ -278,7 +291,7 @@ function DashboardOverview({
         />
         <StatCard
           title="Observations"
-          value={mockObservations.length}
+          value={observations.length}
           subtitle={`${reflectionsCount} with reflections`}
           icon={Eye}
           priority={1}
@@ -314,7 +327,7 @@ function DashboardOverview({
             </Button>
           </div>
           <div className="space-y-4">
-            {mockObservations.map((obs) => (
+            {observations.slice(0, 3).map((obs) => (
               <ObservationCard key={obs.id} observation={obs} />
             ))}
           </div>
@@ -356,13 +369,28 @@ function DashboardOverview({
   );
 }
 
-function ObservationsView() {
+function ObservationsView({ observations, onReflect }: { observations: Observation[], onReflect: (id: string, reflection: DetailedReflection) => void }) {
+  const [selectedObs, setSelectedObs] = useState<Observation | null>(null);
+  const navigate = useNavigate();
+
+  const handleSubmit = (reflection: DetailedReflection) => {
+    if (selectedObs) {
+      onReflect(selectedObs.id, reflection);
+      setSelectedObs(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="My Observations" subtitle="Manage and reflect on your classroom observations" />
       <div className="grid gap-4">
-        {mockObservations.map((obs) => (
-          <ObservationCard key={obs.id} observation={obs} />
+        {observations.map((obs) => (
+          <ObservationCard
+            key={obs.id}
+            observation={obs}
+            onReflect={() => setSelectedObs(obs)}
+            onView={() => navigate(`/teacher/observations/${obs.id}`)}
+          />
         ))}
         {/* Placeholder for more observations */}
         {[3, 4, 5].map((id) => (
@@ -377,6 +405,17 @@ function ObservationsView() {
           </Card>
         ))}
       </div>
+
+      {selectedObs && (
+        <ReflectionForm
+          isOpen={!!selectedObs}
+          onClose={() => setSelectedObs(null)}
+          onSubmit={handleSubmit}
+          observation={selectedObs}
+          teacherName={selectedObs.teacher || "Emily Rodriguez"}
+          teacherEmail="emily.r@ekyaschools.com"
+        />
+      )}
     </div>
   );
 }
@@ -1037,6 +1076,53 @@ export default function TeacherDashboard() {
   const location = useLocation();
   const [goals, setGoals] = useState(initialGoals);
   const [events, setEvents] = useState(initialEvents);
+  const [observations, setObservations] = useState<Observation[]>(() => {
+    try {
+      const saved = localStorage.getItem('observations_data');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return mockObservations;
+    } catch (e) {
+      console.error("Failed to load observations", e);
+      return mockObservations;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('observations_data', JSON.stringify(observations));
+  }, [observations]);
+
+  // Listen for updates from Leader Dashboard
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'observations_data' && e.newValue) {
+        try {
+          setObservations(JSON.parse(e.newValue));
+        } catch (err) {
+          console.error("Failed to sync observation data", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleReflect = (id: string, reflection: DetailedReflection) => {
+    setObservations(prev => prev.map(obs => {
+      if (obs.id === id) {
+        toast.success("Reflection submitted successfully!");
+        return {
+          ...obs,
+          hasReflection: true,
+          // Keep legacy string for backward compatibility with existing simple cards if needed
+          reflection: reflection.comments || "Detailed reflection submitted.",
+          detailedReflection: reflection
+        };
+      }
+      return obs;
+    }));
+  };
 
   const handleAddGoal = (newGoal: NewGoal) => {
     const dateObj = new Date(newGoal.dueDate);
@@ -1063,8 +1149,9 @@ export default function TeacherDashboard() {
   return (
     <DashboardLayout role="teacher" userName="Emily Rodriguez">
       <Routes>
-        <Route index element={<DashboardOverview goals={goals} events={events} onRegister={handleRegister} />} />
-        <Route path="observations" element={<ObservationsView />} />
+        <Route index element={<DashboardOverview goals={goals} events={events} observations={observations.filter(o => !o.teacher || o.teacher === "Emily Rodriguez")} onRegister={handleRegister} />} />
+        <Route path="observations" element={<ObservationsView observations={observations.filter(o => !o.teacher || o.teacher === "Emily Rodriguez")} onReflect={handleReflect} />} />
+        <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
         <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} />} />
         <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
         <Route path="courses" element={<CoursesView />} />
@@ -1072,5 +1159,235 @@ export default function TeacherDashboard() {
         <Route path="insights" element={<InsightsView />} />
       </Routes>
     </DashboardLayout>
+  );
+}
+
+function ObservationDetailView({ observations }: { observations: Observation[] }) {
+  const { id } = useParams(); // Using useParams to get the ID from the URL
+  const navigate = useNavigate();
+  const observation = observations.find(o => o.id === id);
+
+  if (!observation) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <FileCheck className="w-16 h-16 text-muted-foreground mb-4 opacity-20" />
+        <h2 className="text-2xl font-bold">Observation not found</h2>
+        <Button onClick={() => navigate("/teacher/observations")} className="mt-4">Back to Observations</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/teacher/observations")}>
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </Button>
+        <div>
+          <PageHeader
+            title="Observation Report"
+            subtitle={`Ref: #OBS-${observation.id.toUpperCase()}`}
+          />
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Main Assessment Card - Similar to Leader View but read-only for teacher */}
+          <Card className="border-none shadow-2xl bg-background/50 backdrop-blur-sm overflow-hidden">
+            <div className="h-2 bg-primary" />
+            <CardHeader className="bg-muted/10 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                      {observation.domain}
+                    </span>
+                    <span className="text-muted-foreground text-sm">•</span>
+                    <span className="text-muted-foreground text-sm font-medium">{observation.date}</span>
+                  </div>
+                  <CardTitle className="text-3xl font-bold">Instructional Assessment</CardTitle>
+                  {observation.learningArea && (
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 gap-1.5 pl-2 pr-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                        <Book className="w-3.5 h-3.5" />
+                        Subject: {observation.learningArea}
+                      </Badge>
+                      {observation.classroom && (
+                        <>
+                          <Badge variant="outline" className="text-muted-foreground gap-1.5 font-medium">
+                            <span className="font-bold text-foreground">Grade:</span> {observation.classroom.grade}
+                          </Badge>
+                          <Badge variant="outline" className="text-muted-foreground gap-1.5 font-medium">
+                            <span className="font-bold text-foreground">Section:</span> {observation.classroom.section}
+                          </Badge>
+                          <Badge variant="outline" className="text-muted-foreground gap-1.5 font-medium">
+                            <span className="font-bold text-foreground">Block:</span> {observation.classroom.block}
+                          </Badge>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {/* Domain Description */}
+                  <div className="mt-4 p-3 bg-muted/30 rounded-lg text-sm text-muted-foreground border border-muted-foreground/10">
+                    <p className="flex gap-2">
+                      <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" />
+                      <span>
+                        <strong>About {observation.domain}:</strong> This domain evaluates the effectiveness of teaching strategies,
+                        classroom engagement, and the alignment of activities with learning objectives.
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div className={cn(
+                  "w-20 h-20 rounded-2xl flex flex-col items-center justify-center font-black border-4 shadow-xl",
+                  observation.score >= 4 ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"
+                )}>
+                  <span className="text-3xl leading-none">{observation.score}</span>
+                  <span className="text-[10px] uppercase opacity-60">Score</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8 p-8">
+              <div className="grid md:grid-cols-2 gap-8 border-b border-dashed pb-8">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Observer</p>
+                  <p className="text-lg font-bold">{observation.observerName || "School Leader"}</p>
+                  <p className="text-sm text-muted-foreground">{observation.observerRole || "Administrator"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Teacher</p>
+                  <p className="text-lg font-bold">{observation.teacher || "Emily Rodriguez"}</p>
+                </div>
+              </div>
+
+              {/* Power BI Style Data Visualization Section */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {observation.strengths && (
+                  <Card className="bg-success/5 border-success/20 shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-success flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Strengths Observed
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium leading-relaxed text-foreground/90">
+                        {observation.strengths}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {observation.improvements && (
+                  <Card className="bg-orange-500/5 border-orange-500/20 shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Areas for Growth
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium leading-relaxed text-foreground/90">
+                        {observation.improvements}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {observation.teachingStrategies && observation.teachingStrategies.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Strategies Observed
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {observation.teachingStrategies.map((strategy, idx) => (
+                      <Badge key={idx} variant="secondary" className="px-3 py-1 text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">
+                        {strategy}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4 pt-4 border-t border-dashed">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
+                  <FileCheck className="w-5 h-5" />
+                  Additional Evidence & Notes
+                </h3>
+                <div className="p-6 rounded-2xl bg-muted/20 border border-muted-foreground/10 text-foreground leading-relaxed italic">
+                  "{observation.notes || "No additional notes provided."}"
+                </div>
+              </div>
+
+              {/* Teacher's Own Reflection Section */}
+              {observation.detailedReflection ? (
+                <div className="space-y-6 pt-6 border-t-[3px] border-dashed border-muted/50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-info/10">
+                      <MessageSquare className="w-6 h-6 text-info" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-foreground">Your Reflection</h3>
+                      <p className="text-sm text-muted-foreground">Self-assessment based on Ekya Danielson Framework</p>
+                    </div>
+                  </div>
+
+                  <Card className="border-info/20 shadow-sm overflow-hidden bg-info/5">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-1 gap-4 p-6">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="p-4 bg-background rounded-lg border shadow-sm">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Strengths</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.strengths}</p>
+                        </div>
+                        <div className="p-4 bg-background rounded-lg border shadow-sm">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Growth Areas</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.improvements}</p>
+                        </div>
+                        <div className="p-4 bg-background rounded-lg border shadow-sm">
+                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Goal</span>
+                          <p className="font-medium text-sm">{observation.detailedReflection.goal}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              ) : observation.hasReflection && (
+                <div className="space-y-4 pt-6 border-t border-dashed">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-info">
+                    <MessageSquare className="w-5 h-5" />
+                    Your Reflection
+                  </h3>
+                  <div className="p-6 rounded-2xl bg-info/5 border border-info/10 text-foreground leading-relaxed">
+                    "{observation.reflection}"
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          {/* Sidebar with Actions / Stats */}
+          <Card className="border-none shadow-lg sticky top-6">
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button className="w-full gap-2" variant="outline" onClick={() => window.print()}>
+                <Download className="w-4 h-4" />
+                Download Report
+              </Button>
+              <div className="p-4 rounded-xl bg-muted/50 text-sm text-muted-foreground">
+                If you have questions about this observation, please schedule a debrief with your observer.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
