@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, Routes, Route, useParams } from "react-router-dom";
 import { Observation } from "@/types/observation";
+import { GoalSettingForm } from "@/components/GoalSettingForm";
+import { TeacherAnalyticsReport } from "@/components/TeacherAnalyticsReport";
+import { LeaderPerformanceAnalytics } from "@/components/LeaderPerformanceAnalytics";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getActiveTemplateByType } from "@/lib/template-utils";
+import { DynamicForm } from "@/components/DynamicForm";
 
 const teamMembers = [
   { id: "1", name: "Emily Rodriguez", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
@@ -64,12 +69,41 @@ export default function LeaderDashboard() {
       return recentObservations;
     }
   });
-  const [goals, setGoals] = useState(initialGoals);
+  const [goals, setGoals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('goals_data');
+      return saved ? JSON.parse(saved) : initialGoals;
+    } catch (e) {
+      console.error("Failed to parse goals", e);
+      return initialGoals;
+    }
+  });
   const [training, setTraining] = useState(initialTrainingEvents);
 
   useEffect(() => {
     localStorage.setItem('observations_data', JSON.stringify(observations));
   }, [observations]);
+
+  useEffect(() => {
+    localStorage.setItem('goals_data', JSON.stringify(goals));
+    // Dispatch custom event for same-window updates if needed, though 'storage' event handles cross-tab
+    window.dispatchEvent(new Event('local-goals-update'));
+  }, [goals]);
+
+  // Listen for updates from Teacher Dashboard
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'observations_data' && e.newValue) {
+        try {
+          setObservations(JSON.parse(e.newValue));
+        } catch (err) {
+          console.error("Failed to sync observation data", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <DashboardLayout role="leader" userName="Dr. Sarah Johnson">
@@ -79,12 +113,15 @@ export default function LeaderDashboard() {
         <Route path="team/:teacherId" element={<TeacherDetailsView team={team} observations={observations} goals={goals} />} />
         <Route path="observations" element={<ObservationsManagementView observations={observations} />} />
         <Route path="observations/:obsId" element={<ObservationReportView observations={observations} team={team} />} />
-        <Route path="performance" element={<PlaceholderView title="Performance Analytics" icon={TrendingUp} />} />
+        <Route path="performance" element={<LeaderPerformanceAnalytics team={team} observations={observations} />} />
         <Route path="calendar" element={<PDCalendarView training={training} />} />
         <Route path="calendar/propose" element={<ProposeCourseView setTraining={setTraining} />} />
+        <Route path="calendar/responses" element={<MoocResponsesView />} />
+        <Route path="calendar/events/:eventId" element={<PlaceholderView title="PD Event Details" icon={Book} />} />
         <Route path="participation" element={<PDParticipationView team={team} />} />
         <Route path="observe" element={<ObserveView setObservations={setObservations} setTeam={setTeam} team={team} observations={observations} />} />
         <Route path="goals" element={<TeacherGoalsView goals={goals} />} />
+        <Route path="goals/assign" element={<AssignGoalView setGoals={setGoals} />} />
         <Route path="reports" element={<ReportsView team={team} />} />
       </Routes>
     </DashboardLayout>
@@ -239,14 +276,18 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
 
         <div className="grid md:grid-cols-3 gap-6">
           {observations.map((obs) => (
-            <div key={obs.id} className="dashboard-card p-5">
+            <div
+              key={obs.id}
+              className="dashboard-card p-5 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group"
+              onClick={() => navigate(`/leader/observations/${obs.id}`)}
+            >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-sm text-muted-foreground">{obs.date}</span>
                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success font-bold text-sm">
                   {obs.score}
                 </span>
               </div>
-              <p className="font-medium text-foreground mb-1">{obs.teacher}</p>
+              <p className="font-medium text-foreground mb-1 group-hover:text-primary transition-colors">{obs.teacher}</p>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 {obs.domain}
               </span>
@@ -841,10 +882,16 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
         subtitle="Schedule and manage professional development sessions"
         priority={3}
         actions={
-          <Button onClick={() => navigate("/leader/calendar/propose")}>
-            <Plus className="mr-2 w-4 h-4" />
-            Propose New Course
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/leader/calendar/responses")}>
+              <FileText className="mr-2 w-4 h-4" />
+              Course Evidence Responses
+            </Button>
+            <Button onClick={() => navigate("/leader/calendar/propose")}>
+              <Plus className="mr-2 w-4 h-4" />
+              Propose New Course
+            </Button>
+          </div>
         }
       />
 
@@ -874,33 +921,81 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar Widget */}
+        {/* Calendar Widget - Fitness Style */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-none shadow-lg bg-background/50 backdrop-blur-sm h-full">
-            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+          <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
+            {/* decorative gradient blob */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-y-10 -translate-x-10 pointer-events-none" />
+
+            <CardContent className="p-6 relative z-10 flex flex-col items-center">
+              <div className="text-left w-full mb-4">
+                <h3 className="text-lg font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
+                  Activity Summary
+                </h3>
+                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
+                  {formatDateStr(new Date())}
+                </p>
+              </div>
+
               <CalendarComponent
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="rounded-md border shadow-sm bg-background"
+                className="rounded-2xl border-none bg-zinc-900/50 p-4 w-full"
+                classNames={{
+                  head_cell: "text-zinc-500 font-medium text-[0.8rem]",
+                  cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-zinc-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-full transition-all",
+                  day_selected: "bg-gradient-to-br from-pink-500 to-red-600 text-white hover:bg-red-600 focus:bg-red-600 shadow-lg shadow-red-500/30",
+                  day_today: "bg-zinc-800 text-white font-bold",
+                  nav_button: "border-zinc-700 hover:bg-zinc-800 hover:text-white text-zinc-400",
+                  caption: "text-white font-bold mb-4",
+                }}
                 modifiers={{
-                  event: eventDates
+                  pedagogy: training.filter(e => e.type === "Pedagogy").map(e => parseEventDate(e.date)),
+                  technology: training.filter(e => e.type === "Technology").map(e => parseEventDate(e.date)),
+                  assessment: training.filter(e => e.type === "Assessment").map(e => parseEventDate(e.date)),
+                  other: training.filter(e => !["Pedagogy", "Technology", "Assessment"].includes(e.type)).map(e => parseEventDate(e.date)),
                 }}
                 modifiersStyles={{
-                  event: { fontWeight: 'bold', textDecoration: 'underline', color: 'var(--primary)' }
+                  pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
+                  technology: { border: '2px solid #10b981', color: 'white' }, // Green
+                  assessment: { border: '2px solid #f43f5e', color: 'white' }, // Red
+                  other: { border: '2px solid #eab308', color: 'white' } // Yellow
                 }}
               />
-              <div className="mt-4 w-full">
+
+              <div className="mt-6 w-full space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-zinc-300">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Pedagogy
+                  </span>
+                  <span className="font-mono text-white">{training.filter(t => t.type === 'Pedagogy').length}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-zinc-300">
+                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Technology
+                  </span>
+                  <span className="font-mono text-white">{training.filter(t => t.type === 'Technology').length}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-zinc-300">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Assessment
+                  </span>
+                  <span className="font-mono text-white">{training.filter(t => t.type === 'Assessment').length}</span>
+                </div>
+              </div>
+
+              <div className="mt-6 w-full">
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
                   onClick={() => setDate(undefined)}
                   disabled={!date}
                 >
-                  Clear Date Filter
+                  Clear Filter
                 </Button>
-              </div>
-              <div className="mt-4 text-xs text-muted-foreground text-center">
-                <p>Days with events are underlined.</p>
               </div>
             </CardContent>
           </Card>
@@ -1159,6 +1254,8 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
 function ReportsView({ team }: { team: typeof teamMembers }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<typeof teamMembers[0] | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const filteredTeam = team.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1280,7 +1377,15 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
                     </td>
                     <td className="p-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" className="h-9 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 gap-2"
+                          onClick={() => {
+                            setSelectedTeacher(member);
+                            setIsReportOpen(true);
+                          }}
+                        >
                           <Eye className="w-4 h-4" />
                           Preview
                         </Button>
@@ -1311,6 +1416,14 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+        <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-none shadow-2xl">
+          {selectedTeacher && (
+            <TeacherAnalyticsReport teacher={selectedTeacher} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1331,7 +1444,7 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
         subtitle="Manage and track performance targets for your staff"
         priority={2}
         actions={
-          <Button onClick={() => navigate("/leader/team")}>
+          <Button onClick={() => navigate("/leader/goals/assign")}>
             <Plus className="mr-2 w-4 h-4" />
             Assign New Goal
           </Button>
@@ -1461,6 +1574,8 @@ function ObservationReportView({ observations, team }: { observations: Observati
     );
   }
 
+  const [showReflection, setShowReflection] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1474,93 +1589,49 @@ function ObservationReportView({ observations, team }: { observations: Observati
           />
         </div>
         <div className="flex items-center gap-2">
-          {(observation.hasReflection || observation.detailedReflection) && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm ring-1 ring-indigo-500">
-                  <MessageSquare className="w-4 h-4" />
-                  Reflection by Teacher
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2 text-xl">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    Teacher Reflection
-                  </DialogTitle>
-                  <DialogDescription>
-                    Submitted by {observation.teacher} on {observation.detailedReflection ? new Date(observation.detailedReflection.submissionDate).toLocaleDateString() : observation.date}
-                  </DialogDescription>
-                </DialogHeader>
 
-                {observation.detailedReflection ? (
-                  <div className="space-y-6 pt-4">
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card className="bg-muted/30 border-none">
-                        <CardContent className="p-4">
-                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Strengths</span>
-                          <p className="font-medium text-sm">{observation.detailedReflection.strengths}</p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-muted/30 border-none">
-                        <CardContent className="p-4">
-                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Growth Areas</span>
-                          <p className="font-medium text-sm">{observation.detailedReflection.improvements}</p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-muted/30 border-none">
-                        <CardContent className="p-4">
-                          <span className="block text-xs font-bold text-muted-foreground uppercase mb-1">Goal</span>
-                          <p className="font-medium text-sm">{observation.detailedReflection.goal}</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="space-y-6">
-                      {Object.entries(observation.detailedReflection.sections).map(([key, section]) => (
-                        <div key={key} className="space-y-3 border p-4 rounded-lg bg-background">
-                          <h4 className="font-semibold text-base flex items-center gap-2 pb-2 border-b">
-                            <span className="w-1.5 h-4 rounded-full bg-primary inline-block" />
-                            {section.title}
-                          </h4>
-                          <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              {section.ratings.map(r => (
-                                <div key={r.indicator} className="flex justify-between items-center text-sm">
-                                  <span className="text-muted-foreground flex-1 pr-4 text-xs font-medium uppercase tracking-wide">{r.indicator}</span>
-                                  <Badge variant={r.rating === "Highly Effective" ? "default" : r.rating === "Effective" ? "secondary" : "outline"}>
-                                    {r.rating}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="bg-muted/10 p-3 rounded-md text-sm italic border-l-2 border-primary/20">
-                              <p className="font-bold text-[10px] text-primary uppercase not-italic mb-1">Evidence</p>
-                              "{section.evidence}"
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-6 rounded-xl bg-muted/20 border text-foreground leading-relaxed">
-                    "{observation.reflection}"
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
-          )}
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
+          {(observation.hasReflection || observation.detailedReflection) && (
+            <Button
+              variant={showReflection ? "secondary" : "default"}
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                setShowReflection(!showReflection);
+                if (!showReflection) {
+                  setTimeout(() => document.getElementById('reflection-card')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }
+              }}
+            >
+              <MessageSquare className="w-4 h-4" />
+              {showReflection ? "Hide Reflection" : "View Teacher Reflection"}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              toast.info("Please select 'Save as PDF' in the print dialog.");
+              setTimeout(() => window.print(), 500);
+            }}
+          >
             <Download className="w-4 h-4" />
             Download PDF
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const subject = `Observation Report: ${observation.teacher} - ${observation.date}`;
+              const body = `Please find the observation report details for ${observation.teacher} observed on ${observation.date}.\n\nDomain: ${observation.domain}\nScore: ${observation.score}/5\n\nLink: ${window.location.href}`;
+              window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            }}
+          >
             <Share2 className="w-4 h-4" />
             Share
           </Button>
@@ -1640,6 +1711,103 @@ function ObservationReportView({ observations, team }: { observations: Observati
               </div>
             </CardContent>
           </Card>
+
+          {/* Teacher Reflection Card - Collapsible */}
+          {(observation.hasReflection || observation.detailedReflection) && showReflection && (
+            <div id="reflection-card" className="animate-in slide-in-from-bottom-5 fade-in duration-500">
+              <Card className="border-none shadow-2xl bg-background/50 backdrop-blur-sm overflow-hidden mt-8">
+                <CardHeader className="bg-indigo-50/40 pb-8 border-b border-indigo-100/50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                        <MessageSquare className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-foreground">Teacher Reflection</CardTitle>
+                        <CardDescription>
+                          Submitted on {observation.detailedReflection ? new Date(observation.detailedReflection.submissionDate).toLocaleDateString() : observation.date} • Self-Assessment
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8">
+                  {observation.detailedReflection ? (
+                    <div className="space-y-8">
+                      {/* Summary Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="bg-emerald-50/50 border-emerald-100 shadow-sm">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-emerald-700">Strengths</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm font-medium text-foreground/80 leading-relaxed">{observation.detailedReflection.strengths}</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-amber-50/50 border-amber-100 shadow-sm">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-amber-700">Areas for Growth</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm font-medium text-foreground/80 leading-relaxed">{observation.detailedReflection.improvements}</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-blue-50/50 border-blue-100 shadow-sm">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-blue-700">Goal for Next Cycle</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm font-medium text-foreground/80 leading-relaxed">{observation.detailedReflection.goal}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Detailed Sections */}
+                      <div className="space-y-6">
+                        <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
+                          <FileText className="w-5 h-5 text-muted-foreground" />
+                          Reflection Details
+                        </h3>
+                        {Object.entries(observation.detailedReflection.sections).map(([key, section]) => (
+                          <div key={key} className="space-y-4 border rounded-2xl p-6 bg-card/50">
+                            <div className="flex items-center gap-3 pb-4 border-b">
+                              <div className="w-2 h-8 rounded-full bg-indigo-500" />
+                              <h4 className="font-bold text-lg">{section.title}</h4>
+                            </div>
+                            <div className="grid lg:grid-cols-2 gap-8">
+                              <div className="space-y-4">
+                                <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Self-Ratings</p>
+                                <div className="space-y-3">
+                                  {section.ratings.map(r => (
+                                    <div key={r.indicator} className="flex justify-between items-center group">
+                                      <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{r.indicator}</span>
+                                      <Badge variant={r.rating === "Highly Effective" ? "default" : r.rating === "Effective" ? "secondary" : "outline"} className="ml-4">
+                                        {r.rating}
+                                      </Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Evidence Provided</p>
+                                <div className="p-4 rounded-xl bg-muted/30 text-sm italic leading-relaxed text-muted-foreground border border-dashed border-muted-foreground/20">
+                                  "{section.evidence}"
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 rounded-2xl bg-muted/20 border-2 border-dashed border-muted-foreground/10 text-lg leading-relaxed text-foreground/80 italic text-center">
+                      "{observation.reflection}"
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -1956,6 +2124,63 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
 
   if (!team || !observations) {
     return <div className="p-8 text-center text-muted-foreground">Loading dashboard data...</div>;
+  }
+
+  if (getActiveTemplateByType("Observation")) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/leader")}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <PageHeader
+            title="New Observation"
+            subtitle="Record teacher performance using Master Template"
+          />
+        </div>
+        <Card className="border-none shadow-xl bg-background overflow-hidden">
+          <CardHeader className="bg-primary/5 border-b py-6">
+            <CardTitle className="text-xl font-bold">Instructional Review (Master)</CardTitle>
+            <CardDescription>All fields are mandatory unless marked optional</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-8">
+            <DynamicForm
+              fields={getActiveTemplateByType("Observation")!.fields}
+              submitLabel="Submit Observation"
+              onCancel={() => navigate("/leader")}
+              onSubmit={(data) => {
+                const newObs = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  teacher: data.t1 || "Unknown Teacher",
+                  domain: data.a1 || "General",
+                  date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  score: Number(data.a2) || 0,
+                  notes: data.a3 || "",
+                  observerName: data.o1 || "Dr. Sarah Johnson",
+                  observerRole: data.o3 || "Head of School",
+                  classroom: {
+                    block: data.c1 || "",
+                    grade: data.c2 || "",
+                    section: data.c3 || "",
+                    learningArea: data.c4 || ""
+                  },
+                  hasReflection: false,
+                  reflection: "",
+                  learningArea: data.c4 || "",
+                  strengths: data.a4 || "",
+                  improvements: data.a5 || "",
+                  teachingStrategies: data.a6 ? data.a6.split(",").map(s => s.trim()) : [],
+                } as Observation;
+
+                setObservations(prev => [newObs, ...prev]);
+                toast.success("Observation recorded using Master Template!");
+                navigate("/leader");
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -2331,6 +2556,91 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
   );
 }
 
+function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateAction<any[]>> }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/leader/goals")}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <PageHeader
+            title="Assign New Goal"
+            subtitle="Set academic year goals for educators"
+          />
+        </div>
+      </div>
+
+      {getActiveTemplateByType("Goal Setting") ? (
+        <Card className="border-none shadow-premium bg-background/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <DynamicForm
+              fields={getActiveTemplateByType("Goal Setting")!.fields}
+              submitLabel="Assign Goal"
+              onCancel={() => navigate("/leader/goals")}
+              onSubmit={(data) => {
+                const newGoal = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  teacher: data.g1 || "Unknown Teacher",
+                  title: data.g9 || "New School Goal",
+                  category: data.g12 || "General",
+                  progress: 0,
+                  status: "Assigned",
+                  dueDate: "Jun 28, 2026",
+                  assignedBy: data.g2 || "Admin",
+                  description: data.g10 || "",
+                  actionStep: data.g11 || "",
+                  pillar: data.g12 || "Professional Practice",
+                  campus: data.g3 || "HQ",
+                  ay: "25-26",
+                  isSchoolAligned: true,
+                  assignedDate: new Date().toISOString(),
+                  reflectionCompleted: true,
+                };
+
+                setGoals(prev => [...prev, newGoal]);
+                toast.success("Goal successfully assigned using Master Template.");
+                navigate("/leader/goals");
+              }}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <GoalSettingForm
+          defaultCoachName="Dr. Sarah Johnson"
+          onCancel={() => navigate("/leader/goals")}
+          onSubmit={(data) => {
+            const newGoal = {
+              id: Math.random().toString(36).substr(2, 9),
+              teacher: data.educatorName,
+              title: data.goalForYear,
+              category: data.pillarTag,
+              progress: 0,
+              status: "Assigned",
+              dueDate: "Jun 28, 2026",
+              assignedBy: data.coachName,
+              description: data.reasonForGoal,
+              actionStep: data.actionStep,
+              pillar: data.pillarTag,
+              campus: data.campus,
+              ay: "25-26",
+              isSchoolAligned: true,
+              assignedDate: data.dateOfGoalSetting.toISOString(),
+              reflectionCompleted: true,
+            };
+
+            setGoals(prev => [...prev, newGoal]);
+            toast.success("Goal successfully assigned.");
+            navigate("/leader/goals");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 function PlaceholderView({ title, icon: Icon }: { title: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
@@ -2345,6 +2655,208 @@ function PlaceholderView({ title, icon: Icon }: { title: string; icon: React.Com
       <Button asChild>
         <Link to="/leader">Return to Overview</Link>
       </Button>
+    </div>
+  );
+}
+
+function MoocResponsesView() {
+  const navigate = useNavigate();
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
+
+  useEffect(() => {
+    const loadSubmissions = () => {
+      const data = localStorage.getItem("mooc_submissions");
+      if (data) {
+        setSubmissions(JSON.parse(data));
+      }
+    };
+    loadSubmissions();
+    window.addEventListener("mooc-submission-updated", loadSubmissions);
+    return () => window.removeEventListener("mooc-submission-updated", loadSubmissions);
+  }, []);
+
+  const filteredSubmissions = submissions.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.courseName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/leader/calendar")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <PageHeader
+          title="Course Evidence Registry"
+          subtitle="Review MOOC completions and reflection evidence"
+        />
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search submissions..."
+            className="pl-10 w-[250px] bg-background border-muted-foreground/20 rounded-xl"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/30 border-b">
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Teacher</th>
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Course</th>
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Platform</th>
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Completion Date</th>
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Evidence</th>
+                  <th className="text-right p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-muted-foreground/10">
+                {filteredSubmissions.map((sub) => (
+                  <tr key={sub.id} className="hover:bg-primary/5 transition-colors group">
+                    <td className="p-6">
+                      <p className="font-bold text-foreground">{sub.name}</p>
+                      <p className="text-xs text-muted-foreground">{sub.email}</p>
+                    </td>
+                    <td className="p-6">
+                      <p className="font-medium text-foreground">{sub.courseName}</p>
+                      <p className="text-xs text-muted-foreground">{sub.hours} Hours</p>
+                    </td>
+                    <td className="p-6">
+                      <Badge variant="outline">{sub.platform === 'Other' ? sub.otherPlatform : sub.platform}</Badge>
+                    </td>
+                    <td className="p-6">
+                      {new Date(sub.completionDate).toLocaleDateString()}
+                    </td>
+                    <td className="p-6">
+                      {sub.hasCertificate === 'yes' ? (
+                        <a href={sub.proofLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline font-medium">
+                          <LinkIcon className="w-3 h-3" />
+                          Certificate
+                        </a>
+                      ) : (
+                        <Badge variant="secondary">Reflection</Badge>
+                      )}
+                    </td>
+                    <td className="p-6 text-right">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedSubmission(sub)}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Details
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredSubmissions.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                      No submissions found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selectedSubmission} onOpenChange={(open) => !open && setSelectedSubmission(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Submission Details</DialogTitle>
+            <DialogDescription>
+              Submitted on {selectedSubmission && new Date(selectedSubmission.submittedAt).toLocaleDateString()}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSubmission && (
+            <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Teacher</Label>
+                  <p className="font-medium">{selectedSubmission.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Campus</Label>
+                  <p className="font-medium">{selectedSubmission.campus}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Course</Label>
+                  <p className="font-medium">{selectedSubmission.courseName}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Platform</Label>
+                  <p className="font-medium">{selectedSubmission.platform === 'Other' ? selectedSubmission.otherPlatform : selectedSubmission.platform}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Hours</Label>
+                  <p className="font-medium">{selectedSubmission.hours}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Completion Date</Label>
+                  <p className="font-medium">{new Date(selectedSubmission.completionDate).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div className="h-px bg-border my-4" />
+
+              {selectedSubmission.hasCertificate === 'yes' ? (
+                <div>
+                  <Label className="text-muted-foreground block mb-2">Certificate</Label>
+                  <a href={selectedSubmission.proofLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline border px-4 py-2 rounded-md bg-primary/5">
+                    <LinkIcon className="w-4 h-4" />
+                    Open Certificate Link
+                  </a>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="font-semibold flex items-center gap-2"><Brain className="w-4 h-4" /> Reflection</h4>
+                  <div>
+                    <Label className="text-muted-foreground">Key Takeaways</Label>
+                    <p className="mt-1 text-sm bg-muted p-3 rounded-md whitespace-pre-wrap">{selectedSubmission.keyTakeaways}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Unanswered Questions</Label>
+                    <p className="mt-1 text-sm bg-muted p-3 rounded-md whitespace-pre-wrap">{selectedSubmission.unansweredQuestions}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Enjoyed Most</Label>
+                    <p className="mt-1 text-sm bg-muted p-3 rounded-md">{selectedSubmission.enjoyedMost}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="h-px bg-border my-4" />
+
+              <div>
+                <Label className="text-muted-foreground">Effectiveness Rating</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex gap-1">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div key={i} className={cn("w-2 h-2 rounded-full", i < selectedSubmission.effectivenessRating[0] ? "bg-primary" : "bg-muted")} />
+                    ))}
+                  </div>
+                  <span className="font-bold">{selectedSubmission.effectivenessRating[0]}/10</span>
+                </div>
+              </div>
+
+              {selectedSubmission.additionalFeedback && (
+                <div>
+                  <Label className="text-muted-foreground">Additional Feedback</Label>
+                  <p className="mt-1 text-sm italic">{selectedSubmission.additionalFeedback}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

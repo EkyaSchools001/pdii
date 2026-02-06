@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronLeft,
   GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 import { Role, RoleBadge } from "../RoleBadge";
 import { Button } from "../ui/button";
@@ -41,6 +42,7 @@ const leaderNav = [
   { title: "Team Overview", icon: Users, path: "/leader/team" },
   { title: "Set Goals", icon: Target, path: "/leader/goals" },
   { title: "PD Participation", icon: Clock, path: "/leader/participation" },
+  { title: "Performance", icon: TrendingUp, path: "/leader/performance" },
   { title: "Training Calendar", icon: Calendar, path: "/leader/calendar" },
   { title: "Reports", icon: FileText, path: "/leader/reports" },
 ];

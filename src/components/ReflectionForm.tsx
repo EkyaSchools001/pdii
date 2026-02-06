@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DetailedReflection, Observation, ReflectionSection } from "@/types/observation";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Lock, Save } from "lucide-react";
+import { CheckCircle2, ChevronRight, Lock, Save, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ReflectionFormProps {
@@ -251,30 +251,39 @@ export function ReflectionForm({ observation, isOpen, onClose, onSubmit, teacher
                                         const currentRating = formData.sections[sectionKey].ratings.find(r => r.indicator === indicator)?.rating;
 
                                         return (
-                                            <Card key={idx} className="border-muted/50 shadow-sm">
-                                                <CardHeader className="pb-3 bg-muted/5 border-b border-muted/20">
-                                                    <CardTitle className="text-base font-semibold">{indicator}</CardTitle>
-                                                </CardHeader>
-                                                <CardContent className="pt-4">
-                                                    <RadioGroup
-                                                        value={currentRating}
-                                                        onValueChange={(val) => handleRatingChange(sectionKey, indicator, val)}
-                                                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
-                                                    >
-                                                        {["Basic", "Developing", "Effective", "Highly Effective"].map((option) => (
-                                                            <div key={option} className="relative">
-                                                                <RadioGroupItem value={option} id={`${indicator}-${option}`} className="peer sr-only" />
-                                                                <Label
-                                                                    htmlFor={`${indicator}-${option}`}
-                                                                    className="flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 peer-data-[state=checked]:text-primary"
-                                                                >
-                                                                    <span className="font-semibold">{option}</span>
-                                                                </Label>
-                                                            </div>
-                                                        ))}
-                                                    </RadioGroup>
-                                                </CardContent>
-                                            </Card>
+                                            <div key={idx} className="space-y-4 pb-4 border-b border-muted/40 last:border-0">
+                                                <h3 className="text-base font-semibold text-foreground">{indicator}</h3>
+                                                <RadioGroup
+                                                    value={currentRating}
+                                                    onValueChange={(val) => handleRatingChange(sectionKey, indicator, val)}
+                                                    className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+                                                >
+                                                    {["Basic", "Developing", "Effective", "Highly Effective"].map((option, optIdx) => (
+                                                        <div key={option} className="relative">
+                                                            <RadioGroupItem value={option} id={`${indicator}-${option}`} className="peer sr-only" />
+                                                            <Label
+                                                                htmlFor={`${indicator}-${option}`}
+                                                                className="flex flex-col items-center justify-center h-24 rounded-xl border-2 bg-background cursor-pointer transition-all hover:bg-muted/50 hover:border-primary/30 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 peer-data-[state=checked]:shadow-sm"
+                                                            >
+                                                                <div className="flex gap-0.5 mb-2">
+                                                                    {[...Array(4)].map((_, i) => (
+                                                                        <Star
+                                                                            key={i}
+                                                                            className={cn(
+                                                                                "w-4 h-4",
+                                                                                i <= optIdx
+                                                                                    ? "fill-primary text-primary"
+                                                                                    : "fill-muted/20 text-muted-foreground/20"
+                                                                            )}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-sm font-medium peer-data-[state=checked]:text-primary text-muted-foreground">{option}</span>
+                                                            </Label>
+                                                        </div>
+                                                    ))}
+                                                </RadioGroup>
+                                            </div>
                                         );
                                     })}
                                 </div>

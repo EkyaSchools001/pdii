@@ -7,11 +7,16 @@ interface GoalCardProps {
   goal: {
     id: string;
     title: string;
-    description: string;
+    description?: string;
+    actionStep?: string;
+    pillar?: string;
+    category?: string;
     progress: number;
     dueDate: string;
     assignedBy?: string;
     isSchoolAligned?: boolean;
+    teacher?: string;
+    reflectionCompleted?: boolean;
   };
   className?: string;
 }
@@ -30,11 +35,33 @@ export function GoalCard({ goal, className }: GoalCardProps) {
               School Priority
             </span>
           )}
+          {goal.reflectionCompleted && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+              Reflected
+            </span>
+          )}
+          {(goal.pillar || goal.category) && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              {goal.pillar || goal.category}
+            </span>
+          )}
         </div>
       </div>
 
       <h3 className="font-semibold text-foreground mb-2">{goal.title}</h3>
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{goal.description}</p>
+      {goal.description && (
+        <div className="mb-4">
+          {goal.assignedBy && <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Rationale</p>}
+          <p className="text-sm text-muted-foreground leading-relaxed">{goal.description}</p>
+        </div>
+      )}
+
+      {goal.actionStep && (
+        <div className="mb-4 p-3 bg-muted/30 rounded-md border border-muted-foreground/10">
+          <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Action Step</p>
+          <p className="text-sm italic">{goal.actionStep}</p>
+        </div>
+      )}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">

@@ -55,6 +55,8 @@ import { Label } from "@/components/ui/label";
 import { format, parse, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { getActiveTemplateByType } from "@/lib/template-utils";
+import { DynamicForm } from "@/components/DynamicForm";
 import {
   ResponsiveContainer,
   Radar,
@@ -76,6 +78,7 @@ import {
 
 import { Observation, DetailedReflection } from "@/types/observation";
 import { ReflectionForm } from "@/components/ReflectionForm";
+import { MoocEvidenceForm } from "@/components/MoocEvidenceForm";
 
 // Removed local Observation interface in favor of shared type
 
@@ -115,6 +118,7 @@ const initialGoals = [
     dueDate: "Mar 30, 2024",
     assignedBy: "Dr. Sarah Johnson",
     isSchoolAligned: true,
+    teacher: "Emily Rodriguez"
   },
   {
     id: "2",
@@ -122,6 +126,7 @@ const initialGoals = [
     description: "Develop and implement tiered assignments for diverse learner needs",
     progress: 40,
     dueDate: "Apr 15, 2024",
+    teacher: "Emily Rodriguez"
   },
 ];
 
@@ -341,7 +346,7 @@ const DashboardOverview = ({
             </Button>
           </div>
           <div className="space-y-4">
-            {goals.map((goal) => (
+            {goals.filter(g => !g.teacher || g.teacher.toLowerCase().includes("emily")).map((goal) => (
               <GoalCard key={goal.id} goal={goal} />
             ))}
           </div>
@@ -407,14 +412,42 @@ function ObservationsView({ observations, onReflect }: { observations: Observati
       </div>
 
       {selectedObs && (
-        <ReflectionForm
-          isOpen={!!selectedObs}
-          onClose={() => setSelectedObs(null)}
-          onSubmit={handleSubmit}
-          observation={selectedObs}
-          teacherName={selectedObs.teacher || "Emily Rodriguez"}
-          teacherEmail="emily.r@ekyaschools.com"
-        />
+        <>
+          {getActiveTemplateByType("Reflection") ? (
+            <Dialog open={!!selectedObs} onOpenChange={() => setSelectedObs(null)}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Teacher Self-Reflection (Master)</DialogTitle>
+                  <DialogDescription>Based on the Ekya Danielson Framework</DialogDescription>
+                </DialogHeader>
+                <DynamicForm
+                  fields={getActiveTemplateByType("Reflection")!.fields}
+                  submitLabel="Submit Reflection"
+                  onCancel={() => setSelectedObs(null)}
+                  onSubmit={(data) => {
+                    // Map dynamic data to DetailedReflection structure
+                    const reflection: DetailedReflection = {
+                      strengths: data.r23 || "See details",
+                      improvements: data.r24 || "See details",
+                      goal: data.r25 || "Assigned by teacher",
+                      comments: data.r26 || "Master form reflection submitted.",
+                    };
+                    handleSubmit(reflection);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <ReflectionForm
+              isOpen={!!selectedObs}
+              onClose={() => setSelectedObs(null)}
+              onSubmit={handleSubmit}
+              observation={selectedObs}
+              teacherName={selectedObs.teacher || "Emily Rodriguez"}
+              teacherEmail="emily.r@ekyaschools.com"
+            />
+          )}
+        </>
       )}
     </div>
   );
@@ -436,7 +469,7 @@ function GoalsView({ goals, onAddGoal }: { goals: typeof initialGoals, onAddGoal
     <div className="space-y-6">
       <PageHeader title="Professional Goals" subtitle="Track your growth and align with school priorities" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {goals.map((goal) => (
+        {goals.filter(g => !g.teacher || g.teacher.toLowerCase().includes("emily")).map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
         ))}
 
@@ -635,6 +668,8 @@ function CalendarView({
 }
 
 function CoursesView() {
+  const [isMoocFormOpen, setIsMoocFormOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -643,6 +678,10 @@ function CoursesView() {
           subtitle="Expand your knowledge with certified professional development courses"
         />
         <div className="flex items-center gap-2">
+          <Button onClick={() => setIsMoocFormOpen(true)} className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 mr-2">
+            <PlusCircle className="w-4 h-4" />
+            Submit MOOC Evidence
+          </Button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input className="pl-9 w-[200px] lg:w-[300px]" placeholder="Search courses..." />
@@ -652,6 +691,35 @@ function CoursesView() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={isMoocFormOpen} onOpenChange={setIsMoocFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background/95 backdrop-blur-xl border-none">
+          {getActiveTemplateByType("Other", "MOOC") ? (
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-2xl font-bold">MOOC Submission (Master)</h2>
+                <p className="text-muted-foreground italic">Submit your course evidence using the latest official form</p>
+              </div>
+              <DynamicForm
+                fields={getActiveTemplateByType("Other", "MOOC")!.fields}
+                submitLabel="Submit MOOC Evidence"
+                onCancel={() => setIsMoocFormOpen(false)}
+                onSubmit={(data) => {
+                  toast.success("MOOC Evidence submitted successfully using Master Template!");
+                  setIsMoocFormOpen(false);
+                }}
+              />
+            </div>
+          ) : (
+            <MoocEvidenceForm
+              onCancel={() => setIsMoocFormOpen(false)}
+              onSubmitSuccess={() => setIsMoocFormOpen(false)}
+              userEmail="emily.r@ekyaschools.com"
+              userName="Emily Rodriguez"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-8">
         {/* In Progress */}
@@ -1074,7 +1142,15 @@ interface NewGoal {
 
 export default function TeacherDashboard() {
   const location = useLocation();
-  const [goals, setGoals] = useState(initialGoals);
+  const [goals, setGoals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('goals_data');
+      return saved ? JSON.parse(saved) : initialGoals;
+    } catch (e) {
+      console.error("Failed to load goals", e);
+      return initialGoals;
+    }
+  });
   const [events, setEvents] = useState(initialEvents);
   const [observations, setObservations] = useState<Observation[]>(() => {
     try {
@@ -1093,6 +1169,10 @@ export default function TeacherDashboard() {
     localStorage.setItem('observations_data', JSON.stringify(observations));
   }, [observations]);
 
+  useEffect(() => {
+    localStorage.setItem('goals_data', JSON.stringify(goals));
+  }, [goals]);
+
   // Listen for updates from Leader Dashboard
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -1103,9 +1183,28 @@ export default function TeacherDashboard() {
           console.error("Failed to sync observation data", err);
         }
       }
+      if (e.key === 'goals_data' && e.newValue) {
+        try {
+          setGoals(JSON.parse(e.newValue));
+        } catch (err) {
+          console.error("Failed to sync goals data", err);
+        }
+      }
     };
+
+    const handleLocalGoalsUpdate = () => {
+      const saved = localStorage.getItem('goals_data');
+      if (saved) {
+        setGoals(JSON.parse(saved));
+      }
+    }
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('local-goals-update', handleLocalGoalsUpdate);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('local-goals-update', handleLocalGoalsUpdate);
+    };
   }, []);
 
   const handleReflect = (id: string, reflection: DetailedReflection) => {
@@ -1149,8 +1248,8 @@ export default function TeacherDashboard() {
   return (
     <DashboardLayout role="teacher" userName="Emily Rodriguez">
       <Routes>
-        <Route index element={<DashboardOverview goals={goals} events={events} observations={observations.filter(o => !o.teacher || o.teacher === "Emily Rodriguez")} onRegister={handleRegister} />} />
-        <Route path="observations" element={<ObservationsView observations={observations.filter(o => !o.teacher || o.teacher === "Emily Rodriguez")} onReflect={handleReflect} />} />
+        <Route index element={<DashboardOverview goals={goals} events={events} observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))} onRegister={handleRegister} />} />
+        <Route path="observations" element={<ObservationsView observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))} onReflect={handleReflect} />} />
         <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
         <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} />} />
         <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />

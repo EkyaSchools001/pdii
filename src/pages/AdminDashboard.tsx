@@ -4,14 +4,30 @@ import { StatCard } from "@/components/StatCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { Users, FileText, Book, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, Routes, Route, useNavigate } from "react-router-dom";
+import { UserManagementView } from "./admin/UserManagementView";
+import { FormTemplatesView } from "./admin/FormTemplatesView";
+import { CourseManagementView } from "./admin/CourseManagementView";
+import { AdminCalendarView } from "./admin/AdminCalendarView";
+import { AdminReportsView } from "./admin/AdminReportsView";
+import { SystemSettingsView } from "./admin/SystemSettingsView";
 
-const quickStats = [
-  { label: "Total Users", value: "248", change: "+12 this month" },
-  { label: "Active Forms", value: "8", change: "2 pending approval" },
-  { label: "Courses", value: "34", change: "5 new this quarter" },
-  { label: "Training Events", value: "12", change: "This month" },
-];
+export default function AdminDashboard() {
+  return (
+    <DashboardLayout role="admin" userName="Admin User">
+      <Routes>
+        <Route index element={<DashboardOverview />} />
+        <Route path="users" element={<UserManagementView />} />
+        <Route path="forms" element={<FormTemplatesView />} />
+        <Route path="courses" element={<CourseManagementView />} />
+        <Route path="calendar" element={<AdminCalendarView />} />
+        <Route path="reports" element={<AdminReportsView />} />
+        <Route path="settings" element={<SystemSettingsView />} />
+      </Routes>
+    </DashboardLayout>
+  );
+}
+
 
 const recentActivity = [
   { id: "1", action: "User role updated", user: "admin@school.edu", target: "Maria Santos → Department Head", time: "2 hours ago" },
@@ -35,7 +51,7 @@ const adminModules = [
     icon: FileText,
     path: "/admin/forms",
     priority: 1 as const,
-    stats: "8 templates",
+    stats: "4 templates",
   },
   {
     title: "Course Catalogue",
@@ -71,9 +87,11 @@ const adminModules = [
   },
 ];
 
-export default function AdminDashboard() {
+
+
+function DashboardOverview() {
   return (
-    <DashboardLayout role="admin" userName="Admin User">
+    <>
       <PageHeader
         title="Admin Dashboard"
         subtitle="Manage platform settings, users, and content"
@@ -92,8 +110,8 @@ export default function AdminDashboard() {
         />
         <StatCard
           title="Active Forms"
-          value="8"
-          subtitle="2 pending approval"
+          value="4"
+          subtitle="All systems active"
           icon={FileText}
           priority={1}
         />
@@ -111,6 +129,119 @@ export default function AdminDashboard() {
           icon={Calendar}
           priority={2}
         />
+      </div>
+
+      {/* Live Data Feeds / Drill Downs */}
+      <div className="mb-8 animate-in slide-in-from-bottom-5 duration-500 delay-100">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Pending Actions & Live Updates</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          {/* New Registrations Card */}
+          <div className="dashboard-card p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm text-foreground">New Registrations</h3>
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
+              {[
+                { name: "Alice M.", role: "Teacher", time: "10m ago" },
+                { name: "Robert F.", role: "Staff", time: "1h ago" },
+                { name: "Sarah L.", role: "Teacher", time: "3h ago" },
+                { name: "James K.", role: "Teacher", time: "1d ago" },
+              ].map((u, i) => (
+                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{u.name}</span>
+                    <span className="text-xs text-muted-foreground">{u.role}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{u.time}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" asChild>
+              <Link to="/admin/users">Review All</Link>
+            </Button>
+          </div>
+
+          {/* Pending Forms Card */}
+          <div className="dashboard-card p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm text-foreground">Pending Form Reviews</h3>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">2</span>
+            </div>
+            <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
+              {[
+                { title: "Walkthrough: Gr 5 Math", author: "J. Doe", status: "Waiting" },
+                { title: "Self-Reflection Q3", author: "M. Smith", status: "Waiting" },
+                { title: "Peer Obsv: Science", author: "K. Williams", status: "Reviewed" },
+              ].map((f, i) => (
+                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer">
+                  <div className="flex flex-col truncate max-w-[120px]">
+                    <span className="font-medium truncate">{f.title}</span>
+                    <span className="text-xs text-muted-foreground">{f.author}</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${f.status === 'Waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{f.status}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" asChild>
+              <Link to="/admin/forms">Go to Approvals</Link>
+            </Button>
+          </div>
+
+          {/* Recent Course Enrollments */}
+          <div className="dashboard-card p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm text-foreground">Recent Enrollments</h3>
+              <Book className="w-4 h-4 text-primary" />
+            </div>
+            <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
+              {[
+                { user: "Emily R.", course: "Diff. Instruction", date: "Today" },
+                { user: "Michael B.", course: "Tech Integration", date: "Yesterday" },
+                { user: "Sarah L.", course: "Diff. Instruction", date: "Yesterday" },
+              ].map((e, i) => (
+                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 transition-colors">
+                  <div className="flex flex-col truncate max-w-[140px]">
+                    <span className="font-medium truncate">{e.user}</span>
+                    <span className="text-xs text-muted-foreground truncate">{e.course}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{e.date}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" asChild>
+              <Link to="/admin/courses">View Catalogue</Link>
+            </Button>
+          </div>
+
+          {/* Upcoming Event RSVPs */}
+          <div className="dashboard-card p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm text-foreground">Event RSVPs</h3>
+              <Calendar className="w-4 h-4 text-primary" />
+            </div>
+            <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
+              {[
+                { event: "Feb 15: Pedagogy Dept", user: "Alice M.", status: "Going" },
+                { event: "Feb 15: Pedagogy Dept", user: "John D.", status: "Going" },
+                { event: "Feb 18: Digital Safety", user: "Robert F.", status: "Maybe" },
+              ].map((e, i) => (
+                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 transition-colors">
+                  <div className="flex flex-col truncate max-w-[130px]">
+                    <span className="font-medium truncate">{e.event}</span>
+                    <span className="text-xs text-muted-foreground">{e.user}</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${e.status === 'Going' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{e.status}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" asChild>
+              <Link to="/admin/calendar">Manage Calendar</Link>
+            </Button>
+          </div>
+
+        </div>
       </div>
 
       {/* Admin Modules Grid */}
@@ -147,7 +278,7 @@ export default function AdminDashboard() {
               <PriorityBadge priority={2} showLabel={false} />
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/audit">View Audit Log</Link>
+              <Link to="/admin/reports">View Audit Log</Link>
             </Button>
           </div>
 
@@ -215,6 +346,8 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
+
+
