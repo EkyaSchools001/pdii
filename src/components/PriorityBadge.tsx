@@ -16,8 +16,10 @@ const priorityConfig = {
 };
 
 export function PriorityBadge({ priority, showLabel = true, className }: PriorityBadgeProps) {
+  if (priority === 1 || priority === 2 || priority === 3) return null;
+
   const config = priorityConfig[priority];
-  
+
   return (
     <span className={cn("priority-badge", config.className, className)}>
       {config.label}
