@@ -60,7 +60,7 @@ export default function Auth() {
                         <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
                             <GraduationCap className="w-6 h-6" />
                         </div>
-                        <span className="text-2xl font-bold text-foreground tracking-tight">PD Platform</span>
+                        <span className="text-2xl font-bold text-foreground tracking-tight">EKYA PD PLATFORM</span>
                     </Link>
                     <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
                         Welcome Back

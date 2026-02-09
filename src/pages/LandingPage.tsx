@@ -72,7 +72,7 @@ export default function LandingPage() {
           <nav className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/EKYA.png" alt="Ekya Schools" className="h-16 w-auto" />
-              <span className="text-xl font-bold tracking-tight">PD PLATFORM</span>
+              <span className="text-xl font-bold tracking-tight">EKYA PD PLATFORM</span>
             </div>
             <Button variant="secondary" asChild>
               <Link to="/login">Sign In</Link>
@@ -194,7 +194,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/EKYA.png" alt="Ekya Schools" className="h-12 w-auto brightness-0 invert" />
-              <span className="font-bold tracking-tight text-lg">PD PLATFORM</span>
+              <span className="font-bold tracking-tight text-lg">EKYA PD PLATFORM</span>
             </div>
             <p className="text-sm text-primary-foreground/70">
               © 2024 Professional Development Platform. All rights reserved.
