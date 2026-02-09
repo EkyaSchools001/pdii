@@ -235,7 +235,6 @@ export function SystemSettingsView() {
             <PageHeader
                 title="Platform Settings"
                 subtitle="Configure system preferences, notifications, and security"
-                priority={1}
                 actions={
                     <Button onClick={handleSave}>
                         <Save className="w-4 h-4 mr-2" />
