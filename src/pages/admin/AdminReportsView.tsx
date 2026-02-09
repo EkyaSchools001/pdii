@@ -2,7 +2,8 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Filter, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import { Download, Filter, RefreshCw, Calendar as CalendarIcon, Sparkles } from "lucide-react";
+import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { toast } from "sonner";
 import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -37,6 +38,14 @@ const courseDistributionData = [
 
 export function AdminReportsView() {
     const [timeRange, setTimeRange] = useState("6m");
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+
+    const analyticsData = {
+        userGrowth: userGrowthData,
+        campusActivity: campusActivityData,
+        courseDistribution: courseDistributionData,
+        timeRange
+    };
 
     const handleDownloadReport = () => {
         // Prepare CSV data
@@ -85,11 +94,25 @@ export function AdminReportsView() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            <AIAnalysisModal
+                isOpen={isAIModalOpen}
+                onClose={() => setIsAIModalOpen(false)}
+                data={analyticsData}
+                type="admin"
+                title="System-Wide Performance Analysis"
+            />
             <PageHeader
                 title="Reports & Analytics"
                 subtitle="Real-time system insights and performance metrics"
                 actions={
                     <div className="flex items-center gap-2">
+                        <Button
+                            onClick={() => setIsAIModalOpen(true)}
+                            className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/20 font-bold border-none"
+                        >
+                            <Sparkles className="w-4 h-4 text-amber-300" />
+                            AI System Analysis
+                        </Button>
                         <Select value={timeRange} onValueChange={setTimeRange}>
                             <SelectTrigger className="w-[150px]">
                                 <SelectValue placeholder="Select Range" />
@@ -228,7 +251,7 @@ export function AdminReportsView() {
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: any) => `${value}`} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}`} />
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}

@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { Observation } from "@/types/observation";
 import { GoalSettingForm } from "@/components/GoalSettingForm";
 import { TeacherAnalyticsReport } from "@/components/TeacherAnalyticsReport";
 import { LeaderPerformanceAnalytics } from "@/components/LeaderPerformanceAnalytics";
+import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getActiveTemplateByType } from "@/lib/template-utils";
@@ -519,6 +520,7 @@ function TeamManagementView({ team }: { team: typeof teamMembers }) {
 function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMembers, observations: Observation[], goals: typeof initialGoals }) {
   const { teacherId } = useParams();
   const navigate = useNavigate();
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const teacher = team.find(t => t.id === teacherId);
   const teacherObservations = observations.filter(obs => obs.teacher === teacher?.name);
   const teacherGoals = goals.filter(g => g.teacher === teacher?.name);
@@ -544,6 +546,21 @@ function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMe
           subtitle={`${teacher.role} • Staff ID #EDU-${teacher.id}00${teacher.id}`}
         />
         <div className="ml-auto flex gap-3">
+          <AIAnalysisModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            data={{ teacher, observations: teacherObservations, goals: teacherGoals }}
+            type="admin"
+            title={`Performance Analysis: ${teacher.name}`}
+          />
+          <Button
+            onClick={() => setIsAIModalOpen(true)}
+            variant="outline"
+            className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-600" />
+            AI Smart Insights
+          </Button>
           <Button variant="outline" onClick={() => navigate("/leader/observe")}>
             Schedule Observation
           </Button>
@@ -888,7 +905,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
     return format(d, "MMM d, yyyy");
   };
 
-  const filteredEvents = training.filter((e: any) => {
+  const filteredEvents = training.filter((e) => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (e.topic || e.type || "").toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -1411,6 +1428,7 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<typeof teamMembers[0] | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Filter State
   const [selectedRole, setSelectedRole] = useState("all");
@@ -1487,6 +1505,21 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
               <CardDescription>Select a teacher to preview or email their comprehensive report.</CardDescription>
             </div>
             <div className="flex items-center gap-3">
+              <AIAnalysisModal
+                isOpen={isAIModalOpen}
+                onClose={() => setIsAIModalOpen(false)}
+                data={team}
+                type="admin"
+                title="Staff Performance AI Analysis"
+              />
+              <Button
+                onClick={() => setIsAIModalOpen(true)}
+                variant="outline"
+                className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                AI Smart Insights
+              </Button>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -1863,6 +1896,7 @@ function ObservationReportView({ observations, team }: { observations: Observati
   const teacher = team.find(t => t.name === observation?.teacher);
 
   const [showReflection, setShowReflection] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   if (!observation) {
     return (
@@ -1887,6 +1921,21 @@ function ObservationReportView({ observations, team }: { observations: Observati
           />
         </div>
         <div className="flex items-center gap-2">
+          <AIAnalysisModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            data={{ observation, teacher }}
+            type="observation"
+            title={`Observation Analysis - ${observation.teacher}`}
+          />
+          <Button
+            onClick={() => setIsAIModalOpen(true)}
+            size="sm"
+            className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/20 font-bold border-none"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            AI Smart Analysis
+          </Button>
 
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />
