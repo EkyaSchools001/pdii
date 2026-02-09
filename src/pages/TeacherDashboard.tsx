@@ -1468,8 +1468,9 @@ export default function TeacherDashboard() {
 }
 
 function ObservationDetailView({ observations }: { observations: Observation[] }) {
-  const { id } = useParams(); // Using useParams to get the ID from the URL
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const observation = observations.find(o => o.id === id);
 
   if (!observation) {
@@ -1488,11 +1489,28 @@ function ObservationDetailView({ observations }: { observations: Observation[] }
         <Button variant="ghost" size="icon" onClick={() => navigate("/teacher/observations")}>
           <ChevronRight className="w-5 h-5 rotate-180" />
         </Button>
-        <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between flex-1 gap-4">
           <PageHeader
             title="Observation Report"
             subtitle={`Ref: #OBS-${observation.id.toUpperCase()}`}
           />
+          <div className="flex items-center gap-2">
+            <AIAnalysisModal
+              isOpen={isAIModalOpen}
+              onClose={() => setIsAIModalOpen(false)}
+              data={{ observation }}
+              type="observation"
+              title="Instructional Insight Analysis"
+            />
+            <Button
+              onClick={() => setIsAIModalOpen(true)}
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/20 font-bold border-none"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              AI Smart Analysis
+            </Button>
+          </div>
         </div>
       </div>
 
