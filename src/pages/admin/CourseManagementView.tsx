@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-    Search, Plus, BookOpen, Clock, Users, MoreHorizontal, Filter
+    Search, Plus, BookOpen, Clock, Users, MoreHorizontal, Filter, Edit, Trash2
 } from "lucide-react";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger
@@ -30,7 +30,10 @@ const initialCourses = [
 export function CourseManagementView() {
     const [courses, setCourses] = useState(initialCourses);
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [newCourse, setNewCourse] = useState({ title: "", category: "Pedagogy", hours: "2" });
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [currentCourse, setCurrentCourse] = useState<any>(null);
+    const [newCourse, setNewCourse] = useState({ title: "", category: "Pedagogy", hours: "2", instructor: "TBD", status: "Active" });
 
     const handleAddCourse = () => {
         if (!newCourse.title) {
@@ -38,30 +41,47 @@ export function CourseManagementView() {
             return;
         }
         const course = {
-            id: courses.length + 1,
+            id: courses.length > 0 ? Math.max(...courses.map(c => c.id)) + 1 : 1,
             title: newCourse.title,
             category: newCourse.category,
             hours: parseInt(newCourse.hours),
-            instructor: "TBD",
-            status: "Draft",
+            instructor: newCourse.instructor || "TBD",
+            status: newCourse.status || "Draft",
             enrolled: 0
         };
         setCourses([course, ...courses]);
         setIsAddOpen(false);
-        setNewCourse({ title: "", category: "Pedagogy", hours: "2" });
+        setNewCourse({ title: "", category: "Pedagogy", hours: "2", instructor: "TBD", status: "Active" });
         toast.success("Course added successfully");
     };
 
-    const handleAction = (action: string, courseTitle: string) => {
-        toast.info(`${action} ${courseTitle}`);
-    }
+    const handleEditCourse = () => {
+        if (!currentCourse?.title) {
+            toast.error("Please enter a course title");
+            return;
+        }
+        setCourses(courses.map(c => c.id === currentCourse.id ? currentCourse : c));
+        setIsEditOpen(false);
+        toast.success("Course updated successfully");
+    };
+
+    const handleDeleteCourse = () => {
+        if (!currentCourse) return;
+        setCourses(courses.filter(c => c.id !== currentCourse.id));
+        setIsDeleteOpen(false);
+        toast.success("Course deleted successfully");
+    };
+
+    const handleStatusChange = (id: number, newStatus: string) => {
+        setCourses(courses.map(c => c.id === id ? { ...c, status: newStatus } : c));
+        toast.success(`Status updated to ${newStatus}`);
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <PageHeader
                 title="Course Catalogue"
                 subtitle="Manage professional development courses and workshops"
-                priority={1}
                 actions={
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
@@ -99,6 +119,25 @@ export function CourseManagementView() {
                                     <div className="grid gap-2">
                                         <Label htmlFor="hours">PD Hours</Label>
                                         <Input id="hours" type="number" value={newCourse.hours} onChange={e => setNewCourse({ ...newCourse, hours: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="instructor">Instructor</Label>
+                                        <Input id="instructor" value={newCourse.instructor} onChange={e => setNewCourse({ ...newCourse, instructor: e.target.value })} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="status">Initial Status</Label>
+                                        <Select value={newCourse.status} onValueChange={v => setNewCourse({ ...newCourse, status: v })}>
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Active">Active</SelectItem>
+                                                <SelectItem value="Draft">Draft</SelectItem>
+                                                <SelectItem value="Mandatory">Mandatory</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </div>
@@ -177,9 +216,15 @@ export function CourseManagementView() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleAction("Edit", course.title)}>Edit Course</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleAction("Manage Sessions for", course.title)}>Manage Sessions</DropdownMenuItem>
-                                                <DropdownMenuItem className="text-destructive" onClick={() => handleAction("Delete", course.title)}>Delete</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => { setCurrentCourse(course); setIsEditOpen(true); }}>
+                                                    <BookOpen className="w-4 h-4 mr-2" /> Edit Details
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleStatusChange(course.id, course.status === 'Active' ? 'Draft' : 'Active')}>
+                                                    <Plus className="w-4 h-4 mr-2" /> Toggle Status
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className="text-destructive" onClick={() => { setCurrentCourse(course); setIsDeleteOpen(true); }}>
+                                                    <MoreHorizontal className="w-4 h-4 mr-2" /> Delete
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -189,6 +234,78 @@ export function CourseManagementView() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Edit Dialog */}
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Course</DialogTitle>
+                        <DialogDescription>Modify professional development course details.</DialogDescription>
+                    </DialogHeader>
+                    {currentCourse && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-title">Course Title</Label>
+                                <Input id="edit-title" value={currentCourse.title} onChange={e => setCurrentCourse({ ...currentCourse, title: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-category">Category</Label>
+                                    <Select value={currentCourse.category} onValueChange={v => setCurrentCourse({ ...currentCourse, category: v })}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Pedagogy">Pedagogy</SelectItem>
+                                            <SelectItem value="Technology">Technology</SelectItem>
+                                            <SelectItem value="Assessment">Assessment</SelectItem>
+                                            <SelectItem value="Culture">Culture</SelectItem>
+                                            <SelectItem value="Compliance">Compliance</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-hours">PD Hours</Label>
+                                    <Input id="edit-hours" type="number" value={currentCourse.hours} onChange={e => setCurrentCourse({ ...currentCourse, hours: parseInt(e.target.value) })} />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-status">Status</Label>
+                                <Select value={currentCourse.status} onValueChange={v => setCurrentCourse({ ...currentCourse, status: v })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Active">Active</SelectItem>
+                                        <SelectItem value="Draft">Draft</SelectItem>
+                                        <SelectItem value="Mandatory">Mandatory</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                        <Button onClick={handleEditCourse}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-destructive">Confirm Deletion</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <strong>{currentCourse?.title}</strong>? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDeleteCourse}>Confirm Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
