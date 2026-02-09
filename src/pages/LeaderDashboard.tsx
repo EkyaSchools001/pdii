@@ -755,14 +755,26 @@ function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMe
 function PDParticipationView({ team }: { team: typeof teamMembers }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredTeam = team.filter(m =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTeam = team.filter(m => {
+    const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.role.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === "all" || m.role === roleFilter;
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "Certified" && m.completionRate >= 90) ||
+      (statusFilter === "In Progress" && m.completionRate < 90);
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const uniqueRoles = Array.from(new Set(team.map(m => m.role)));
 
   const totalHours = team.reduce((acc, m) => acc + m.pdHours, 0);
   const avgCompletion = Math.round(team.reduce((acc, m) => acc + m.completionRate, 0) / team.length);
+
+  const activeFiltersCount = (roleFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
 
   return (
     <div className="space-y-6">
@@ -815,9 +827,73 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon" className="rounded-xl">
-                <Filter className="w-4 h-4" />
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={activeFiltersCount > 0 ? "default" : "outline"}
+                    size="icon"
+                    className="rounded-xl relative"
+                  >
+                    <Filter className="w-4 h-4" />
+                    {activeFiltersCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-accent-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-6 rounded-2xl shadow-2xl border-primary/10" align="end">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-foreground">Filters</h4>
+                      {(roleFilter !== "all" || statusFilter !== "all") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setRoleFilter("all");
+                            setStatusFilter("all");
+                          }}
+                          className="h-8 text-xs text-primary font-bold hover:bg-primary/5"
+                        >
+                          Reset All
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Staff Role</Label>
+                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                          <SelectTrigger className="rounded-xl bg-muted/30 border-none">
+                            <SelectValue placeholder="All Roles" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-primary/10">
+                            <SelectItem value="all">All Roles</SelectItem>
+                            {uniqueRoles.map(role => (
+                              <SelectItem key={role} value={role}>{role}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="rounded-xl bg-muted/30 border-none">
+                            <SelectValue placeholder="All Statuses" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-primary/10">
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="Certified">Certified (≥90%)</SelectItem>
+                            <SelectItem value="In Progress">In Progress (&lt;90%)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardHeader>

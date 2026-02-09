@@ -70,9 +70,9 @@ export default function LandingPage() {
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-6 py-6">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/EKYA.png" alt="Ekya Schools" className="h-16 w-auto" />
-              <span className="text-xl font-bold tracking-tight">EKYA PD PLATFORM</span>
+            <div className="flex items-center gap-4">
+              <img src="/EKYA.png" alt="Ekya Schools" className="h-[70px] w-auto drop-shadow-2xl" />
+              <span className="text-2xl font-black tracking-tight text-white drop-shadow-sm">EKYA <span className="text-accent">PD</span> PLATFORM</span>
             </div>
             <Button variant="secondary" asChild>
               <Link to="/login">Sign In</Link>
@@ -191,12 +191,14 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/EKYA.png" alt="Ekya Schools" className="h-12 w-auto brightness-0 invert" />
-              <span className="font-bold tracking-tight text-lg">EKYA PD PLATFORM</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-2 rounded-xl shadow-lg">
+                <img src="/EKYA.png" alt="Ekya Schools" className="h-10 w-auto" />
+              </div>
+              <span className="font-black tracking-tight text-xl">EKYA PD PLATFORM</span>
             </div>
-            <p className="text-sm text-primary-foreground/70">
+            <p className="text-sm text-primary-foreground/60 font-medium">
               © 2024 Professional Development Platform. All rights reserved.
             </p>
           </div>

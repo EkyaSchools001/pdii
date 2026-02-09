@@ -10,6 +10,7 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DynamicForm } from "@/components/DynamicForm";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -50,9 +51,11 @@ export function FormTemplatesView() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [newTemplate, setNewTemplate] = useState({ title: "", type: "Observation" as any, version: "1.0", targetRole: "Teacher", targetBlock: "All", fields: [] as FormField[] });
     const [editingTemplate, setEditingTemplate] = useState<typeof initialTemplates[0] | null>(null);
     const [templateToDelete, setTemplateToDelete] = useState<typeof initialTemplates[0] | null>(null);
+    const [previewTemplate, setPreviewTemplate] = useState<typeof initialTemplates[0] | null>(null);
 
     const handleCreateTemplate = () => {
         if (!newTemplate.title) {
@@ -181,6 +184,23 @@ export function FormTemplatesView() {
     const onDelete = (template: typeof initialTemplates[0]) => {
         setTemplateToDelete(template);
         setIsDeleteOpen(true);
+    };
+
+    const onPreview = (template: typeof initialTemplates[0]) => {
+        setPreviewTemplate(template);
+        setIsPreviewOpen(true);
+    };
+
+    const onDuplicate = (template: typeof initialTemplates[0]) => {
+        const duplicatedTemplate = {
+            ...template,
+            id: Math.max(...templates.map(t => t.id), 0) + 1,
+            title: `${template.title} (Copy)`,
+            lastUpdated: "Just now",
+            status: "Draft"
+        };
+        setTemplates([duplicatedTemplate, ...templates]);
+        toast.success(`Duplicated ${template.title}`);
     };
 
     return (
@@ -379,19 +399,19 @@ export function FormTemplatesView() {
                 </TabsList>
 
                 <TabsContent value="all" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
+                    {templates.map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} onPreview={onPreview} onDuplicate={onDuplicate} />)}
                 </TabsContent>
                 <TabsContent value="observation" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.filter(t => t.type === 'Observation').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
+                    {templates.filter(t => t.type === 'Observation').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} onPreview={onPreview} onDuplicate={onDuplicate} />)}
                 </TabsContent>
                 <TabsContent value="goals" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.filter(t => t.type === 'Goal Setting' || t.type === 'Reflection').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
+                    {templates.filter(t => t.type === 'Goal Setting' || t.type === 'Reflection').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} onPreview={onPreview} onDuplicate={onDuplicate} />)}
                 </TabsContent>
                 <TabsContent value="pd" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.filter(t => t.type === 'Other' || t.title.includes('MOOC')).map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
+                    {templates.filter(t => t.type === 'Other' || t.title.includes('MOOC')).map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} onPreview={onPreview} onDuplicate={onDuplicate} />)}
                 </TabsContent>
                 <TabsContent value="drafts" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.filter(t => t.status === 'Draft').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
+                    {templates.filter(t => t.status === 'Draft').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} onPreview={onPreview} onDuplicate={onDuplicate} />)}
                 </TabsContent>
             </Tabs>
 
@@ -581,6 +601,50 @@ export function FormTemplatesView() {
                 </DialogContent>
             </Dialog>
 
+            {/* Preview Dialog */}
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
+                    <DialogHeader className="px-8 py-6 border-b bg-primary/5 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                                <Eye className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-bold">Template Preview</DialogTitle>
+                                <DialogDescription className="font-medium">
+                                    Previewing: <span className="text-primary font-bold">{previewTemplate?.title}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto p-8 bg-muted/10">
+                        <div className="max-w-2xl mx-auto space-y-8">
+                            <div className="bg-background rounded-3xl p-8 shadow-xl shadow-primary/5 border border-primary/10">
+                                <div className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                    <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Live Preview Mode</p>
+                                    <p className="text-sm text-muted-foreground">This is how the form will appear to your staff. Interactive elements are functional for testing purposes.</p>
+                                </div>
+                                {previewTemplate && (
+                                    <DynamicForm
+                                        fields={previewTemplate.fields}
+                                        onSubmit={(data) => {
+                                            console.log("Preview form submitted:", data);
+                                            toast.success("Form submitted successfully (Preview Mode)");
+                                        }}
+                                        submitLabel="Test Submit"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="px-8 py-4 border-t bg-background shrink-0">
+                        <Button className="font-bold px-8 h-11 rounded-xl" onClick={() => setIsPreviewOpen(false)}>Close Preview</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Delete Confirmation */}
             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                 <AlertDialogContent>
@@ -600,18 +664,22 @@ export function FormTemplatesView() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </div >
     );
 }
 
 function TemplateCard({
     template,
     onEdit,
-    onDelete
+    onDelete,
+    onPreview,
+    onDuplicate
 }: {
     template: any,
     onEdit: (t: any) => void,
-    onDelete: (t: any) => void
+    onDelete: (t: any) => void,
+    onPreview: (t: any) => void,
+    onDuplicate: (t: any) => void
 }) {
     const handleAction = (action: string) => {
         if (action === "Edit") {
@@ -619,9 +687,9 @@ function TemplateCard({
         } else if (action === "Delete") {
             onDelete(template);
         } else if (action === "Duplicate") {
-            toast.success(`Duplicated ${template.title}`);
-        } else {
-            toast.info(`${action} ${template.title}`);
+            onDuplicate(template);
+        } else if (action === "Preview") {
+            onPreview(template);
         }
     }
 

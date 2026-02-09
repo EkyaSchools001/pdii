@@ -56,11 +56,11 @@ export default function Auth() {
         <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
             <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-500">
                 <div className="text-center">
-                    <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-                        <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
-                            <GraduationCap className="w-6 h-6" />
+                    <Link to="/" className="inline-flex items-center gap-4 mb-8 group">
+                        <div className="p-2.5 rounded-2xl bg-white shadow-xl group-hover:scale-110 transition-transform duration-300">
+                            <img src="/EKYA.png" alt="Ekya Schools" className="h-10 w-auto" />
                         </div>
-                        <span className="text-2xl font-bold text-foreground tracking-tight">EKYA PD PLATFORM</span>
+                        <span className="text-2xl font-black text-foreground tracking-tight">EKYA PD PLATFORM</span>
                     </Link>
                     <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
                         Welcome Back

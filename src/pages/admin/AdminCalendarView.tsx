@@ -253,174 +253,225 @@ export function AdminCalendarView() {
                 }
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Calendar Widget - Fitness Style (Reused) */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
-                        {/* decorative gradient blob */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none" />
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-y-10 -translate-x-10 pointer-events-none" />
+            <div className="flex flex-col gap-8">
+                {/* Calendar Widget - Refactored to Horizontal Layout */}
+                <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
+                    {/* decorative gradient blob */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl -translate-y-20 translate-x-20 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-y-20 -translate-x-20 pointer-events-none" />
 
-                        <CardContent className="p-6 relative z-10 flex flex-col items-center">
-                            <div className="text-left w-full mb-4">
-                                <h3 className="text-lg font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
-                                    Activity Summary
-                                </h3>
-                                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
-                                    {formatDateStr(new Date())}
-                                </p>
+                    <CardContent className="p-8 md:p-10 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-10 items-start">
+                            {/* Left side: Header and Calendar */}
+                            <div className="lg:col-span-7 space-y-8">
+                                <div className="text-left w-full">
+                                    <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
+                                        Activity Summary
+                                    </h3>
+                                    <p className="text-zinc-400 text-sm uppercase tracking-widest font-bold mt-1">
+                                        {formatDateStr(new Date())}
+                                    </p>
+                                </div>
+
+                                <CalendarComponent
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={setDate}
+                                    className="rounded-3xl border-none bg-zinc-900/50 p-8 w-full shadow-inner"
+                                    classNames={{
+                                        months: "flex flex-col space-y-6",
+                                        month: "space-y-6 w-full",
+                                        caption: "flex justify-center pt-1 relative items-center mb-6",
+                                        caption_label: "text-lg font-bold text-white",
+                                        nav: "space-x-2 flex items-center",
+                                        nav_button: "h-9 w-9 bg-transparent p-0 text-zinc-400 hover:text-white border-zinc-700 hover:bg-zinc-800 rounded-xl transition-all",
+                                        nav_button_previous: "absolute left-2",
+                                        nav_button_next: "absolute right-2",
+                                        table: "w-full border-collapse",
+                                        head_row: "flex w-full mt-2",
+                                        head_cell: "text-zinc-500 rounded-md w-full font-bold text-[0.85rem] uppercase tracking-wider flex items-center justify-center",
+                                        row: "flex w-full mt-4",
+                                        cell: "h-12 w-full text-center text-sm p-0 relative [&:has([aria-selected])]:bg-zinc-800/50 first:[&:has([aria-selected])]:rounded-l-xl last:[&:has([aria-selected])]:rounded-r-xl focus-within:relative focus-within:z-20",
+                                        day: "h-12 w-12 p-0 font-medium aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-2xl transition-all flex items-center justify-center mx-auto",
+                                        day_selected: "bg-gradient-to-br from-pink-500 to-red-600 text-white hover:bg-red-600 focus:bg-red-600 shadow-xl shadow-red-500/40 font-bold scale-110",
+                                        day_today: "bg-zinc-800/80 text-white font-black ring-2 ring-zinc-700/50",
+                                        day_outside: "text-zinc-600 opacity-30",
+                                    }}
+                                    modifiers={{
+                                        pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
+                                        technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
+                                        assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
+                                        other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
+                                    }}
+                                    modifiersStyles={{
+                                        pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
+                                        technology: { border: '2px solid #10b981', color: 'white' }, // Green
+                                        assessment: { border: '2px solid #f43f5e', color: 'white' }, // Red
+                                        other: { border: '2px solid #eab308', color: 'white' } // Yellow
+                                    }}
+                                />
                             </div>
 
-                            <CalendarComponent
-                                mode="single"
-                                selected={date}
-                                onSelect={setDate}
-                                className="rounded-2xl border-none bg-zinc-900/50 p-4 w-full"
-                                classNames={{
-                                    head_cell: "text-zinc-500 font-medium text-[0.8rem]",
-                                    cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-zinc-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                                    day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-full transition-all",
-                                    day_selected: "bg-gradient-to-br from-pink-500 to-red-600 text-white hover:bg-red-600 focus:bg-red-600 shadow-lg shadow-red-500/30",
-                                    day_today: "bg-zinc-800 text-white font-bold",
-                                    nav_button: "border-zinc-700 hover:bg-zinc-800 hover:text-white text-zinc-400",
-                                    caption: "text-white font-bold mb-4",
-                                }}
-                                modifiers={{
-                                    pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
-                                    technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
-                                    assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
-                                    other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
-                                }}
-                                modifiersStyles={{
-                                    pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
-                                    technology: { border: '2px solid #10b981', color: 'white' }, // Green
-                                    assessment: { border: '2px solid #f43f5e', color: 'white' }, // Red
-                                    other: { border: '2px solid #eab308', color: 'white' } // Yellow
-                                }}
-                            />
+                            {/* Right side: Legend and Filters */}
+                            <div className="lg:col-span-5 h-full flex flex-col justify-center pt-8 lg:pt-20">
+                                <div className="bg-zinc-900/40 rounded-3xl p-8 border border-zinc-800/50 backdrop-blur-sm space-y-8">
+                                    <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                                        <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Training Legend</h4>
+                                        <Badge variant="outline" className="bg-white/5 border-zinc-700 text-zinc-300">
+                                            {training.length} Total
+                                        </Badge>
+                                    </div>
 
-                            <div className="mt-6 w-full space-y-3">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="flex items-center gap-2 text-zinc-300">
-                                        <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Pedagogy
-                                    </span>
-                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="flex items-center gap-2 text-zinc-300">
-                                        <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Technology
-                                    </span>
-                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Technology').length}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="flex items-center gap-2 text-zinc-300">
-                                        <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Assessment
-                                    </span>
-                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}</span>
-                                </div>
-                            </div>
+                                    <div className="space-y-5">
+                                        <div className="flex items-center justify-between group cursor-default">
+                                            <span className="flex items-center gap-4 text-zinc-300 group-hover:text-white transition-colors font-medium">
+                                                <span className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]"></span> Pedagogy
+                                            </span>
+                                            <span className="font-mono text-zinc-100 bg-blue-500/10 px-3 py-1 rounded-xl border border-blue-500/20">
+                                                {training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between group cursor-default">
+                                            <span className="flex items-center gap-4 text-zinc-300 group-hover:text-white transition-colors font-medium">
+                                                <span className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"></span> Technology
+                                            </span>
+                                            <span className="font-mono text-zinc-100 bg-green-500/10 px-3 py-1 rounded-xl border border-green-500/20">
+                                                {training.filter((t: any) => (t.topic || t.type) === 'Technology').length}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between group cursor-default">
+                                            <span className="flex items-center gap-4 text-zinc-300 group-hover:text-white transition-colors font-medium">
+                                                <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]"></span> Assessment
+                                            </span>
+                                            <span className="font-mono text-zinc-100 bg-rose-500/10 px-3 py-1 rounded-xl border border-rose-500/20">
+                                                {training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}
+                                            </span>
+                                        </div>
+                                    </div>
 
-
-                            <div className="mt-6 w-full">
-                                <Button
-                                    variant="outline"
-                                    className="w-full bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-                                    onClick={() => setDate(undefined)}
-                                    disabled={!date}
-                                >
-                                    Clear Filter
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Events List */}
-                <div className="lg:col-span-3">
-                    <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm h-full">
-                        <CardHeader className="border-b bg-muted/20 pb-6">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle>
-                                        {date ? `Sessions for ${formatDateStr(date)}` : "All Upcoming Sessions"}
-                                    </CardTitle>
-                                    <CardDescription>
-                                        {filteredEvents.length} session{filteredEvents.length !== 1 && 's'} scheduled
-                                    </CardDescription>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Search sessions..."
-                                            className="pl-10 w-[200px] bg-background border-muted-foreground/20 rounded-xl"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
+                                    <div className="pt-6 border-t border-zinc-800 flex flex-col gap-4">
+                                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-xs text-zinc-400 italic">
+                                            Tip: Select a date on the calendar to filter the sessions list below.
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full h-12 bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-2xl transition-all font-bold"
+                                            onClick={() => setDate(undefined)}
+                                            disabled={!date}
+                                        >
+                                            Clear Date Filter
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="bg-muted/30 border-b">
-                                            <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Session Title</th>
-                                            <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Type</th>
-                                            <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Time</th>
-                                            <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Location</th>
-                                            <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Status</th>
-                                            <th className="text-right p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-muted-foreground/10">
-                                        {filteredEvents.map((session) => (
-                                            <tr key={session.id} className="hover:bg-primary/5 transition-colors group">
-                                                <td className="p-6">
-                                                    <p className="font-bold text-foreground">{session.title}</p>
-                                                    {!date && <p className="text-xs text-muted-foreground mt-1">{session.date}</p>}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Events List - Now below the calendar */}
+                <Card className="border-none shadow-2xl bg-background/60 backdrop-blur-xl rounded-[2rem] overflow-hidden border border-muted/20">
+                    <CardHeader className="px-8 py-8 border-b bg-muted/5">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <CardTitle className="text-2xl font-black text-foreground tracking-tight">
+                                    {date ? `Sessions for ${formatDateStr(date)}` : "Upcoming Training Sessions"}
+                                </CardTitle>
+                                <p className="text-sm font-medium text-muted-foreground mt-1">
+                                    {filteredEvents.length} session{filteredEvents.length !== 1 && 's'} identified for this period
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="relative group">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <Input
+                                        placeholder="Search sessions..."
+                                        className="pl-12 w-[280px] h-12 bg-muted/40 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 rounded-2xl transition-all font-medium"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-muted/10 border-b">
+                                        <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Session Details</th>
+                                        <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Type</th>
+                                        <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Time & Location</th>
+                                        <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Status</th>
+                                        <th className="text-right px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-muted/10">
+                                    {filteredEvents.length > 0 ? (
+                                        filteredEvents.map((session) => (
+                                            <tr key={session.id} className="hover:bg-primary/[0.02] transition-colors group">
+                                                <td className="px-8 py-7">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{session.title}</span>
+                                                        {!date && <span className="text-xs font-bold text-muted-foreground mt-1 flex items-center gap-1.5 uppercase tracking-wide">
+                                                            <Clock className="w-3 h-3" /> {session.date}
+                                                        </span>}
+                                                    </div>
                                                 </td>
-                                                <td className="p-6">
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary uppercase tracking-wider">
+                                                <td className="px-8 py-7">
+                                                    <Badge variant="outline" className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
                                                         {session.topic || session.type}
-                                                    </span>
+                                                    </Badge>
                                                 </td>
-                                                <td className="p-6">
-                                                    <p className="text-sm font-bold text-foreground flex items-center gap-2">
-                                                        <Clock className="w-4 h-4 text-muted-foreground" />
-                                                        {session.time}
-                                                    </p>
+                                                <td className="px-8 py-7">
+                                                    <div className="space-y-2">
+                                                        <p className="text-sm font-bold text-foreground flex items-center gap-2.5">
+                                                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                                                                <Clock className="w-4 h-4 text-orange-500" />
+                                                            </div>
+                                                            {session.time}
+                                                        </p>
+                                                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-2.5 pl-0.5">
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                                                <MapPin className="w-4 h-4 text-blue-500" />
+                                                            </div>
+                                                            {session.location}
+                                                        </p>
+                                                    </div>
                                                 </td>
-                                                <td className="p-6">
-                                                    <p className="text-sm text-foreground flex items-center gap-2">
-                                                        <MapPin className="w-4 h-4 text-primary" />
-                                                        {session.location}
-                                                    </p>
-                                                </td>
-                                                <td className="p-6">
+                                                <td className="px-8 py-7">
                                                     <span className={cn(
-                                                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                                                        "inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border shadow-sm",
                                                         session.status === "Approved"
-                                                            ? "bg-success/10 text-success border-success/20"
-                                                            : "bg-warning/10 text-warning border-warning/20"
+                                                            ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20"
+                                                            : "bg-amber-500/5 text-amber-600 border-amber-500/20"
                                                     )}>
                                                         {session.status}
                                                     </span>
                                                 </td>
-                                                <td className="p-6 text-right">
-                                                    <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/10 hover:text-primary" onClick={() => handleManageSession(session)}>
+                                                <td className="px-8 py-7 text-right">
+                                                    <Button variant="ghost" className="h-10 px-6 rounded-xl hover:bg-primary hover:text-white transition-all font-bold" onClick={() => handleManageSession(session)}>
                                                         Manage
                                                     </Button>
                                                 </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={5} className="px-8 py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-16 h-16 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground">
+                                                        <Users className="w-8 h-8" />
+                                                    </div>
+                                                    <p className="text-muted-foreground font-bold italic">No sessions found for this selection.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Edit Event Dialog */}
