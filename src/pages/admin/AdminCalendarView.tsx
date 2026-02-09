@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 // Mock Data (Reusing structure for consistency)
@@ -26,7 +27,15 @@ export function AdminCalendarView() {
     const [searchQuery, setSearchQuery] = useState("");
     const [date, setDate] = useState<Date | undefined>(new Date(2026, 1, 15)); // Default to Feb 15, 2026
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-    const [newEvent, setNewEvent] = useState({ title: "", type: "Pedagogy", date: "", time: "", location: "" });
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [currentEvent, setCurrentEvent] = useState<any>(null);
+    const [newEvent, setNewEvent] = useState({ title: "", type: "Pedagogy", date: new Date(2026, 1, 15), time: "09:00 AM", location: "" });
+
+    // Helper to format Date object to "MMM DD" string
+    const formatDateStr = (d: Date) => {
+        return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    };
 
     const handleScheduleEvent = () => {
         if (!newEvent.title || !newEvent.date) {
@@ -34,32 +43,57 @@ export function AdminCalendarView() {
             return;
         }
         const event = {
-            id: (training.length + 1).toString(),
+            id: (training.length > 0 ? Math.max(...training.map(t => parseInt(t.id))) + 1 : 1).toString(),
             ...newEvent,
+            date: formatDateStr(newEvent.date),
             registered: 0,
             capacity: 30,
             status: "Approved"
         };
         setTraining([...training, event]);
         setIsScheduleOpen(false);
-        setNewEvent({ title: "", type: "Pedagogy", date: "", time: "", location: "" });
+        setNewEvent({ title: "", type: "Pedagogy", date: new Date(2026, 1, 15), time: "09:00 AM", location: "" });
         toast.success("Event scheduled successfully");
     };
 
-    const handleManageSession = (title: string) => {
-        toast.info(`Managing session: ${title}`);
+    const handleEditEvent = () => {
+        if (!currentEvent?.title || !currentEvent?.date) {
+            toast.error("Please fill in required fields");
+            return;
+        }
+
+        // Ensure date is string if it was changed to Date object in dialog
+        const updatedEvent = {
+            ...currentEvent,
+            date: typeof currentEvent.date === 'string' ? currentEvent.date : formatDateStr(currentEvent.date)
+        };
+
+        setTraining(training.map(t => t.id === updatedEvent.id ? updatedEvent : t));
+        setIsEditOpen(false);
+        toast.success("Event updated successfully");
+    };
+
+    const handleDeleteEvent = () => {
+        if (!currentEvent) return;
+        setTraining(training.filter(t => t.id !== currentEvent.id));
+        setIsDeleteOpen(false);
+        toast.success("Event deleted successfully");
+    };
+
+    const handleManageSession = (event: any) => {
+        setCurrentEvent(event);
+        setIsEditOpen(true);
     }
 
     // Helper to parse "MMM DD" string to Date object for year 2026
     const parseEventDate = (dateStr: string) => {
-        const [monthStr, dayStr] = dateStr.split(" ");
-        const month = new Date(`${monthStr} 1, 2026`).getMonth();
-        return new Date(2026, month, parseInt(dayStr));
-    };
-
-    // Helper to format Date object to "MMM DD" string
-    const formatDateStr = (d: Date) => {
-        return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        try {
+            const [monthStr, dayStr] = dateStr.split(" ");
+            const month = new Date(`${monthStr} 1, 2026`).getMonth();
+            return new Date(2026, month, parseInt(dayStr));
+        } catch (e) {
+            return new Date();
+        }
     };
 
     const filteredEvents = training.filter(e => {
@@ -79,7 +113,6 @@ export function AdminCalendarView() {
             <PageHeader
                 title="Training Calendar"
                 subtitle="Schedule and manage professional development sessions"
-                priority={1}
                 actions={
                     <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
                         <DialogTrigger asChild>
@@ -96,7 +129,7 @@ export function AdminCalendarView() {
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="event-title">Event Title</Label>
-                                    <Input id="event-title" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
+                                    <Input id="event-title" placeholder="Workshop Name" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
@@ -114,8 +147,33 @@ export function AdminCalendarView() {
                                         </Select>
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="event-date">Date (MMM DD)</Label>
-                                        <Input id="event-date" placeholder="Feb 20" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
+                                        <Label>Date</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full pl-3 text-left font-normal",
+                                                        !newEvent.date && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {newEvent.date ? (
+                                                        formatDateStr(newEvent.date)
+                                                    ) : (
+                                                        <span>Pick a date</span>
+                                                    )}
+                                                    <Clock className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <CalendarComponent
+                                                    mode="single"
+                                                    selected={newEvent.date}
+                                                    onSelect={(d) => d && setNewEvent({ ...newEvent, date: d })}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -125,7 +183,10 @@ export function AdminCalendarView() {
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="event-location">Location</Label>
-                                        <Input id="event-location" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} />
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input id="event-location" className="pl-9" placeholder="Room/Lab" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
