@@ -75,6 +75,9 @@ const formSchema = z.object({
         required_error: "Please select an option",
     }),
     proofLink: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+    certificateType: z.enum(["link", "file"]).optional(),
+    certificateFile: z.string().optional(),
+    certificateFileName: z.string().optional(),
 
     // Section 4: Reflection (Conditional)
     keyTakeaways: z.string().optional(),
@@ -101,12 +104,28 @@ const formSchema = z.object({
         });
     }
 
-    if (data.hasCertificate === "yes" && !data.proofLink) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Please provide the certificate link",
-            path: ["proofLink"],
-        });
+    if (data.hasCertificate === "yes") {
+        if (!data.certificateType) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Please select a proof type",
+                path: ["certificateType"],
+            });
+        }
+        if (data.certificateType === "link" && !data.proofLink) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Please provide the certificate link",
+                path: ["proofLink"],
+            });
+        }
+        if (data.certificateType === "file" && !data.certificateFile) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Please upload a certificate file",
+                path: ["certificateFile"],
+            });
+        }
     }
 
     if (data.hasCertificate === "no") {
@@ -170,6 +189,9 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             additionalFeedback: "",
             startDate: new Date(),
             endDate: new Date(),
+            certificateType: "link",
+            certificateFile: "",
+            certificateFileName: "",
             supportingDocType: undefined,
             supportingDocLink: "",
             supportingDocFile: "",
@@ -179,9 +201,10 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
 
     const hasCertificate = form.watch("hasCertificate");
     const selectedPlatform = form.watch("platform");
+    const certificateType = form.watch("certificateType");
     const supportingDocType = form.watch("supportingDocType");
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: "supportingDocFile" | "certificateFile", fileNameField: "supportingDocFileName" | "certificateFileName") => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 500 * 1024) { // 500KB limit
@@ -193,8 +216,8 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64String = reader.result as string;
-                form.setValue("supportingDocFile", base64String);
-                form.setValue("supportingDocFileName", file.name);
+                form.setValue(fieldName, base64String);
+                form.setValue(fileNameField, file.name);
             };
             reader.readAsDataURL(file);
         }
@@ -520,25 +543,85 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                             />
 
                             {hasCertificate === "yes" && (
-                                <FormField
-                                    control={form.control}
-                                    name="proofLink"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Certificate / Proof Link *</FormLabel>
-                                            <FormDescription>
-                                                Upload certificate or final completion screenshot to Google Drive with "Anyone with link can view" access.
-                                            </FormDescription>
+                                <div className="space-y-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="certificateType"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel>Proof Type</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                        className="flex gap-4"
+                                                    >
+                                                        <FormItem className="flex items-center space-x-2 space-y-0">
+                                                            <FormControl>
+                                                                <RadioGroupItem value="link" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal cursor-pointer">Drive Link</FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-2 space-y-0">
+                                                            <FormControl>
+                                                                <RadioGroupItem value="file" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal cursor-pointer">File Upload</FormLabel>
+                                                        </FormItem>
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {certificateType === "link" && (
+                                        <FormField
+                                            control={form.control}
+                                            name="proofLink"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Certificate / Proof Link *</FormLabel>
+                                                    <FormDescription>
+                                                        Upload certificate or final completion screenshot to Google Drive with "Anyone with link can view" access.
+                                                    </FormDescription>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                            <Input className="pl-9" placeholder="https://drive.google.com/..." {...field} />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+
+                                    {certificateType === "file" && (
+                                        <div className="space-y-2">
+                                            <FormLabel>Upload Certificate (Max 500KB) *</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
-                                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                    <Input className="pl-9" placeholder="https://drive.google.com/..." {...field} />
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        type="file"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        onChange={(e) => handleFileChange(e, "certificateFile", "certificateFileName")}
+                                                        className="cursor-pointer"
+                                                    />
                                                 </div>
                                             </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                            {form.watch("certificateFileName") && (
+                                                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                                    <FileText className="w-3 h-3" />
+                                                    Selected: {form.watch("certificateFileName")}
+                                                </p>
+                                            )}
+                                            <FormMessage>
+                                                {form.formState.errors.certificateFile?.message}
+                                            </FormMessage>
+                                        </div>
                                     )}
-                                />
+                                </div>
                             )}
                         </div>
 
@@ -657,7 +740,7 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                                         <Input
                                             type="file"
                                             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                            onChange={handleFileChange}
+                                            onChange={(e) => handleFileChange(e, "supportingDocFile", "supportingDocFileName")}
                                             className="cursor-pointer"
                                         />
                                     </div>
