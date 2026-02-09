@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,14 +16,60 @@ import { toast } from "sonner";
 
 // Mock Data (Reusing structure for consistency)
 const initialTrainingEvents = [
-    { id: "1", title: "Differentiated Instruction Workshop", type: "Pedagogy", date: "Feb 15", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved" },
-    { id: "2", title: "Digital Literacy in Classroom", type: "Technology", date: "Feb 18", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved" },
-    { id: "3", title: "Social-Emotional Learning Hub", type: "Culture", date: "Feb 22", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved" },
-    { id: "4", title: "Advanced Formative Assessment", type: "Assessment", date: "Feb 25", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending" },
+    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
+    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
+    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
+    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
 ];
 
 export function AdminCalendarView() {
-    const [training, setTraining] = useState(initialTrainingEvents);
+    const [training, setTraining] = useState(() => {
+        try {
+            const saved = localStorage.getItem('training_events_data');
+            return saved ? JSON.parse(saved) : initialTrainingEvents;
+        } catch (e) {
+            console.error("Failed to parse training events", e);
+            return initialTrainingEvents;
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('training_events_data', JSON.stringify(training));
+        // Dispatch custom event for same-window updates
+        window.dispatchEvent(new Event('training-events-updated'));
+    }, [training]);
+
+    // Listen for updates from other dashboards/tabs
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'training_events_data' && e.newValue) {
+                try {
+                    setTraining(JSON.parse(e.newValue));
+                } catch (err) {
+                    console.error("Failed to sync training data", err);
+                }
+            }
+        };
+
+        const handleCustomEvent = () => {
+            const saved = localStorage.getItem('training_events_data');
+            if (saved) {
+                try {
+                    setTraining(JSON.parse(saved));
+                } catch (err) {
+                    console.error("Failed to sync training data via custom event", err);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('training-events-updated', handleCustomEvent);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('training-events-updated', handleCustomEvent);
+        };
+    }, []);
+
     const [searchQuery, setSearchQuery] = useState("");
     const [date, setDate] = useState<Date | undefined>(new Date(2026, 1, 15)); // Default to Feb 15, 2026
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -43,12 +89,14 @@ export function AdminCalendarView() {
             return;
         }
         const event = {
-            id: (training.length > 0 ? Math.max(...training.map(t => parseInt(t.id))) + 1 : 1).toString(),
+            id: (training.length > 0 ? Math.max(...training.map((t: any) => parseInt(t.id) || 0)) + 1 : 1).toString(),
             ...newEvent,
             date: formatDateStr(newEvent.date),
             registered: 0,
             capacity: 30,
-            status: "Approved"
+            status: "Approved",
+            topic: newEvent.type, // Map type to topic for shared schema
+            spotsLeft: 30
         };
         setTraining([...training, event]);
         setIsScheduleOpen(false);
@@ -65,10 +113,11 @@ export function AdminCalendarView() {
         // Ensure date is string if it was changed to Date object in dialog
         const updatedEvent = {
             ...currentEvent,
-            date: typeof currentEvent.date === 'string' ? currentEvent.date : formatDateStr(currentEvent.date)
+            date: typeof currentEvent.date === 'string' ? currentEvent.date : formatDateStr(currentEvent.date),
+            topic: currentEvent.type // Sync topic with type
         };
 
-        setTraining(training.map(t => t.id === updatedEvent.id ? updatedEvent : t));
+        setTraining(training.map((t: any) => t.id === updatedEvent.id ? updatedEvent : t));
         setIsEditOpen(false);
         toast.success("Event updated successfully");
     };
@@ -96,9 +145,9 @@ export function AdminCalendarView() {
         }
     };
 
-    const filteredEvents = training.filter(e => {
+    const filteredEvents = training.filter((e: any) => {
         const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            e.type.toLowerCase().includes(searchQuery.toLowerCase());
+            (e.topic || e.type || "").toLowerCase().includes(searchQuery.toLowerCase());
 
         let matchesDate = true;
         if (date) {
@@ -232,10 +281,10 @@ export function AdminCalendarView() {
                                     caption: "text-white font-bold mb-4",
                                 }}
                                 modifiers={{
-                                    pedagogy: training.filter(e => e.type === "Pedagogy").map(e => parseEventDate(e.date)),
-                                    technology: training.filter(e => e.type === "Technology").map(e => parseEventDate(e.date)),
-                                    assessment: training.filter(e => e.type === "Assessment").map(e => parseEventDate(e.date)),
-                                    other: training.filter(e => !["Pedagogy", "Technology", "Assessment"].includes(e.type)).map(e => parseEventDate(e.date)),
+                                    pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
+                                    technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
+                                    assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
+                                    other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
                                 }}
                                 modifiersStyles={{
                                     pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
@@ -250,19 +299,19 @@ export function AdminCalendarView() {
                                     <span className="flex items-center gap-2 text-zinc-300">
                                         <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Pedagogy
                                     </span>
-                                    <span className="font-mono text-white">{training.filter(t => t.type === 'Pedagogy').length}</span>
+                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="flex items-center gap-2 text-zinc-300">
                                         <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Technology
                                     </span>
-                                    <span className="font-mono text-white">{training.filter(t => t.type === 'Technology').length}</span>
+                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Technology').length}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="flex items-center gap-2 text-zinc-300">
                                         <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Assessment
                                     </span>
-                                    <span className="font-mono text-white">{training.filter(t => t.type === 'Assessment').length}</span>
+                                    <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}</span>
                                 </div>
                             </div>
 
@@ -329,7 +378,7 @@ export function AdminCalendarView() {
                                                 </td>
                                                 <td className="p-6">
                                                     <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary uppercase tracking-wider">
-                                                        {session.type}
+                                                        {session.topic || session.type}
                                                     </span>
                                                 </td>
                                                 <td className="p-6">

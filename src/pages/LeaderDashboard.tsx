@@ -79,7 +79,15 @@ export default function LeaderDashboard() {
       return initialGoals;
     }
   });
-  const [training, setTraining] = useState(initialTrainingEvents);
+  const [training, setTraining] = useState(() => {
+    try {
+      const saved = localStorage.getItem('training_events_data');
+      return saved ? JSON.parse(saved) : initialTrainingEvents;
+    } catch (e) {
+      console.error("Failed to parse training events", e);
+      return initialTrainingEvents;
+    }
+  });
 
   useEffect(() => {
     localStorage.setItem('observations_data', JSON.stringify(observations));
@@ -91,7 +99,13 @@ export default function LeaderDashboard() {
     window.dispatchEvent(new Event('local-goals-update'));
   }, [goals]);
 
-  // Listen for updates from Teacher Dashboard
+  // Sync training events to localStorage when changed in Leader view (propose course etc)
+  useEffect(() => {
+    localStorage.setItem('training_events_data', JSON.stringify(training));
+    window.dispatchEvent(new Event('training-events-updated'));
+  }, [training]);
+
+  // Listen for updates from other dashboards/tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'observations_data' && e.newValue) {
@@ -101,9 +115,32 @@ export default function LeaderDashboard() {
           console.error("Failed to sync observation data", err);
         }
       }
+      if (e.key === 'training_events_data' && e.newValue) {
+        try {
+          setTraining(JSON.parse(e.newValue));
+        } catch (err) {
+          console.error("Failed to sync training data", err);
+        }
+      }
     };
+
+    const handleCustomTrainingEvent = () => {
+      const saved = localStorage.getItem('training_events_data');
+      if (saved) {
+        try {
+          setTraining(JSON.parse(saved));
+        } catch (err) {
+          console.error("Failed to sync training data via custom event", err);
+        }
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('training-events-updated', handleCustomTrainingEvent);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
+    };
   }, []);
 
   return (
