@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star } from "lucide-react";
+import { Star, Upload, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormField } from "@/pages/admin/FormTemplatesView";
+import { toast } from "sonner";
 
 interface DynamicFormProps {
     fields: FormField[];
@@ -119,6 +120,39 @@ export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit"
                                         <Star className={cn("h-6 w-6", (formData[field.id] || 0) >= star && "fill-current")} />
                                     </Button>
                                 ))}
+                            </div>
+                        )}
+
+                        {field.type === "file" && (
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id={field.id}
+                                        type="file"
+                                        className="cursor-pointer"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                if (file.size > 500 * 1024) {
+                                                    toast.error("File size exceeds 500KB limit");
+                                                    return;
+                                                }
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    handleInputChange(field.id, reader.result as string);
+                                                    handleInputChange(`${field.id}_name`, file.name);
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {formData[`${field.id}_name`] && (
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                        <FileText className="w-3 h-3" />
+                                        Selected: {formData[`${field.id}_name`]}
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

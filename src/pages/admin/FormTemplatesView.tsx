@@ -28,7 +28,7 @@ import { toast } from "sonner";
 export interface FormField {
     id: string;
     label: string;
-    type: "text" | "textarea" | "select" | "radio" | "rating" | "date" | "time";
+    type: "text" | "textarea" | "select" | "radio" | "rating" | "date" | "time" | "file";
     required: boolean;
     options?: string[]; // For select, radio
 }
@@ -314,6 +314,7 @@ export function FormTemplatesView() {
                                                                     <SelectItem value="select">Dropdown</SelectItem>
                                                                     <SelectItem value="radio">Multiple Choice</SelectItem>
                                                                     <SelectItem value="rating">Linear Scale (1-5)</SelectItem>
+                                                                    <SelectItem value="file">File Upload</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
@@ -527,6 +528,7 @@ export function FormTemplatesView() {
                                                             <SelectItem value="select">Dropdown</SelectItem>
                                                             <SelectItem value="radio">Multiple Choice</SelectItem>
                                                             <SelectItem value="rating">Linear Scale (1-5)</SelectItem>
+                                                            <SelectItem value="file">File Upload</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>

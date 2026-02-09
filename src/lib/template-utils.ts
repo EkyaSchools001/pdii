@@ -140,6 +140,7 @@ export const initialTemplates: FormTemplate[] = [
             { id: "m8", label: "Specify Platform (if other)", type: "text", required: false },
             { id: "m9", label: "Do you have a completion certificate?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "m10", label: "Certificate / Proof Link", type: "text", required: false },
+            { id: "m_file", label: "Certificate / Proof File (if no link)", type: "file", required: false },
             { id: "m11", label: "Three Key Takeaways from the Course", type: "textarea", required: false },
             { id: "m12", label: "Two Unanswered Questions After Learning", type: "textarea", required: false },
             { id: "m13", label: "One Thing You Enjoyed Most", type: "text", required: false },
@@ -213,6 +214,18 @@ export const getTemplates = (): FormTemplate[] => {
                     if (completionField) {
                         t.fields = t.fields.filter((f: any) => f.label !== "Date of Completion");
                         needsUpdate = true;
+                    }
+
+                    // Auto-migration: Add Certificate File field if missing
+                    const certificateFileField = t.fields.find((f: any) => f.id === "m_file");
+                    if (!certificateFileField) {
+                        const linkIndex = t.fields.findIndex((f: any) => f.id === "m10");
+                        if (linkIndex !== -1) {
+                            const newFields = [...t.fields];
+                            newFields.splice(linkIndex + 1, 0, { id: "m_file", label: "Certificate / Proof File (if no link)", type: "file", required: false });
+                            t.fields = newFields;
+                            needsUpdate = true;
+                        }
                     }
                 }
                 return t;
