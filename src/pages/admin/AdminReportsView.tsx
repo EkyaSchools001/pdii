@@ -2,94 +2,277 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, BarChart, Calendar, Users, Activity, Filter, PieChart, TrendingUp } from "lucide-react";
+import { Download, Filter, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import {
+    LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRange } from "react-day-picker";
 
-const reports = [
-    {
-        title: "Teacher Performance Summary",
-        description: "Aggregated observation scores and goal completion rates by campus.",
-        icon: TrendingUp,
-        type: "PDF",
-        frequency: "Monthly"
-    },
-    {
-        title: "PD Hours & Attendance",
-        description: "Detailed log of professional development hours per teacher.",
-        icon: ClockIcon,
-        type: "Excel",
-        frequency: "Weekly"
-    },
-    {
-        title: "Course Popularity & Feedback",
-        description: "Analysis of course enrollments and participant feedback ratings.",
-        icon: PieChart,
-        type: "PDF",
-        frequency: "Quarterly"
-    },
-    {
-        title: "System Audit Log",
-        description: "Complete history of user actions, logins, and permission changes.",
-        icon: FileText,
-        type: "CSV",
-        frequency: "Real-time"
-    }
+// Mock Data for Charts
+const userGrowthData = [
+    { name: 'Jan', teachers: 40, students: 24, total: 64 },
+    { name: 'Feb', teachers: 45, students: 28, total: 73 },
+    { name: 'Mar', teachers: 55, students: 35, total: 90 },
+    { name: 'Apr', teachers: 70, students: 45, total: 115 },
+    { name: 'May', teachers: 85, students: 55, total: 140 },
+    { name: 'Jun', teachers: 100, students: 70, total: 170 },
 ];
 
-function ClockIcon(props: any) {
-    return <Calendar {...props} />
-}
+const campusActivityData = [
+    { name: 'North Campus', observations: 45, goals: 32 },
+    { name: 'South Campus', observations: 30, goals: 25 },
+    { name: 'West Campus', observations: 55, goals: 40 },
+    { name: 'Main Office', observations: 15, goals: 10 },
+];
+
+const courseDistributionData = [
+    { name: 'Pedagogy', value: 45, color: '#8884d8' },
+    { name: 'Technology', value: 25, color: '#82ca9d' },
+    { name: 'Leadership', value: 15, color: '#ffc658' },
+    { name: 'Subject Specific', value: 15, color: '#ff8042' },
+];
 
 export function AdminReportsView() {
-    const handleDownload = (reportTitle: string) => {
-        toast.success(`Downloading ${reportTitle}...`);
-    }
+    const [timeRange, setTimeRange] = useState("6m");
 
-    const handleBuildReport = () => {
-        toast.info("Opening Report Builder...");
-    }
+    const handleDownloadReport = () => {
+        toast.success("Downloading Analytics Report (PDF)...");
+    };
+
+    const handleRefresh = () => {
+        toast.info("Refreshing data...");
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <PageHeader
                 title="Reports & Analytics"
-                subtitle="Generate and download system-wide reports"
+                subtitle="Real-time system insights and performance metrics"
                 priority={1}
                 actions={
-                    <Button variant="outline" onClick={handleBuildReport}>
-                        <Filter className="w-4 h-4 mr-2" />
-                        Build Custom Report
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Select value={timeRange} onValueChange={setTimeRange}>
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Select Range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="7d">Last 7 Days</SelectItem>
+                                <SelectItem value="30d">Last 30 Days</SelectItem>
+                                <SelectItem value="3m">Last 3 Months</SelectItem>
+                                <SelectItem value="6m">Last 6 Months</SelectItem>
+                                <SelectItem value="1y">Last Year</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="icon" onClick={handleRefresh}>
+                            <RefreshCw className="w-4 h-4" />
+                        </Button>
+                        <Button onClick={handleDownloadReport}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Export Report
+                        </Button>
+                    </div>
                 }
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {reports.map((report, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                <report.icon className="w-6 h-6" />
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <span className="text-xs font-medium bg-muted px-2 py-1 rounded text-muted-foreground">{report.type}</span>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            <CardTitle className="text-lg mb-2">{report.title}</CardTitle>
-                            <CardDescription className="mb-4 h-10">{report.description}</CardDescription>
-
-                            <div className="flex items-center justify-between mt-4">
-                                <span className="text-xs text-muted-foreground">Updated: {report.frequency}</span>
-                                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleDownload(report.title)}>
-                                    <Download className="w-4 h-4" /> Download
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">+2350</div>
+                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <rect width="20" height="14" x="2" y="5" rx="2" />
+                            <path d="M2 10h20" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">+12,234</div>
+                        <p className="text-xs text-muted-foreground">+19% from last month</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">PD Hours Logged</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">+573</div>
+                        <p className="text-xs text-muted-foreground">+201 since last hour</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">System Uptime</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">99.9%</div>
+                        <p className="text-xs text-muted-foreground">+0.1% from last week</p>
+                    </CardContent>
+                </Card>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                {/* Main Area Chart */}
+                <Card className="col-span-1 lg:col-span-4">
+                    <CardHeader>
+                        <CardTitle>User Growth Overview</CardTitle>
+                        <CardDescription>
+                            Comparing teacher and student enrollment over the last 6 months.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        <div className="h-[350px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={userGrowthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorTeachers" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: any) => `${value}`} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}
+                                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                    />
+                                    <Area type="monotone" dataKey="total" stroke="#8884d8" fillOpacity={1} fill="url(#colorTotal)" name="Total Users" />
+                                    <Area type="monotone" dataKey="teachers" stroke="#82ca9d" fillOpacity={1} fill="url(#colorTeachers)" name="Teachers" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
 
+                {/* Pie Chart */}
+                <Card className="col-span-1 lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle>Course Enrollment by Category</CardTitle>
+                        <CardDescription>
+                            Distribution of active enrollments across categories.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[350px] relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={courseDistributionData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {courseDistributionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}
+                                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Bar Chart */}
+                <Card className="col-span-2">
+                    <CardHeader>
+                        <CardTitle>Campus Activity Levels</CardTitle>
+                        <CardDescription>
+                            Observations and Goals created per campus.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={campusActivityData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <Tooltip
+                                        cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }}
+                                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}
+                                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                    />
+                                    <Legend />
+                                    <Bar dataKey="observations" name="Observations" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="goals" name="Goals" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-    )
+    );
 }
