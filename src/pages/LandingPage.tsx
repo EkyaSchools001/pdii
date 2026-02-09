@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { GraduationCap, Users, Shield, ArrowRight, CheckCircle2, BarChart3, Calendar, Target } from "lucide-react";
+import { GraduationCap, Users, Shield, ArrowRight, CheckCircle2, BarChart3, Calendar, Target, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "@/components/PriorityBadge";
+
 
 const features = [
   {
@@ -55,6 +56,14 @@ const roles = [
     path: "/login",
     color: "bg-success/10 text-success",
   },
+  {
+    role: "management",
+    title: "Management",
+    description: "Oversee campus operations, track resources, and manage institutional growth",
+    icon: Building2,
+    path: "/login",
+    color: "bg-orange-500/10 text-orange-500",
+  },
 ];
 
 export default function LandingPage() {
@@ -107,6 +116,8 @@ export default function LandingPage() {
         </div>
       </header>
 
+
+
       {/* Features Section */}
       <section className="py-24 bg-muted/50">
         <div className="container mx-auto px-6">
@@ -154,7 +165,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {roles.map((role, index) => (
               <Link
                 key={role.role}
