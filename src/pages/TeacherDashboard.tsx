@@ -1485,7 +1485,7 @@ function ObservationDetailView({ observations }: { observations: Observation[] }
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/teacher/observations")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/teacher/observations")} className="print:hidden">
           <ChevronRight className="w-5 h-5 rotate-180" />
         </Button>
         <div>
@@ -1677,7 +1677,7 @@ function ObservationDetailView({ observations }: { observations: Observation[] }
 
         <div>
           {/* Sidebar with Actions / Stats */}
-          <Card className="border-none shadow-lg sticky top-6">
+          <Card className="border-none shadow-lg sticky top-6 print:hidden">
             <CardHeader>
               <CardTitle>Actions</CardTitle>
             </CardHeader>

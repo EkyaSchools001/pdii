@@ -70,7 +70,7 @@ export function DashboardSidebar({ role, userName, collapsed, onToggle }: Dashbo
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 print:hidden",
         collapsed ? "w-16" : "w-64"
       )}
     >

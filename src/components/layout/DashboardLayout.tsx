@@ -22,7 +22,7 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
       />
       <main
         className={cn(
-          "flex-1 transition-all duration-300 min-h-screen overflow-x-hidden",
+          "flex-1 transition-all duration-300 min-h-screen overflow-x-hidden print:ml-0",
           collapsed ? "ml-16" : "ml-64"
         )}
       >

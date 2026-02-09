@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -951,89 +952,116 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="space-y-8">
         {/* Calendar Widget */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="w-full space-y-6">
           <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
             {/* decorative gradient blob */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-y-10 -translate-x-10 pointer-events-none" />
 
-            <CardContent className="p-6 relative z-10 flex flex-col items-center">
-              <div className="text-left w-full mb-4">
-                <h3 className="text-lg font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
-                  Activity Summary
-                </h3>
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
-                  {formatDateStr(new Date())}
-                </p>
-              </div>
+            <CardContent className="p-6 md:p-10 relative z-10">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                {/* Left side: Header and Calendar */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="text-left w-full">
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
+                      Activity Summary
+                    </h3>
+                    <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
+                      {formatDateStr(new Date())}
+                    </p>
+                  </div>
 
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-2xl border-none bg-zinc-900/50 p-4 w-full"
-                classNames={{
-                  head_cell: "text-zinc-500 font-medium text-[0.8rem]",
-                  cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-zinc-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                  day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-full transition-all",
-                  day_selected: "bg-gradient-to-br from-pink-500 to-red-600 text-white hover:bg-red-600 focus:bg-red-600 shadow-lg shadow-red-500/30",
-                  day_today: "bg-zinc-800 text-white font-bold",
-                  nav_button: "border-zinc-700 hover:bg-zinc-800 hover:text-white text-zinc-400",
-                  caption: "text-white font-bold mb-4",
-                }}
-                modifiers={{
-                  pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
-                  technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
-                  assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
-                  other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
-                }}
-                modifiersStyles={{
-                  pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
-                  technology: { border: '2px solid #10b981', color: 'white' }, // Green
-                  assessment: { border: '2px solid #f43f5e', color: 'white' }, // Red
-                  other: { border: '2px solid #eab308', color: 'white' } // Yellow
-                }}
-              />
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-2xl border-none bg-zinc-900/50 p-6 w-full"
+                    classNames={{
+                      months: "flex flex-col space-y-4",
+                      month: "space-y-4 w-full",
+                      caption: "flex justify-center pt-1 relative items-center mb-6",
+                      caption_label: "text-base font-bold text-white",
+                      nav: "space-x-1 flex items-center",
+                      nav_button: "h-8 w-8 bg-transparent p-0 text-zinc-400 hover:text-white border-zinc-700 hover:bg-zinc-800",
+                      nav_button_previous: "absolute left-2",
+                      nav_button_next: "absolute right-2",
+                      table: "w-full border-collapse",
+                      head_row: "flex w-full mt-2",
+                      head_cell: "text-zinc-400 rounded-md w-10 font-bold text-[0.85rem] uppercase tracking-wider flex items-center justify-center",
+                      row: "flex w-full mt-3",
+                      cell: "h-10 w-10 text-center text-base p-0 relative [&:has([aria-selected])]:bg-zinc-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      day: "h-10 w-10 p-0 font-semibold aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-full transition-all flex items-center justify-center",
+                      day_selected: "bg-gradient-to-br from-pink-500 to-red-600 text-white hover:bg-red-600 focus:bg-red-600 shadow-lg shadow-red-500/30",
+                      day_today: "bg-zinc-800 text-white font-black ring-2 ring-zinc-700",
+                      day_outside: "text-zinc-500 opacity-40",
+                    }}
+                    modifiers={{
+                      pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
+                      technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
+                      assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
+                      other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
+                    }}
+                    modifiersStyles={{
+                      pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
+                      technology: { border: '2px solid #10b981', color: 'white' }, // Green
+                      assessment: { border: '2px solid #f43f5e', color: 'white' }, // Red
+                      other: { border: '2px solid #eab308', color: 'white' } // Yellow
+                    }}
+                  />
+                </div>
 
-              <div className="mt-6 w-full space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-zinc-300">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Pedagogy
-                  </span>
-                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-zinc-300">
-                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Technology
-                  </span>
-                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Technology').length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-zinc-300">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Assessment
-                  </span>
-                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}</span>
-                </div>
-              </div>
+                {/* Right side: Legend and Actions */}
+                <div className="lg:col-span-5 h-full flex flex-col justify-center pt-10">
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-4">Legend</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                        <span className="flex items-center gap-3 text-sm text-zinc-300">
+                          <span className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> Pedagogy
+                        </span>
+                        <span className="font-mono text-white text-sm bg-blue-500/20 px-2 py-0.5 rounded-md">
+                          {training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                        <span className="flex items-center gap-3 text-sm text-zinc-300">
+                          <span className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]"></span> Technology
+                        </span>
+                        <span className="font-mono text-white text-sm bg-green-500/20 px-2 py-0.5 rounded-md">
+                          {training.filter((t: any) => (t.topic || t.type) === 'Technology').length}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                        <span className="flex items-center gap-3 text-sm text-zinc-300">
+                          <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]"></span> Assessment
+                        </span>
+                        <span className="font-mono text-white text-sm bg-rose-500/20 px-2 py-0.5 rounded-md">
+                          {training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}
+                        </span>
+                      </div>
+                    </div>
 
-              <div className="mt-6 w-full">
-                <Button
-                  variant="outline"
-                  className="w-full bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-                  onClick={() => setDate(undefined)}
-                  disabled={!date}
-                >
-                  Clear Filter
-                </Button>
+                    <div className="pt-8">
+                      <Button
+                        variant="outline"
+                        className="w-full py-6 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-base rounded-xl"
+                        onClick={() => setDate(undefined)}
+                        disabled={!date}
+                      >
+                        Clear Selection Filter
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Event List */}
-        <div className="lg:col-span-3">
+        <div className="w-full">
           <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm h-full">
             <CardHeader className="border-b bg-muted/20 pb-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1629,11 +1657,19 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
 function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGoal, setSelectedGoal] = useState<typeof initialGoals[0] | null>(null);
+  const [reviewFeedback, setReviewFeedback] = useState("");
 
   const filteredGoals = goals.filter(g =>
     g.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
     g.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleReviewSubmit = () => {
+    toast.success(`Review submitted for ${selectedGoal?.teacher}'s goal.`);
+    setSelectedGoal(null);
+    setReviewFeedback("");
+  };
 
   return (
     <div className="space-y-6">
@@ -1737,7 +1773,12 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
                       </div>
                     </td>
                     <td className="p-6 text-right">
-                      <Button variant="ghost" size="sm" className="h-10 px-4 hover:bg-primary/10 hover:text-primary">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-10 px-4 hover:bg-primary/10 hover:text-primary font-bold"
+                        onClick={() => setSelectedGoal(goal)}
+                      >
                         Review
                       </Button>
                     </td>
@@ -1748,6 +1789,69 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedGoal} onOpenChange={(open) => !open && setSelectedGoal(null)}>
+        <DialogContent className="sm:max-w-[500px] border-none shadow-2xl bg-background p-0 overflow-hidden">
+          <DialogHeader className="p-8 pb-0">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Target className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold">Goal Review</DialogTitle>
+                <DialogDescription>Provide feedback on teacher progress</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="p-8 space-y-6">
+            <div className="grid grid-cols-2 gap-6 p-6 rounded-2xl bg-muted/30 border border-muted-foreground/10">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Teacher</p>
+                <p className="font-bold text-lg">{selectedGoal?.teacher}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Due Date</p>
+                <p className="font-bold text-lg">{selectedGoal?.dueDate}</p>
+              </div>
+              <div className="col-span-2 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Goal Target</p>
+                <p className="font-semibold text-primary">{selectedGoal?.title}</p>
+              </div>
+              <div className="col-span-2 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Current Progress</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span>{selectedGoal?.progress}%</span>
+                    <span className="text-primary">{selectedGoal?.category}</span>
+                  </div>
+                  <Progress value={selectedGoal?.progress} className="h-3 rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="feedback" className="text-sm font-bold text-foreground">Leader Feedback</Label>
+              <Textarea
+                id="feedback"
+                placeholder="Share your thoughts on the progress, areas of improvement, or words of encouragement..."
+                className="min-h-[120px] bg-background border-muted-foreground/20 rounded-2xl focus:ring-primary/20 resize-none p-4"
+                value={reviewFeedback}
+                onChange={(e) => setReviewFeedback(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button variant="outline" className="flex-1 h-12 rounded-xl border-muted-foreground/20" onClick={() => setSelectedGoal(null)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 h-12 rounded-xl shadow-lg shadow-primary/20 font-bold" onClick={handleReviewSubmit}>
+                Submit Review
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -2046,7 +2150,10 @@ function ObservationReportView({ observations, team }: { observations: Observati
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Review this report with the teacher during the post-observation conference. Define one specific actionable goal for the next cycle.
               </p>
-              <Button className="w-full gap-2">
+              <Button
+                className="w-full gap-2"
+                onClick={() => toast.success("Debrief session scheduled. Email invites sent to teacher.")}
+              >
                 <Calendar className="w-4 h-4" />
                 Schedule Debrief
               </Button>
