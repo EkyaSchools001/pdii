@@ -625,59 +625,7 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                             )}
                         </div>
 
-                        {/* Section 4: Reflection (Conditional) */}
-                        {hasCertificate === "no" && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-                                <Separator />
-                                <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground border-l-4 border-warning pl-3">
-                                    <Brain className="w-5 h-5 text-muted-foreground" />
-                                    Reflection <span className="text-xs text-muted-foreground font-normal">(Required as no certificate is available)</span>
-                                </h3>
-                                <FormField
-                                    control={form.control}
-                                    name="keyTakeaways"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Three Key Takeaways from the Course *</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="1. ...&#10;2. ...&#10;3. ..." className="min-h-[100px]" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="unansweredQuestions"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Two Unanswered Questions After Learning *</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="1. ...&#10;2. ..." className="min-h-[80px]" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="enjoyedMost"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>One Thing You Enjoyed Most *</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Briefly describe what you enjoyed..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                        )}
-
-                        <Separator />
-
-                        {/* Section 6: Supporting Documents (Optional) */}
+                        {/* Section 4: Supporting Documents (Optional) */}
                         <div className="space-y-6">
                             <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground border-l-4 border-primary pl-3">
                                 <Paperclip className="w-5 h-5 text-muted-foreground" />
@@ -759,7 +707,61 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
 
                         <Separator />
 
-                        {/* Section 5: Feedback */}
+                        {/* Section 5: Reflection (Conditional) */}
+                        {hasCertificate === "no" && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                                <Separator />
+                                <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground border-l-4 border-warning pl-3">
+                                    <Brain className="w-5 h-5 text-muted-foreground" />
+                                    Reflection <span className="text-xs text-muted-foreground font-normal">(Required as no certificate is available)</span>
+                                </h3>
+                                <FormField
+                                    control={form.control}
+                                    name="keyTakeaways"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Three Key Takeaways from the Course *</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="1. ...&#10;2. ...&#10;3. ..." className="min-h-[100px]" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="unansweredQuestions"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Two Unanswered Questions After Learning *</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="1. ...&#10;2. ..." className="min-h-[80px]" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="enjoyedMost"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>One Thing You Enjoyed Most *</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Briefly describe what you enjoyed..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+
+                        <Separator />
+
+
+
+                        {/* Section 6: Feedback */}
                         <div className="space-y-6">
                             <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground border-l-4 border-primary pl-3">
                                 <Star className="w-5 h-5 text-muted-foreground" />
