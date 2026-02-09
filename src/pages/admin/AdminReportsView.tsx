@@ -39,7 +39,44 @@ export function AdminReportsView() {
     const [timeRange, setTimeRange] = useState("6m");
 
     const handleDownloadReport = () => {
-        toast.success("Downloading Analytics Report (PDF)...");
+        // Prepare CSV data
+        let csvContent = "data:text/csv;charset=utf-8,";
+
+        // 1. User Growth Data
+        csvContent += "USER GROWTH OVERVIEW\n";
+        csvContent += "Month,Teachers,Students,Total\n";
+        userGrowthData.forEach(item => {
+            csvContent += `${item.name},${item.teachers},${item.students},${item.total}\n`;
+        });
+
+        csvContent += "\n";
+
+        // 2. Campus Activity Data
+        csvContent += "CAMPUS ACTIVITY LEVELS\n";
+        csvContent += "Campus,Observations,Goals\n";
+        campusActivityData.forEach(item => {
+            csvContent += `${item.name},${item.observations},${item.goals}\n`;
+        });
+
+        csvContent += "\n";
+
+        // 3. Course Distribution Data
+        csvContent += "COURSE ENROLLMENT BY CATEGORY\n";
+        csvContent += "Category,Value\n";
+        courseDistributionData.forEach(item => {
+            csvContent += `${item.name},${item.value}\n`;
+        });
+
+        // Create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `admin_analytics_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success("Analytics Report exported as CSV");
     };
 
     const handleRefresh = () => {
@@ -51,7 +88,6 @@ export function AdminReportsView() {
             <PageHeader
                 title="Reports & Analytics"
                 subtitle="Real-time system insights and performance metrics"
-                priority={1}
                 actions={
                     <div className="flex items-center gap-2">
                         <Select value={timeRange} onValueChange={setTimeRange}>
