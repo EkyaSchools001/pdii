@@ -18,7 +18,7 @@ interface GroqResponse {
     }[];
 }
 
-export async function getGroqAnalysis(data: any, type: 'teacher' | 'observation' | 'admin'): Promise<string> {
+export async function getGroqAnalysis(data: unknown, type: 'teacher' | 'observation' | 'admin'): Promise<string> {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!apiKey) {

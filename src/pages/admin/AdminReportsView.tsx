@@ -251,7 +251,7 @@ export function AdminReportsView() {
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: any) => `${value}`} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}`} />
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}

@@ -889,7 +889,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
     return format(d, "MMM d, yyyy");
   };
 
-  const filteredEvents = training.filter((e: any) => {
+  const filteredEvents = training.filter((e) => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (e.topic || e.type || "").toLowerCase().includes(searchQuery.toLowerCase());
 

@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface AIAnalysisModalProps {
     isOpen: boolean;
     onClose: () => void;
-    data: any;
+    data: unknown;
     type: 'teacher' | 'observation' | 'admin';
     title?: string;
 }
@@ -30,8 +30,9 @@ export function AIAnalysisModal({ isOpen, onClose, data, type, title }: AIAnalys
         try {
             const result = await getGroqAnalysis(data, type);
             setAnalysis(result);
-        } catch (err: any) {
-            setError(err.message || "An error occurred during analysis.");
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : "An error occurred during analysis.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -129,8 +130,8 @@ export function AIAnalysisModal({ isOpen, onClose, data, type, title }: AIAnalys
 }
 
 // Internal Badge for local use
-function Badge({ children, className, variant = "default" }: any) {
-    const variants: any = {
+function Badge({ children, className, variant = "default" }: { children: React.ReactNode, className?: string, variant?: "default" | "outline" }) {
+    const variants = {
         default: "bg-primary text-primary-foreground",
         outline: "border border-input bg-background"
     }
