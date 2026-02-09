@@ -37,6 +37,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
