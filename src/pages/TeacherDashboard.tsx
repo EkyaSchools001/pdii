@@ -1059,6 +1059,94 @@ function PDHoursView() {
 }
 
 function InsightsView() {
+  const navigate = useNavigate();
+  const handleDownloadPortfolio = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(22);
+    doc.setTextColor(41, 128, 185);
+    doc.text("Professional Growth Portfolio", 20, 20);
+
+    // Subtitle
+    doc.setFontSize(16);
+    doc.setTextColor(100);
+    doc.text("Emily Rodriguez - Teacher", 20, 30);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 36);
+
+    let yPos = 50;
+
+    // Core Strengths Section
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text("Core Strengths", 20, yPos);
+    yPos += 10;
+
+    const strengthsData = mockInsights.strengths.map(s => [s.name, s.level, s.description]);
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Strength', 'Level', 'Description']],
+      body: strengthsData,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 }
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 20;
+
+    // Skill Competencies Section
+    doc.setFontSize(14);
+    doc.text("Skill Competencies (Radar Data)", 20, yPos);
+    yPos += 10;
+
+    const skillsData = mockInsights.skills.map(s => [s.subject, s.A.toString(), s.B.toString(), s.fullMark.toString()]);
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Subject', 'Score (Growth)', 'Benchmark', 'Max Score']],
+      body: skillsData,
+      theme: 'striped',
+      headStyles: { fillColor: [39, 174, 96] }, // Emerald color
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 20;
+
+    // Growth Trends Section
+    doc.setFontSize(14);
+    doc.text("Growth Trends (Cumulative Hours)", 20, yPos);
+    yPos += 10;
+
+    const growthData = mockInsights.growth.map(g => [g.month, `${g.hours}h`]);
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Month', 'Hours']],
+      body: growthData,
+      theme: 'plain',
+      styles: { cellWidth: 50 }
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 20;
+
+    // Recommendations Section
+    doc.setFontSize(14);
+    doc.text("Growth Recommendations", 20, yPos);
+    yPos += 10;
+
+    mockInsights.recommendations.forEach((rec) => {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`• ${rec.name} (${rec.focus})`, 25, yPos);
+      yPos += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(rec.reason, 30, yPos);
+      yPos += 10;
+    });
+
+    // Save
+    doc.save("growth_portfolio.pdf");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1066,7 +1154,7 @@ function InsightsView() {
           title="Professional Insights"
           subtitle="Data-driven overview of your teaching competencies and growth"
         />
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" onClick={handleDownloadPortfolio}>
           <Download className="w-4 h-4" />
           Download Growth Portfolio
         </Button>
@@ -1193,7 +1281,7 @@ function InsightsView() {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               {mockInsights.recommendations.map((rec, idx) => (
-                <div key={idx} className="group p-5 rounded-2xl border border-muted/50 hover:bg-muted/30 transition-all cursor-pointer">
+                <div key={idx} onClick={() => navigate("/teacher/courses")} className="group p-5 rounded-2xl border border-muted/50 hover:bg-muted/30 transition-all cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="font-semibold">{rec.focus}</Badge>
                     <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -1204,7 +1292,7 @@ function InsightsView() {
               ))}
             </div>
             <div className="pt-2">
-              <Button variant="link" className="p-0 h-auto gap-2 text-primary font-bold group">
+              <Button variant="link" onClick={() => navigate("/teacher/courses")} className="p-0 h-auto gap-2 text-primary font-bold group">
                 Browse related courses
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
