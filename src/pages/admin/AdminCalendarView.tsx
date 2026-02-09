@@ -355,7 +355,7 @@ export function AdminCalendarView() {
                                                     </span>
                                                 </td>
                                                 <td className="p-6 text-right">
-                                                    <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/10 hover:text-primary" onClick={() => handleManageSession(session.title)}>
+                                                    <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/10 hover:text-primary" onClick={() => handleManageSession(session)}>
                                                         Manage
                                                     </Button>
                                                 </td>
@@ -368,6 +368,104 @@ export function AdminCalendarView() {
                     </Card>
                 </div>
             </div>
+
+            {/* Edit Event Dialog */}
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Training Event</DialogTitle>
+                        <DialogDescription>Modify the details of this professional development session.</DialogDescription>
+                    </DialogHeader>
+                    {currentEvent && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-event-title">Event Title</Label>
+                                <Input id="edit-event-title" value={currentEvent.title} onChange={e => setCurrentEvent({ ...currentEvent, title: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-event-type">Type</Label>
+                                    <Select value={currentEvent.type} onValueChange={v => setCurrentEvent({ ...currentEvent, type: v })}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Pedagogy">Pedagogy</SelectItem>
+                                            <SelectItem value="Technology">Technology</SelectItem>
+                                            <SelectItem value="Assessment">Assessment</SelectItem>
+                                            <SelectItem value="Culture">Culture</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Date</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full pl-3 text-left font-normal",
+                                                    !currentEvent.date && "text-muted-foreground"
+                                                )}
+                                            >
+                                                {currentEvent.date ? (
+                                                    typeof currentEvent.date === 'string' ? currentEvent.date : formatDateStr(currentEvent.date)
+                                                ) : (
+                                                    <span>Pick a date</span>
+                                                )}
+                                                <Clock className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <CalendarComponent
+                                                mode="single"
+                                                selected={typeof currentEvent.date === 'string' ? parseEventDate(currentEvent.date) : currentEvent.date}
+                                                onSelect={(d) => d && setCurrentEvent({ ...currentEvent, date: d })}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-event-time">Time</Label>
+                                    <Input id="edit-event-time" value={currentEvent.time} onChange={e => setCurrentEvent({ ...currentEvent, time: e.target.value })} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-event-location">Location</Label>
+                                    <Input id="edit-event-location" value={currentEvent.location} onChange={e => setCurrentEvent({ ...currentEvent, location: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="pt-4 border-t mt-2">
+                                <Button variant="destructive" size="sm" className="w-full" onClick={() => { setIsEditOpen(false); setIsDeleteOpen(true); }}>
+                                    Delete Event
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                        <Button onClick={handleEditEvent}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-destructive">Confirm Deletion</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <strong>{currentEvent?.title}</strong>? This will remove it from the calendar for all staff members.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDeleteEvent}>Confirm Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
