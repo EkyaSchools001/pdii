@@ -35,8 +35,11 @@ export function UserManagementView() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isChangeRoleDialogOpen, setIsChangeRoleDialogOpen] = useState(false);
+    const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: "", email: "", role: "Teacher", campus: "" });
     const [editingUser, setEditingUser] = useState<typeof initialUsers[0] | null>(null);
+    const [selectedUser, setSelectedUser] = useState<typeof initialUsers[0] | null>(null);
     const [activeTab, setActiveTab] = useState("all");
     const [campusFilter, setCampusFilter] = useState("all");
 
@@ -91,12 +94,33 @@ export function UserManagementView() {
         toast.success("User updated successfully");
     };
 
+    const handleChangeRole = () => {
+        if (!selectedUser) return;
+        setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
+        setIsChangeRoleDialogOpen(false);
+        toast.success(`Role updated to ${selectedUser.role} for ${selectedUser.name}`);
+        setSelectedUser(null);
+    };
+
+    const handleDeactivate = () => {
+        if (!selectedUser) return;
+        const newStatus = selectedUser.status === "Active" ? "Inactive" : "Active";
+        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: newStatus } : u));
+        setIsDeactivateDialogOpen(false);
+        toast.success(`User ${newStatus === "Inactive" ? "deactivated" : "activated"} successfully`);
+        setSelectedUser(null);
+    };
+
     const handleAction = (action: string, user: typeof initialUsers[0]) => {
         if (action === "Edit Details") {
             setEditingUser(user);
             setIsEditDialogOpen(true);
-        } else {
-            toast.info(`${action} for ${user.name}`);
+        } else if (action === "Change Role") {
+            setSelectedUser(user);
+            setIsChangeRoleDialogOpen(true);
+        } else if (action === "Deactivate" || action === "Activate") {
+            setSelectedUser(user);
+            setIsDeactivateDialogOpen(true);
         }
     }
 
@@ -220,6 +244,87 @@ export function UserManagementView() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+
+                        {/* Change Role Dialog */}
+                        <Dialog open={isChangeRoleDialogOpen} onOpenChange={setIsChangeRoleDialogOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Change User Role</DialogTitle>
+                                    <DialogDescription>Update the role for this user account.</DialogDescription>
+                                </DialogHeader>
+                                {selectedUser && (
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label>User</Label>
+                                            <div className="flex flex-col gap-1 p-3 bg-muted rounded-md">
+                                                <span className="font-medium">{selectedUser.name}</span>
+                                                <span className="text-sm text-muted-foreground">{selectedUser.email}</span>
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="change-role">New Role</Label>
+                                            <Select value={selectedUser.role} onValueChange={v => setSelectedUser({ ...selectedUser, role: v })}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select role" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Teacher">Teacher</SelectItem>
+                                                    <SelectItem value="Leader">Leader</SelectItem>
+                                                    <SelectItem value="Admin">Admin</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                )}
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsChangeRoleDialogOpen(false)}>Cancel</Button>
+                                    <Button onClick={handleChangeRole}>Update Role</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Deactivate/Activate Confirmation Dialog */}
+                        <Dialog open={isDeactivateDialogOpen} onOpenChange={setIsDeactivateDialogOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        {selectedUser?.status === "Active" ? "Deactivate User" : "Activate User"}
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        {selectedUser?.status === "Active"
+                                            ? "This user will no longer be able to access the system. You can reactivate them later."
+                                            : "This user will regain access to the system."}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                {selectedUser && (
+                                    <div className="grid gap-4 py-4">
+                                        <div className="flex flex-col gap-1 p-3 bg-muted rounded-md">
+                                            <span className="font-medium">{selectedUser.name}</span>
+                                            <span className="text-sm text-muted-foreground">{selectedUser.email}</span>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Badge variant="outline" className="w-fit">
+                                                    <Shield className="w-3 h-3 mr-1" />
+                                                    {selectedUser.role}
+                                                </Badge>
+                                                <Badge variant={selectedUser.status === "Active" ? "default" : "secondary"} className={selectedUser.status === "Active" ? "bg-green-600" : ""}>
+                                                    {selectedUser.status === "Active" ? <UserCheck className="w-3 h-3 mr-1" /> : <UserX className="w-3 h-3 mr-1" />}
+                                                    {selectedUser.status}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsDeactivateDialogOpen(false)}>Cancel</Button>
+                                    <Button
+                                        variant={selectedUser?.status === "Active" ? "destructive" : "default"}
+                                        onClick={handleDeactivate}
+                                    >
+                                        {selectedUser?.status === "Active" ? "Deactivate User" : "Activate User"}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </>
                 }
             />
@@ -336,8 +441,19 @@ export function UserManagementView() {
                                                     <DropdownMenuItem onClick={() => handleAction("Change Role", user)}>
                                                         <Shield className="w-4 h-4 mr-2" /> Change Role
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleAction("Deactivate", user)}>
-                                                        <Trash2 className="w-4 h-4 mr-2" /> Deactivate
+                                                    <DropdownMenuItem
+                                                        className={user.status === "Active" ? "text-red-600 focus:text-red-600" : "text-green-600 focus:text-green-600"}
+                                                        onClick={() => handleAction(user.status === "Active" ? "Deactivate" : "Activate", user)}
+                                                    >
+                                                        {user.status === "Active" ? (
+                                                            <>
+                                                                <UserX className="w-4 h-4 mr-2" /> Deactivate
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <UserCheck className="w-4 h-4 mr-2" /> Activate
+                                                            </>
+                                                        )}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
