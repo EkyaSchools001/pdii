@@ -22,7 +22,7 @@ export function TrainingEventCard({ event, onRegister, className }: TrainingEven
     <div className={cn("dashboard-card p-5", className)}>
       <div className="flex items-start justify-between mb-3">
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-info/10 text-info">
-          {event.topic}
+          {event.topic || (event as any).type}
         </span>
       </div>
 

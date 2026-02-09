@@ -12,14 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { toast } from "sonner";
 
 // Mock Data (Reusing structure for consistency)
 const initialTrainingEvents = [
-    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
-    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
-    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
-    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
+    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
+    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
+    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
+    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
 ];
 
 export function AdminCalendarView() {
@@ -80,7 +81,7 @@ export function AdminCalendarView() {
 
     // Helper to format Date object to "MMM d, yyyy" string
     const formatDateStr = (d: Date) => {
-        return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        return format(d, "MMM d, yyyy");
     };
 
     const handleScheduleEvent = () => {
@@ -130,14 +131,20 @@ export function AdminCalendarView() {
     };
 
     const handleManageSession = (event: any) => {
-        setCurrentEvent(event);
+        setCurrentEvent({
+            ...event,
+            type: event.type || event.topic || "Pedagogy",
+            topic: event.topic || event.type || "Pedagogy"
+        });
         setIsEditOpen(true);
     }
 
     // Helper to parse "MMM d, yyyy" string to Date object
     const parseEventDate = (dateStr: string) => {
         try {
-            return new Date(dateStr);
+            // Handle both "MMM d, yyyy" and potential legacy "MMM d"
+            const parts = dateStr.includes(',') ? dateStr : `${dateStr}, 2026`;
+            return new Date(parts);
         } catch (e) {
             return new Date();
         }
@@ -432,7 +439,10 @@ export function AdminCalendarView() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="edit-event-type">Type</Label>
-                                    <Select value={currentEvent.type} onValueChange={v => setCurrentEvent({ ...currentEvent, type: v })}>
+                                    <Select
+                                        value={currentEvent.type || currentEvent.topic}
+                                        onValueChange={v => setCurrentEvent({ ...currentEvent, type: v, topic: v })}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>

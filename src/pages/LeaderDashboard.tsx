@@ -53,10 +53,10 @@ const initialGoals = [
 ];
 
 const initialTrainingEvents = [
-  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
-  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
-  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
-  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
+  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
+  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
+  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
+  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
 ];
 
 export default function LeaderDashboard() {
@@ -874,7 +874,9 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
   // Helper to parse "MMM d, yyyy" string to Date object
   const parseEventDate = (dateStr: string) => {
     try {
-      return new Date(dateStr);
+      // Handle both "MMM d, yyyy" and potential legacy "MMM d"
+      const parts = dateStr.includes(',') ? dateStr : `${dateStr}, 2026`;
+      return new Date(parts);
     } catch (e) {
       return new Date();
     }
@@ -882,7 +884,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
 
   // Helper to format Date object to "MMM d, yyyy" string
   const formatDateStr = (d: Date) => {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return format(d, "MMM d, yyyy");
   };
 
   const filteredEvents = training.filter((e: any) => {
@@ -1156,8 +1158,8 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
                 <div className="space-y-2">
                   <Label htmlFor="edit-type">Type</Label>
                   <Select
-                    value={editingEvent.type}
-                    onValueChange={(val) => setEditingEvent({ ...editingEvent, type: val })}
+                    value={editingEvent.type || editingEvent.topic}
+                    onValueChange={(val) => setEditingEvent({ ...editingEvent, type: val, topic: val })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1247,7 +1249,7 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
     const newSession = {
       id: Math.random().toString(36).substr(2, 9),
       ...formData,
-      date: new Date(formData.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      date: format(new Date(formData.date), "MMM d, yyyy"),
       registered: 0,
       status: "Pending", // Automatically pending approval
       topic: formData.type, // Map type to topic

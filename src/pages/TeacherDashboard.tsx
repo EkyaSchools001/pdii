@@ -141,26 +141,10 @@ const initialGoals = [
 ];
 
 const initialEvents = [
-  {
-    id: "1",
-    title: "Inquiry-Based Learning Workshop",
-    date: "Jan 25, 2026",
-    time: "3:00 PM - 5:00 PM",
-    location: "Main Campus - Room 201",
-    topic: "Pedagogy",
-    spotsLeft: 8,
-    isRegistered: false,
-  },
-  {
-    id: "2",
-    title: "Technology Integration Seminar",
-    date: "Feb 2, 2026",
-    time: "2:00 PM - 4:00 PM",
-    location: "Virtual",
-    topic: "Technology",
-    spotsLeft: 15,
-    isRegistered: true,
-  },
+  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8, isRegistered: false },
+  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7, isRegistered: true },
+  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isRegistered: false },
+  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5, isRegistered: false },
 ];
 
 const mockCourses = [
@@ -1339,7 +1323,15 @@ export default function TeacherDashboard() {
       return initialGoals;
     }
   });
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState(() => {
+    try {
+      const saved = localStorage.getItem('training_events_data');
+      return saved ? JSON.parse(saved) : initialEvents;
+    } catch (e) {
+      console.error("Failed to load events", e);
+      return initialEvents;
+    }
+  });
   const [observations, setObservations] = useState<Observation[]>(() => {
     try {
       const saved = localStorage.getItem('observations_data');
@@ -1361,6 +1353,12 @@ export default function TeacherDashboard() {
     localStorage.setItem('goals_data', JSON.stringify(goals));
   }, [goals]);
 
+  // Sync training events to localStorage when changed (e.g., registration)
+  useEffect(() => {
+    localStorage.setItem('training_events_data', JSON.stringify(events));
+    window.dispatchEvent(new Event('training-events-updated'));
+  }, [events]);
+
   // Listen for updates from Leader Dashboard
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -1378,6 +1376,24 @@ export default function TeacherDashboard() {
           console.error("Failed to sync goals data", err);
         }
       }
+      if (e.key === 'training_events_data' && e.newValue) {
+        try {
+          setEvents(JSON.parse(e.newValue));
+        } catch (err) {
+          console.error("Failed to sync training data", err);
+        }
+      }
+    };
+
+    const handleCustomTrainingEvent = () => {
+      const saved = localStorage.getItem('training_events_data');
+      if (saved) {
+        try {
+          setEvents(JSON.parse(saved));
+        } catch (err) {
+          console.error("Failed to sync training data via custom event", err);
+        }
+      }
     };
 
     const handleLocalGoalsUpdate = () => {
@@ -1389,9 +1405,11 @@ export default function TeacherDashboard() {
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('local-goals-update', handleLocalGoalsUpdate);
+    window.addEventListener('training-events-updated', handleCustomTrainingEvent);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('local-goals-update', handleLocalGoalsUpdate);
+      window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
     };
   }, []);
 
