@@ -427,6 +427,17 @@ function ObservationsView({ observations, onReflect }: { observations: Observati
                   onSubmit={(data) => {
                     // Map dynamic data to DetailedReflection structure
                     const reflection: DetailedReflection = {
+                      teacherName: selectedObs?.teacher || "Emily Rodriguez",
+                      teacherEmail: "emily.r@ekyaschools.com",
+                      submissionDate: new Date().toISOString(),
+                      sections: {
+                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
+                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
+                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
+                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
+                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
+                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
+                      },
                       strengths: data.r23 || "See details",
                       improvements: data.r24 || "See details",
                       goal: data.r25 || "Assigned by teacher",

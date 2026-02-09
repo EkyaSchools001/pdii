@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
-import { PriorityBadge } from "./PriorityBadge";
 
 interface StatCardProps {
   title: string;
@@ -11,12 +10,11 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
-  priority?: 1 | 2 | 3 | 4;
   className?: string;
   onClick?: () => void;
 }
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, priority, className, onClick }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon: Icon, trend, className, onClick }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -30,7 +28,6 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, priority, 
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <p className="stat-label">{title}</p>
-            {priority && <PriorityBadge priority={priority} showLabel={false} />}
           </div>
           <p className="stat-value">{value}</p>
           {subtitle && (

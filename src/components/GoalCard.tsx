@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Target, Calendar, User } from "lucide-react";
 import { Progress } from "./ui/progress";
-import { PriorityBadge } from "./PriorityBadge";
 
 interface GoalCardProps {
   goal: {
@@ -29,7 +28,6 @@ export function GoalCard({ goal, className }: GoalCardProps) {
           <div className="p-2 rounded-lg bg-accent/10">
             <Target className="w-4 h-4 text-accent" />
           </div>
-          <PriorityBadge priority={2} showLabel={false} />
           {goal.isSchoolAligned && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-info/10 text-info font-medium">
               School Priority

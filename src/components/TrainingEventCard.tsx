@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Calendar, MapPin, Users, Clock } from "lucide-react";
 import { Button } from "./ui/button";
-import { PriorityBadge } from "./PriorityBadge";
 
 interface TrainingEventCardProps {
   event: {
@@ -25,7 +24,6 @@ export function TrainingEventCard({ event, onRegister, className }: TrainingEven
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-info/10 text-info">
           {event.topic}
         </span>
-        <PriorityBadge priority={1} showLabel={false} />
       </div>
 
       <h3 className="font-semibold text-foreground mb-3">{event.title}</h3>

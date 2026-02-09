@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Calendar, User, Tag, MessageSquare, Eye, CheckCircle2 } from "lucide-react";
-import { PriorityBadge } from "./PriorityBadge";
 import { Button } from "./ui/button";
 
 interface ObservationCardProps {
@@ -29,7 +28,6 @@ export function ObservationCard({ observation, onReflect, onView, className }: O
             <Calendar className="w-4 h-4" />
             {observation.date}
           </span>
-          <PriorityBadge priority={1} showLabel={false} />
         </div>
         {observation.score !== undefined && (
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-success/10 text-success font-bold">
