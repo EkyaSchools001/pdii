@@ -185,7 +185,7 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
       />
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <StatCard
           title="Team Members"
           value={team.length}
@@ -306,7 +306,7 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {observations.map((obs) => (
             <div
               key={obs.id}
@@ -329,7 +329,7 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 grid md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <Button variant="outline" className="h-auto p-6 flex flex-col items-start gap-2" onClick={() => navigate("/leader/goals")}>
           <Target className="w-6 h-6 text-primary" />
           <div className="text-left">
@@ -537,37 +537,41 @@ function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMe
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/leader/team")}>
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
-        <PageHeader
-          title={teacher.name}
-          subtitle={`${teacher.role} • Staff ID #EDU-${teacher.id}00${teacher.id}`}
-        />
-        <div className="ml-auto flex gap-3">
-          <AIAnalysisModal
-            isOpen={isAIModalOpen}
-            onClose={() => setIsAIModalOpen(false)}
-            data={{ teacher, observations: teacherObservations, goals: teacherGoals }}
-            type="admin"
-            title={`Performance Analysis: ${teacher.name}`}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/leader/team")} className="-ml-2">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <PageHeader
+            title={teacher.name}
+            subtitle={`${teacher.role} • Staff ID #EDU-${teacher.id}00${teacher.id}`}
+            actions={
+              <>
+                <AIAnalysisModal
+                  isOpen={isAIModalOpen}
+                  onClose={() => setIsAIModalOpen(false)}
+                  data={{ teacher, observations: teacherObservations, goals: teacherGoals }}
+                  type="admin"
+                  title={`Performance Analysis: ${teacher.name}`}
+                />
+                <Button
+                  onClick={() => setIsAIModalOpen(true)}
+                  variant="outline"
+                  className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
+                >
+                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                  AI Smart Insights
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/leader/observe")} className="hidden md:flex">
+                  Schedule Observation
+                </Button>
+                <Button onClick={() => navigate("/leader/observe")}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Observation
+                </Button>
+              </>
+            }
           />
-          <Button
-            onClick={() => setIsAIModalOpen(true)}
-            variant="outline"
-            className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
-          >
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            AI Smart Insights
-          </Button>
-          <Button variant="outline" onClick={() => navigate("/leader/observe")}>
-            Schedule Observation
-          </Button>
-          <Button onClick={() => navigate("/leader/observe")}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Observation
-          </Button>
         </div>
       </div>
 
@@ -744,7 +748,7 @@ function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMe
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

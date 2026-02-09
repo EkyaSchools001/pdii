@@ -91,7 +91,7 @@ function DashboardOverview() {
       />
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <StatCard
           title="Total Users"
           value="248"
@@ -122,7 +122,7 @@ function DashboardOverview() {
       {/* Live Data Feeds / Drill Downs */}
       <div className="mb-8 animate-in slide-in-from-bottom-5 duration-500 delay-100">
         <h2 className="text-xl font-semibold text-foreground mb-4">Pending Actions & Live Updates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
 
           {/* New Registrations Card */}
           <div className="dashboard-card p-4 flex flex-col">
@@ -235,7 +235,7 @@ function DashboardOverview() {
       {/* Admin Modules Grid */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-4">Platform Management</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {adminModules.map((module) => (
             <Link
               key={module.title}

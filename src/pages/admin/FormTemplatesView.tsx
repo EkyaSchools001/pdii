@@ -378,19 +378,19 @@ export function FormTemplatesView() {
                     <TabsTrigger value="drafts">Drafts</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="all" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <TabsContent value="all" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
                 </TabsContent>
-                <TabsContent value="observation" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <TabsContent value="observation" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.filter(t => t.type === 'Observation').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
                 </TabsContent>
-                <TabsContent value="goals" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <TabsContent value="goals" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.filter(t => t.type === 'Goal Setting' || t.type === 'Reflection').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
                 </TabsContent>
-                <TabsContent value="pd" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <TabsContent value="pd" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.filter(t => t.type === 'Other' || t.title.includes('MOOC')).map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
                 </TabsContent>
-                <TabsContent value="drafts" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <TabsContent value="drafts" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.filter(t => t.status === 'Draft').map(template => <TemplateCard key={template.id} template={template} onEdit={onEdit} onDelete={onDelete} />)}
                 </TabsContent>
             </Tabs>

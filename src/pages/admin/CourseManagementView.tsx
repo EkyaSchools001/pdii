@@ -161,7 +161,7 @@ export function CourseManagementView() {
             </div>
 
             <Card className="border-none shadow-md">
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>

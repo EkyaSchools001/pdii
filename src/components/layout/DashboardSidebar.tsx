@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   LayoutDashboard,
   Eye,
@@ -15,6 +16,7 @@ import {
   ChevronLeft,
   GraduationCap,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { Role, RoleBadge } from "../RoleBadge";
 import { Button } from "../ui/button";
@@ -65,19 +67,24 @@ const navByRole = {
 
 export function DashboardSidebar({ role, userName, collapsed, onToggle }: DashboardSidebarProps) {
   const location = useLocation();
+  const isMobile = useIsMobile();
   const navItems = navByRole[role];
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 print:hidden",
-        collapsed ? "w-16" : "w-64"
+        "fixed left-0 top-0 z-[60] h-screen bg-sidebar transition-all duration-300 shadow-xl print:hidden",
+        collapsed
+          ? isMobile
+            ? "-translate-x-full"
+            : "w-16 translate-x-0"
+          : "translate-x-0 w-64"
       )}
     >
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16">
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <div className="flex items-center gap-2 animate-in fade-in duration-300">
               <div className="p-2 rounded-lg bg-sidebar-primary">
                 <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
@@ -85,7 +92,7 @@ export function DashboardSidebar({ role, userName, collapsed, onToggle }: Dashbo
               <span className="font-semibold text-sidebar-foreground truncate">PD Platform</span>
             </div>
           )}
-          {collapsed && (
+          {collapsed && !isMobile && (
             <div className="mx-auto bg-sidebar-primary p-2 rounded-lg">
               <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
@@ -96,10 +103,14 @@ export function DashboardSidebar({ role, userName, collapsed, onToggle }: Dashbo
             onClick={onToggle}
             className={cn(
               "text-sidebar-foreground hover:bg-sidebar-accent",
-              collapsed && "absolute -right-3 top-20 bg-sidebar border border-sidebar-border rounded-full shadow-md z-50 h-6 w-6"
+              collapsed && !isMobile && "absolute -right-3 top-20 bg-sidebar border border-sidebar-border rounded-full shadow-md z-50 h-6 w-6"
             )}
           >
-            <ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
+            {isMobile ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
+            )}
           </Button>
         </div>
 

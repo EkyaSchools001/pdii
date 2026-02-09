@@ -106,7 +106,6 @@ export function UserManagementView() {
             <PageHeader
                 title="User Management"
                 subtitle="Manage user accounts, roles, and access permissions"
-                priority={1}
                 actions={
                     // ... Dialogs ...
                     <>
@@ -225,7 +224,7 @@ export function UserManagementView() {
                 }
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Teachers</CardTitle>
@@ -285,7 +284,7 @@ export function UserManagementView() {
 
             <Card className="border-none shadow-md">
                 <CardContent className="p-0">
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

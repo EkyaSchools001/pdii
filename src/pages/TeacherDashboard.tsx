@@ -279,7 +279,7 @@ const DashboardOverview = ({
 
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <StatCard
           title="PD Hours Completed"
           value={mockPDHours.total}
@@ -355,7 +355,7 @@ const DashboardOverview = ({
             <Link to="/teacher/calendar">View Calendar</Link>
           </Button>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
             <TrainingEventCard
               key={event.id}
@@ -1003,41 +1003,43 @@ function PDHoursView() {
             Export PDF
           </Button>
         </CardHeader>
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-muted/50">
-              <TableHead className="w-[300px]">Activity</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Hours</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockPDHours.history.map((row) => (
-              <TableRow key={row.id} className="group hover:bg-muted/30 border-muted/50 transition-colors">
-                <TableCell className="font-medium">{row.activity}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="font-normal text-xs">{row.category}</Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">{row.date}</TableCell>
-                <TableCell className="text-right font-bold">{row.hours}h</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {row.status}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-muted/50">
+                <TableHead className="w-[300px]">Activity</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Hours</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {mockPDHours.history.map((row) => (
+                <TableRow key={row.id} className="group hover:bg-muted/30 border-muted/50 transition-colors">
+                  <TableCell className="font-medium">{row.activity}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-normal text-xs">{row.category}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{row.date}</TableCell>
+                  <TableCell className="text-right font-bold">{row.hours}h</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {row.status}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
   );
@@ -1163,7 +1165,7 @@ function InsightsView() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Competency Radar */}
         <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm overflow-hidden">
           <CardHeader>
@@ -1250,7 +1252,7 @@ function InsightsView() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Identified Strengths */}
         <Card className="lg:col-span-1 border-none shadow-xl bg-background/50 backdrop-blur-sm">
           <CardHeader>
