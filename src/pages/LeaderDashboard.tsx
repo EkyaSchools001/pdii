@@ -19,6 +19,7 @@ import { Observation } from "@/types/observation";
 import { GoalSettingForm } from "@/components/GoalSettingForm";
 import { TeacherAnalyticsReport } from "@/components/TeacherAnalyticsReport";
 import { LeaderPerformanceAnalytics } from "@/components/LeaderPerformanceAnalytics";
+import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getActiveTemplateByType } from "@/lib/template-utils";
@@ -1759,6 +1760,7 @@ function ObservationReportView({ observations, team }: { observations: Observati
   const teacher = team.find(t => t.name === observation?.teacher);
 
   const [showReflection, setShowReflection] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   if (!observation) {
     return (
@@ -1783,6 +1785,21 @@ function ObservationReportView({ observations, team }: { observations: Observati
           />
         </div>
         <div className="flex items-center gap-2">
+          <AIAnalysisModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            data={{ observation, teacher }}
+            type="observation"
+            title={`Observation Analysis - ${observation.teacher}`}
+          />
+          <Button
+            onClick={() => setIsAIModalOpen(true)}
+            size="sm"
+            className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/20 font-bold border-none"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            AI Smart Analysis
+          </Button>
 
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     Card,
     CardContent,
@@ -26,7 +27,9 @@ import {
     Pie,
     Cell,
 } from "recharts";
-import { Book, CheckCircle, Clock, Star, TrendingUp, Award, Target, Zap } from "lucide-react";
+import { Book, CheckCircle, Clock, Star, TrendingUp, Award, Target, Zap, Sparkles, Brain } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AIAnalysisModal } from "./AIAnalysisModal";
 
 interface TeacherAnalyticsReportProps {
     teacher: {
@@ -69,8 +72,24 @@ const competencies = [
 const COLORS = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
 
 export function TeacherAnalyticsReport({ teacher }: TeacherAnalyticsReportProps) {
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+
+    const analysisData = {
+        teacher,
+        performanceTrend,
+        domainScores,
+        competencies
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            <AIAnalysisModal
+                isOpen={isAIModalOpen}
+                onClose={() => setIsAIModalOpen(false)}
+                data={analysisData}
+                type="teacher"
+                title={`${teacher.name} - Professional Analysis`}
+            />
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-6 bg-muted/20 rounded-2xl border">
                 <div className="flex items-center gap-4">
@@ -91,7 +110,14 @@ export function TeacherAnalyticsReport({ teacher }: TeacherAnalyticsReportProps)
                     </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col items-end gap-3">
+                    <Button
+                        onClick={() => setIsAIModalOpen(true)}
+                        className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/20 font-bold border-none"
+                    >
+                        <Sparkles className="w-4 h-4 text-amber-300" />
+                        AI Smart Analysis
+                    </Button>
                     <div className="text-right">
                         <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Overall Performance</p>
                         <div className="flex items-center justify-end gap-2 mt-1">
