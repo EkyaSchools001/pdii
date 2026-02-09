@@ -16,10 +16,10 @@ import { toast } from "sonner";
 
 // Mock Data (Reusing structure for consistency)
 const initialTrainingEvents = [
-    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
-    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
-    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
-    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
+    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
+    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
+    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
+    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
 ];
 
 export function AdminCalendarView() {
@@ -78,9 +78,9 @@ export function AdminCalendarView() {
     const [currentEvent, setCurrentEvent] = useState<any>(null);
     const [newEvent, setNewEvent] = useState({ title: "", type: "Pedagogy", date: new Date(2026, 1, 15), time: "09:00 AM", location: "" });
 
-    // Helper to format Date object to "MMM DD" string
+    // Helper to format Date object to "MMM d, yyyy" string
     const formatDateStr = (d: Date) => {
-        return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
     const handleScheduleEvent = () => {
@@ -134,12 +134,10 @@ export function AdminCalendarView() {
         setIsEditOpen(true);
     }
 
-    // Helper to parse "MMM DD" string to Date object for year 2026
+    // Helper to parse "MMM d, yyyy" string to Date object
     const parseEventDate = (dateStr: string) => {
         try {
-            const [monthStr, dayStr] = dateStr.split(" ");
-            const month = new Date(`${monthStr} 1, 2026`).getMonth();
-            return new Date(2026, month, parseInt(dayStr));
+            return new Date(dateStr);
         } catch (e) {
             return new Date();
         }

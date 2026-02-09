@@ -53,10 +53,10 @@ const initialGoals = [
 ];
 
 const initialTrainingEvents = [
-  { id: "1", title: "Differentiated Instruction Workshop", type: "Pedagogy", date: "Feb 15", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved" },
-  { id: "2", title: "Digital Literacy in Classroom", type: "Technology", date: "Feb 18", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved" },
-  { id: "3", title: "Social-Emotional Learning Hub", type: "Culture", date: "Feb 22", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved" },
-  { id: "4", title: "Advanced Formative Assessment", type: "Assessment", date: "Feb 25", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending" },
+  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
+  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
+  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
+  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
 ];
 
 export default function LeaderDashboard() {
@@ -871,21 +871,23 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
   // Edit State
   const [editingEvent, setEditingEvent] = useState<typeof initialTrainingEvents[0] | null>(null);
 
-  // Helper to parse "MMM DD" string to Date object for year 2026
+  // Helper to parse "MMM d, yyyy" string to Date object
   const parseEventDate = (dateStr: string) => {
-    const [monthStr, dayStr] = dateStr.split(" ");
-    const month = new Date(`${monthStr} 1, 2026`).getMonth();
-    return new Date(2026, month, parseInt(dayStr));
+    try {
+      return new Date(dateStr);
+    } catch (e) {
+      return new Date();
+    }
   };
 
-  // Helper to format Date object to "MMM DD" string
+  // Helper to format Date object to "MMM d, yyyy" string
   const formatDateStr = (d: Date) => {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const filteredEvents = training.filter(e => {
+  const filteredEvents = training.filter((e: any) => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.type.toLowerCase().includes(searchQuery.toLowerCase());
+      (e.topic || e.type || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchesDate = true;
     if (date) {
@@ -980,10 +982,10 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
                   caption: "text-white font-bold mb-4",
                 }}
                 modifiers={{
-                  pedagogy: training.filter(e => e.type === "Pedagogy").map(e => parseEventDate(e.date)),
-                  technology: training.filter(e => e.type === "Technology").map(e => parseEventDate(e.date)),
-                  assessment: training.filter(e => e.type === "Assessment").map(e => parseEventDate(e.date)),
-                  other: training.filter(e => !["Pedagogy", "Technology", "Assessment"].includes(e.type)).map(e => parseEventDate(e.date)),
+                  pedagogy: training.filter((e: any) => (e.topic || e.type) === "Pedagogy").map((e: any) => parseEventDate(e.date)),
+                  technology: training.filter((e: any) => (e.topic || e.type) === "Technology").map((e: any) => parseEventDate(e.date)),
+                  assessment: training.filter((e: any) => (e.topic || e.type) === "Assessment").map((e: any) => parseEventDate(e.date)),
+                  other: training.filter((e: any) => !["Pedagogy", "Technology", "Assessment"].includes(e.topic || e.type)).map((e: any) => parseEventDate(e.date)),
                 }}
                 modifiersStyles={{
                   pedagogy: { border: '2px solid #3b82f6', color: 'white' }, // Blue
@@ -998,19 +1000,19 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
                   <span className="flex items-center gap-2 text-zinc-300">
                     <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Pedagogy
                   </span>
-                  <span className="font-mono text-white">{training.filter(t => t.type === 'Pedagogy').length}</span>
+                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-zinc-300">
                     <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Technology
                   </span>
-                  <span className="font-mono text-white">{training.filter(t => t.type === 'Technology').length}</span>
+                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Technology').length}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-zinc-300">
                     <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Assessment
                   </span>
-                  <span className="font-mono text-white">{training.filter(t => t.type === 'Assessment').length}</span>
+                  <span className="font-mono text-white">{training.filter((t: any) => (t.topic || t.type) === 'Assessment').length}</span>
                 </div>
               </div>
 
@@ -1077,7 +1079,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
                           </td>
                           <td className="p-6">
                             <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary uppercase tracking-wider">
-                              {session.type}
+                              {session.topic || session.type}
                             </span>
                           </td>
                           <td className="p-6">
@@ -1245,8 +1247,11 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
     const newSession = {
       id: Math.random().toString(36).substr(2, 9),
       ...formData,
+      date: new Date(formData.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       registered: 0,
-      status: "Pending" // Automatically pending approval
+      status: "Pending", // Automatically pending approval
+      topic: formData.type, // Map type to topic
+      spotsLeft: formData.capacity
     };
 
     setTraining(prev => [...prev, newSession]);

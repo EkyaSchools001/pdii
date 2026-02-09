@@ -144,20 +144,20 @@ const initialEvents = [
   {
     id: "1",
     title: "Inquiry-Based Learning Workshop",
-    date: "Jan 25, 2024",
+    date: "Jan 25, 2026",
     time: "3:00 PM - 5:00 PM",
     location: "Main Campus - Room 201",
-    topic: "Teaching Strategies",
+    topic: "Pedagogy",
     spotsLeft: 8,
     isRegistered: false,
   },
   {
     id: "2",
     title: "Technology Integration Seminar",
-    date: "Feb 2, 2024",
+    date: "Feb 2, 2026",
     time: "2:00 PM - 4:00 PM",
     location: "Virtual",
-    topic: "EdTech",
+    topic: "Technology",
     spotsLeft: 15,
     isRegistered: true,
   },
@@ -564,7 +564,7 @@ function CalendarView({
   events: typeof initialEvents,
   onRegister: (id: string) => void
 }) {
-  const [date, setDate] = useState<Date | undefined>(new Date(2024, 0, 25)); // Set a default date in center of mock data
+  const [date, setDate] = useState<Date | undefined>(new Date(2026, 0, 25)); // Set a default date in center of mock data
 
   const eventDates = events.map(event => parse(event.date, "MMM d, yyyy", new Date()));
 
