@@ -106,7 +106,10 @@ export default function LandingPage() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button
+              size="lg"
+              className="bg-transparent border border-primary-foreground text-primary-foreground hover:bg-transparent hover:text-primary-foreground transition-none shadow-none"
+            >
               Learn More
             </Button>
           </div>
