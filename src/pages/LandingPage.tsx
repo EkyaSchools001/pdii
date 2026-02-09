@@ -70,11 +70,9 @@ export default function LandingPage() {
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-6 py-6">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-accent">
-                <GraduationCap className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <span className="text-xl font-bold">PD Platform</span>
+            <div className="flex items-center gap-3">
+              <img src="/EKYA.png" alt="Ekya Schools" className="h-16 w-auto" />
+              <span className="text-xl font-bold tracking-tight">PD PLATFORM</span>
             </div>
             <Button variant="secondary" asChild>
               <Link to="/login">Sign In</Link>
@@ -109,8 +107,11 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="bg-transparent border border-primary-foreground text-primary-foreground hover:bg-transparent hover:text-primary-foreground transition-none shadow-none"
+              asChild
             >
-              Learn More
+              <a href="https://pdi.ekyaschools.com/" target="_blank" rel="noopener noreferrer">
+                Learn More
+              </a>
             </Button>
           </div>
         </div>
@@ -191,11 +192,9 @@ export default function LandingPage() {
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-accent">
-                <GraduationCap className="w-5 h-5 text-accent-foreground" />
-              </div>
-              <span className="font-semibold">PD Platform</span>
+            <div className="flex items-center gap-3">
+              <img src="/EKYA.png" alt="Ekya Schools" className="h-12 w-auto brightness-0 invert" />
+              <span className="font-bold tracking-tight text-lg">PD PLATFORM</span>
             </div>
             <p className="text-sm text-primary-foreground/70">
               © 2024 Professional Development Platform. All rights reserved.
