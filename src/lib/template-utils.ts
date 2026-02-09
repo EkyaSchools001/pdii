@@ -134,7 +134,8 @@ export const initialTemplates: FormTemplate[] = [
             { id: "m3", label: "Campus", type: "select", required: true, options: ["CMR NPS", "EITPL", "EBYR", "EJPN", "EBTM", "ENICE", "ENAVA", "PU BTM", "PU BYR", "PU HRBR", "PU ITPL", "PU NICE", "HO"] },
             { id: "m4", label: "Name of Course", type: "text", required: true },
             { id: "m5", label: "Number of Hours", type: "text", required: true },
-            { id: "m6", label: "Date of Completion", type: "text", required: true },
+            { id: "m_start", label: "Date of Start", type: "date", required: true },
+            { id: "m_end", label: "Date of End", type: "date", required: true },
             { id: "m7", label: "Platform", type: "radio", required: true, options: ["Coursera", "FutureLearn", "Khan Academy", "edX", "Alison", "Class Central", "Schoology", "Other"] },
             { id: "m8", label: "Specify Platform (if other)", type: "text", required: false },
             { id: "m9", label: "Do you have a completion certificate?", type: "radio", required: true, options: ["Yes", "No"] },
@@ -187,6 +188,30 @@ export const getTemplates = (): FormTemplate[] => {
                         const newFields = [...t.fields];
                         newFields.splice(dateIndex + 1, 0, { id: "o5", label: "Time", type: "time", required: true });
                         t.fields = newFields;
+                        needsUpdate = true;
+                    }
+                }
+
+                // Auto-migration: Add Date of Start/End to MOOC Form
+                if (t.id === 5) {
+                    const startField = t.fields.find((f: any) => f.label === "Date of Start");
+                    if (!startField) {
+                        const hoursIndex = t.fields.findIndex((f: any) => f.label === "Number of Hours");
+                        if (hoursIndex !== -1) {
+                            const newFields = [...t.fields];
+                            newFields.splice(hoursIndex + 1, 0,
+                                { id: "m_start", label: "Date of Start", type: "date", required: true },
+                                { id: "m_end", label: "Date of End", type: "date", required: true }
+                            );
+                            t.fields = newFields;
+                            needsUpdate = true;
+                        }
+                    }
+
+                    // Auto-migration: Remove Date of Completion from MOOC Form
+                    const completionField = t.fields.find((f: any) => f.label === "Date of Completion");
+                    if (completionField) {
+                        t.fields = t.fields.filter((f: any) => f.label !== "Date of Completion");
                         needsUpdate = true;
                     }
                 }
