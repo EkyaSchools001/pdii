@@ -62,6 +62,15 @@ export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit"
                             />
                         )}
 
+                        {(field.type === "date" || field.type === "time") && (
+                            <Input
+                                id={field.id}
+                                type={field.type}
+                                value={formData[field.id] || ""}
+                                onChange={(e) => handleInputChange(field.id, e.target.value)}
+                            />
+                        )}
+
                         {field.type === "select" && (
                             <Select
                                 value={formData[field.id] || ""}

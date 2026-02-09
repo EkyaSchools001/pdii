@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, Routes, Route, useParams } from "react-router-dom";
 import { Observation } from "@/types/observation";
@@ -22,6 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getActiveTemplateByType } from "@/lib/template-utils";
 import { DynamicForm } from "@/components/DynamicForm";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const teamMembers = [
   { id: "1", name: "Emily Rodriguez", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
@@ -113,7 +115,7 @@ export default function LeaderDashboard() {
         <Route path="observations" element={<ObservationsManagementView observations={observations} />} />
         <Route path="observations/:obsId" element={<ObservationReportView observations={observations} team={team} />} />
         <Route path="performance" element={<LeaderPerformanceAnalytics team={team} observations={observations} />} />
-        <Route path="calendar" element={<PDCalendarView training={training} />} />
+        <Route path="calendar" element={<PDCalendarView training={training} setTraining={setTraining} />} />
         <Route path="calendar/propose" element={<ProposeCourseView setTraining={setTraining} />} />
         <Route path="calendar/responses" element={<MoocResponsesView />} />
         <Route path="calendar/events/:eventId" element={<PlaceholderView title="PD Event Details" icon={Book} />} />
@@ -348,10 +350,7 @@ function TeamManagementView({ team }: { team: typeof teamMembers }) {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Teacher
-          </Button>
+
         </div>
       </div>
 
@@ -827,10 +826,13 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
   );
 }
 
-function PDCalendarView({ training }: { training: typeof initialTrainingEvents }) {
+function PDCalendarView({ training, setTraining }: { training: typeof initialTrainingEvents, setTraining: React.Dispatch<React.SetStateAction<typeof initialTrainingEvents>> }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [date, setDate] = useState<Date | undefined>(new Date(2026, 1, 15)); // Default to Feb 15, 2026
+
+  // Edit State
+  const [editingEvent, setEditingEvent] = useState<typeof initialTrainingEvents[0] | null>(null);
 
   // Helper to parse "MMM DD" string to Date object for year 2026
   const parseEventDate = (dateStr: string) => {
@@ -858,6 +860,15 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
 
   // Get dates that have events for highlighting
   const eventDates = training.map(e => parseEventDate(e.date));
+
+  const handleSaveEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+
+    setTraining(prev => prev.map(ev => ev.id === editingEvent.id ? editingEvent : ev));
+    setEditingEvent(null);
+    toast.success("Event details updated successfully.");
+  };
 
   return (
     <div className="space-y-6">
@@ -901,7 +912,6 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar Widget */}
-        {/* Calendar Widget - Fitness Style */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
             {/* decorative gradient blob */}
@@ -1056,7 +1066,12 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
                             </span>
                           </td>
                           <td className="p-6 text-right">
-                            <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/10 hover:text-primary">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 hover:bg-primary/10 hover:text-primary"
+                              onClick={() => setEditingEvent(session)}
+                            >
                               Edit
                             </Button>
                           </td>
@@ -1078,6 +1093,94 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
           </Card>
         </div>
       </div>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Event Details</DialogTitle>
+            <DialogDescription>Update the schedule or details for this professional development session.</DialogDescription>
+          </DialogHeader>
+
+          {editingEvent && (
+            <form onSubmit={handleSaveEvent} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Event Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editingEvent.title}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-type">Type</Label>
+                  <Select
+                    value={editingEvent.type}
+                    onValueChange={(val) => setEditingEvent({ ...editingEvent, type: val })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pedagogy">Pedagogy</SelectItem>
+                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Assessment">Assessment</SelectItem>
+                      <SelectItem value="Culture">Culture</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select
+                    value={editingEvent.status}
+                    onValueChange={(val) => setEditingEvent({ ...editingEvent, status: val })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Date (MMM DD)</Label>
+                  <Input
+                    id="edit-date"
+                    value={editingEvent.date}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-time">Time</Label>
+                  <Input
+                    id="edit-time"
+                    value={editingEvent.time}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Location</Label>
+                <Input
+                  id="edit-location"
+                  value={editingEvent.location}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>Cancel</Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1237,10 +1340,25 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
   const [selectedTeacher, setSelectedTeacher] = useState<typeof teamMembers[0] | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  const filteredTeam = team.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter State
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [performanceFilter, setPerformanceFilter] = useState("all");
+
+  const roles = Array.from(new Set(team.map(t => t.role)));
+
+  const filteredTeam = team.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.role.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesRole = selectedRole === "all" || t.role === selectedRole;
+
+    const matchesPerformance = performanceFilter === "all" ||
+      (performanceFilter === "high" && t.avgScore >= 4.0) ||
+      (performanceFilter === "proficient" && t.avgScore >= 3.0 && t.avgScore < 4.0) ||
+      (performanceFilter === "support" && t.avgScore < 3.0);
+
+    return matchesSearch && matchesRole && matchesPerformance;
+  });
 
   const handleEmailReport = (teacher: typeof teamMembers[0]) => {
     setSendingId(teacher.id);
@@ -1254,6 +1372,12 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
       });
     }, 1500);
   };
+
+  const resetFilters = () => {
+    setSelectedRole("all");
+    setPerformanceFilter("all");
+    setSearchQuery("");
+  }
 
   return (
     <div className="space-y-6">
@@ -1300,9 +1424,55 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon" className="rounded-xl">
-                <Filter className="w-4 h-4" />
-              </Button>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className={cn("rounded-xl", (selectedRole !== "all" || performanceFilter !== "all") && "border-primary text-primary bg-primary/10")}>
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="end">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Filter Reports</h4>
+                      <p className="text-sm text-muted-foreground">Narrow down the list by role or performance.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Role</Label>
+                      <Select value={selectedRole} onValueChange={setSelectedRole}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Roles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Roles</SelectItem>
+                          {roles.map(role => (
+                            <SelectItem key={role} value={role}>{role}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Performance Band</Label>
+                      <Select value={performanceFilter} onValueChange={setPerformanceFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Performance Levels" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Performance Levels</SelectItem>
+                          <SelectItem value="high">High Performing (4.0+)</SelectItem>
+                          <SelectItem value="proficient">Proficient (3.0-3.9)</SelectItem>
+                          <SelectItem value="support">Needs Support (&lt;3.0)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="pt-2 flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground hover:text-foreground">
+                        Reset Filters
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardHeader>
@@ -1319,74 +1489,82 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-muted-foreground/10">
-                {filteredTeam.map((member) => (
-                  <tr key={member.id} className="hover:bg-primary/5 transition-colors group">
-                    <td className="p-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {member.name.split(' ').map(n => n[0]).join('')}
+                {filteredTeam.length > 0 ? (
+                  filteredTeam.map((member) => (
+                    <tr key={member.id} className="hover:bg-primary/5 transition-colors group">
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {member.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          <div>
+                            <p className="font-bold text-foreground">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-foreground">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.role}</p>
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center gap-2">
+                          <Star className={cn("w-4 h-4", member.avgScore >= 4.0 ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
+                          <span className="font-bold">{member.avgScore}</span>
+                          <span className="text-xs text-muted-foreground">/ 5.0</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <div className="flex items-center gap-2">
-                        <Star className={cn("w-4 h-4", member.avgScore >= 4.0 ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
-                        <span className="font-bold">{member.avgScore}</span>
-                        <span className="text-xs text-muted-foreground">/ 5.0</span>
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <div className="space-y-1.5 max-w-[140px]">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-medium">{member.pdHours}h</span>
-                          <span className="text-muted-foreground">{member.completionRate}%</span>
+                      </td>
+                      <td className="p-6">
+                        <div className="space-y-1.5 max-w-[140px]">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium">{member.pdHours}h</span>
+                            <span className="text-muted-foreground">{member.completionRate}%</span>
+                          </div>
+                          <Progress value={member.completionRate} className="h-1.5" />
                         </div>
-                        <Progress value={member.completionRate} className="h-1.5" />
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <p className="text-sm text-foreground">{member.lastObserved}, 2026</p>
-                    </td>
-                    <td className="p-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9 gap-2"
-                          onClick={() => {
-                            setSelectedTeacher(member);
-                            setIsReportOpen(true);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                          Preview
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="h-9 gap-2 min-w-[100px]"
-                          disabled={sendingId === member.id}
-                          onClick={() => handleEmailReport(member)}
-                        >
-                          {sendingId === member.id ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                              Sending
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="w-4 h-4" />
-                              Email
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                      </td>
+                      <td className="p-6">
+                        <p className="text-sm text-foreground">{member.lastObserved}, 2026</p>
+                      </td>
+                      <td className="p-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 gap-2"
+                            onClick={() => {
+                              setSelectedTeacher(member);
+                              setIsReportOpen(true);
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Preview
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-9 gap-2 min-w-[100px]"
+                            disabled={sendingId === member.id}
+                            onClick={() => handleEmailReport(member)}
+                          >
+                            {sendingId === member.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                Sending
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-4 h-4" />
+                                Email
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      No teachers found matching your filters.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

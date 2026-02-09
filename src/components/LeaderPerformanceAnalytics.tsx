@@ -24,6 +24,7 @@ interface TeamMember {
     avgScore: number;
     observations: number;
     lastObserved: string;
+    pdHours: number;
 }
 
 interface LeaderPerformanceAnalyticsProps {
@@ -33,43 +34,44 @@ interface LeaderPerformanceAnalyticsProps {
 
 export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerformanceAnalyticsProps) {
     const navigate = useNavigate();
-    const [timeRange, setTimeRange] = useState("ay-25-26");
+    const [selectedRole, setSelectedRole] = useState("all");
+    const [selectedStatus, setSelectedStatus] = useState("all");
 
-    // --- Dynamic Data Calculation ---
+    // Extract unique roles
+    const roles = Array.from(new Set(team.map(t => t.role)));
+
+    // Filter Logic
+    const filteredTeam = team.filter(t => {
+        const matchesRole = selectedRole === "all" || t.role === selectedRole;
+        const matchesStatus = selectedStatus === "all" ||
+            (selectedStatus === "high" && t.avgScore >= 4.0) ||
+            (selectedStatus === "proficient" && t.avgScore >= 3.0 && t.avgScore < 4.0) ||
+            (selectedStatus === "needs-support" && t.avgScore < 3.0);
+        return matchesRole && matchesStatus;
+    });
+
+    const filteredObservations = observations.filter(o => filteredTeam.some(t => t.name === o.teacher));
+
+    // --- Dynamic Data Calculation (Using Filtered Data) ---
 
     // 1. Calculate Average Score
-    // In a real app, this would be weighted or filtered by timeRange
-    const currentAvgScore = team.length > 0
-        ? team.reduce((acc, curr) => acc + curr.avgScore, 0) / team.length
+    const currentAvgScore = filteredTeam.length > 0
+        ? filteredTeam.reduce((acc, curr) => acc + curr.avgScore, 0) / filteredTeam.length
         : 0;
 
     // 2. Trend Data Aggregation (Monthly)
-    // Group observations by month and calculate average score per month
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
     const trendMap = new Map<string, { total: number; count: number }>();
 
-    // Initialize with some data for context if empty, or just use observations
-    // For this mock, we'll iterate through observations. 
-    // If observations are sparse, we might want to fill gaps, but let's keep it simple.
-
-    observations.forEach(obs => {
-        // obs.date is likely "Jan 15" or ISO string. Let's handle "MMM DD" format from mock data
-        // or ISO string if it comes from real input.
-        // The mock data uses "Jan 15".
+    filteredObservations.forEach(obs => {
         const dateParts = obs.date.split(" ");
         let month = dateParts[0];
-
-        // If it's a full date string, parse it
         if (!monthNames.includes(month)) {
             try {
                 const d = new Date(obs.date);
-                if (!isNaN(d.getTime())) {
-                    month = monthNames[d.getMonth()];
-                }
+                if (!isNaN(d.getTime())) month = monthNames[d.getMonth()];
             } catch (e) { }
         }
-
         if (month) {
             const current = trendMap.get(month) || { total: 0, count: 0 };
             trendMap.set(month, {
@@ -79,43 +81,32 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
         }
     });
 
-    // Convert map to array for Recharts
-    // We want to sort chronologically. Let's assume an Academic Year starting Aug.
     const academicYearOrder = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
-
     const trendData = academicYearOrder.map(month => {
         const data = trendMap.get(month);
-        // Mock district data for comparison
         const districtBase = 3.2;
         const districtVariation = (academicYearOrder.indexOf(month) * 0.05);
-
         return {
             month,
-            score: data ? Number((data.total / data.count).toFixed(1)) : null, // null for no data points
+            score: data ? Number((data.total / data.count).toFixed(1)) : null,
             district: Number((districtBase + districtVariation).toFixed(1))
         };
-    }).filter(d => d.score !== null || d.month === "Jan"); // Keep at least one point or filter nulls if preferred
+    }).filter(d => d.score !== null || d.month === "Jan");
 
-    // If no data, provide a fallback for visualization
-    if (trendData.length === 0) {
-        trendData.push({ month: 'Jan', score: 0, district: 3.5 });
-    }
+    if (trendData.length === 0) trendData.push({ month: 'Jan', score: 0, district: 3.5 });
 
     // 3. Domain Data Aggregation
     const domainMap = new Map<string, { total: number; count: number }>();
-
-    observations.forEach(obs => {
-        const domain = obs.domain;
-        if (domain) {
-            const current = domainMap.get(domain) || { total: 0, count: 0 };
-            domainMap.set(domain, {
+    filteredObservations.forEach(obs => {
+        if (obs.domain) {
+            const current = domainMap.get(obs.domain) || { total: 0, count: 0 };
+            domainMap.set(obs.domain, {
                 total: current.total + (obs.score || 0),
                 count: current.count + 1
             });
         }
     });
 
-    // Ensure we have all key domains represented even if 0
     const allDomains = ["Instruction", "Planning", "Environment", "Professionalism", "Assessment"];
     const domainData = allDomains.map(subject => {
         const data = domainMap.get(subject);
@@ -126,15 +117,39 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
         };
     });
 
-    const totalObservations = observations.length;
-    // Mock growth percentage (could be calculated if we had historical snapshots)
-    const growth = 5.2;
+    const totalObservations = filteredObservations.length;
+    const growth = 5.2; // Mock
 
-    // Teachers needing focus (Score < 3.8)
-    const focusTeachers = team.filter(t => t.avgScore < 4.0);
+    // Teachers Lists (from filtered team)
+    const focusTeachers = filteredTeam.filter(t => t.avgScore < 4.0);
+    const topTeachers = filteredTeam.filter(t => t.avgScore >= 4.0).sort((a, b) => b.avgScore - a.avgScore);
 
-    // Top Performers (Score >= 4.0)
-    const topTeachers = team.filter(t => t.avgScore >= 4.0).sort((a, b) => b.avgScore - a.avgScore);
+    const handleExport = () => {
+        const headers = ["Name", "Role", "Average Score", "Observations", "Last Observed", "PD Hours"];
+        const rows = filteredTeam.map(t => [
+            t.name,
+            t.role,
+            t.avgScore.toString(),
+            t.observations.toString(),
+            t.lastObserved,
+            t.pdHours.toString()
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(r => r.join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `performance_report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -146,28 +161,40 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
                     <PageHeader
                         title="Performance Analytics"
                         subtitle="Deep dive into school-wide teaching effectiveness and growth trends."
-                        priority={1}
+
                     />
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Select value={timeRange} onValueChange={setTimeRange}>
-                        <SelectTrigger className="w-[180px]">
-                            <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                            <SelectValue placeholder="Select Range" />
+                    {/* Role Filter */}
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                        <SelectTrigger className="w-[150px]">
+                            <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                            <SelectValue placeholder="Role" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="ay-25-26">AY 2025-26</SelectItem>
-                            <SelectItem value="term-1">Term 1</SelectItem>
-                            <SelectItem value="term-2">Term 2</SelectItem>
-                            <SelectItem value="last-month">Last Month</SelectItem>
+                            <SelectItem value="all">All Roles</SelectItem>
+                            {roles.map(role => (
+                                <SelectItem key={role} value={role}>{role}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" className="gap-2">
-                        <Filter className="w-4 h-4" />
-                        Filters
-                    </Button>
-                    <Button variant="outline" className="gap-2">
+
+                    {/* Status Filter */}
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                        <SelectTrigger className="w-[160px]">
+                            <Activity className="w-4 h-4 mr-2 text-muted-foreground" />
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="high">High Performing (4.0+)</SelectItem>
+                            <SelectItem value="proficient">Proficient (3.0-3.9)</SelectItem>
+                            <SelectItem value="needs-support">Needs Support (&lt;3.0)</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Button variant="outline" className="gap-2" onClick={handleExport}>
                         <Download className="w-4 h-4" />
                         Export
                     </Button>
