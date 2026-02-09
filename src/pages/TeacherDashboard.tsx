@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -57,6 +59,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getActiveTemplateByType } from "@/lib/template-utils";
 import { DynamicForm } from "@/components/DynamicForm";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ResponsiveContainer,
   Radar,
@@ -680,6 +690,20 @@ function CalendarView({
 
 function CoursesView() {
   const [isMoocFormOpen, setIsMoocFormOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | "all">("all");
+
+  const categories = Array.from(new Set(mockCourses.map(c => c.category)));
+
+  const filteredCourses = mockCourses.filter(course => {
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.instructor.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory = selectedCategory === "all" || course.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="space-y-6">
@@ -695,11 +719,32 @@ function CoursesView() {
           </Button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input className="pl-9 w-[200px] lg:w-[300px]" placeholder="Search courses..." />
+            <Input
+              className="pl-9 w-[200px] lg:w-[300px]"
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className={selectedCategory !== "all" ? "bg-accent text-accent-foreground border-accent" : ""}>
+                <Filter className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSelectedCategory("all")}>
+                All Categories
+              </DropdownMenuItem>
+              {categories.map(category => (
+                <DropdownMenuItem key={category} onClick={() => setSelectedCategory(category)}>
+                  {category}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -740,7 +785,7 @@ function CoursesView() {
             <h3 className="text-xl font-bold">Continue Learning</h3>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockCourses.filter(c => c.status === 'in-progress').map(course => (
+            {filteredCourses.filter(c => c.status === 'in-progress').map(course => (
               <CourseCard key={course.id} course={course} />
             ))}
           </div>
@@ -753,7 +798,7 @@ function CoursesView() {
             <h3 className="text-xl font-bold">Recommended for You</h3>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockCourses.filter(c => c.status === 'recommended').map(course => (
+            {filteredCourses.filter(c => c.status === 'recommended').map(course => (
               <CourseCard key={course.id} course={course} />
             ))}
           </div>
@@ -766,7 +811,7 @@ function CoursesView() {
             <h3 className="text-xl font-bold">Completed Courses</h3>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockCourses.filter(c => c.status === 'completed').map(course => (
+            {filteredCourses.filter(c => c.status === 'completed').map(course => (
               <CourseCard key={course.id} course={course} />
             ))}
           </div>
@@ -835,6 +880,50 @@ function CourseCard({ course }: { course: typeof mockCourses[0] }) {
 }
 
 function PDHoursView() {
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    // Add title
+    doc.setFontSize(20);
+    doc.text("Professional Development Activity Log", 14, 22);
+
+    // Add date
+    doc.setFontSize(11);
+    doc.text(`Generated on: ${format(new Date(), "MMM d, yyyy")}`, 14, 30);
+
+    // Add teacher info
+    doc.text("Teacher: Emily Rodriguez", 14, 38);
+
+    // Create table
+    const tableColumn = ["Activity", "Category", "Date", "Hours", "Status"];
+    const tableRows = mockPDHours.history.map(item => [
+      item.activity,
+      item.category,
+      item.date,
+      `${item.hours}h`,
+      item.status
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      theme: 'grid',
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+    });
+
+    // Save the PDF
+    doc.save("activity_history.pdf");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -924,7 +1013,7 @@ function PDHoursView() {
             <CardTitle className="text-xl font-bold">Activity History</CardTitle>
             <CardDescription>A detailed log of all your PD activities</CardDescription>
           </div>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExportPDF}>
             <Download className="w-4 h-4" />
             Export PDF
           </Button>

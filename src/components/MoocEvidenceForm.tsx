@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon, Upload, CheckCircle2, User, BookOpen, Link as LinkIcon, Star, MessageSquare, Brain } from "lucide-react";
+import { CalendarIcon, Upload, CheckCircle2, User, BookOpen, Link as LinkIcon, Star, MessageSquare, Brain, FileText, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,12 @@ const formSchema = z.object({
         message: "Rating must be between 1 and 10",
     }),
     additionalFeedback: z.string().optional(),
+
+    // Section 6: Supporting Documents (Optional)
+    supportingDocType: z.enum(["link", "file"]).optional(),
+    supportingDocLink: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+    supportingDocFile: z.string().optional(),
+    supportingDocFileName: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.platform === "Other" && !data.otherPlatform) {
         ctx.addIssue({
@@ -123,6 +129,22 @@ const formSchema = z.object({
             });
         }
     }
+
+    if (data.supportingDocType === "link" && !data.supportingDocLink) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please provide the document link",
+            path: ["supportingDocLink"],
+        });
+    }
+
+    if (data.supportingDocType === "file" && !data.supportingDocFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please upload a file",
+            path: ["supportingDocFile"], // This might need manual handling since it's not a standard input
+        });
+    }
 });
 
 interface MoocEvidenceFormProps {
@@ -142,12 +164,38 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             hasCertificate: "yes",
             proofLink: "",
             otherPlatform: "",
+            otherPlatform: "",
             additionalFeedback: "",
+            supportingDocType: undefined,
+            supportingDocLink: "",
+            supportingDocFile: "",
+            supportingDocFileName: "",
         },
     });
 
     const hasCertificate = form.watch("hasCertificate");
+    const hasCertificate = form.watch("hasCertificate");
     const selectedPlatform = form.watch("platform");
+    const supportingDocType = form.watch("supportingDocType");
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 500 * 1024) { // 500KB limit
+                toast.error("File size exceeds 500KB limit");
+                e.target.value = ""; // Reset input
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                form.setValue("supportingDocFile", base64String);
+                form.setValue("supportingDocFileName", file.name);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     function handleSubmit(values: z.infer<typeof formSchema>) {
         console.log("Form Data:", values);
@@ -498,6 +546,88 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                                 />
                             </div>
                         )}
+
+                        <Separator />
+
+                        {/* Section 6: Supporting Documents (Optional) */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground border-l-4 border-primary pl-3">
+                                <Paperclip className="w-5 h-5 text-muted-foreground" />
+                                Supporting Documents <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                            </h3>
+                            <FormField
+                                control={form.control}
+                                name="supportingDocType"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                        <FormLabel>Attach additional evidence (e.g., project files, notes, screenshots)</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                                className="flex gap-4"
+                                            >
+                                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="link" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">Drive Link</FormLabel>
+                                                </FormItem>
+                                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="file" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">File Upload</FormLabel>
+                                                </FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {supportingDocType === "link" && (
+                                <FormField
+                                    control={form.control}
+                                    name="supportingDocLink"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Document Link</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                    <Input className="pl-9" placeholder="https://..." {...field} />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
+                            {supportingDocType === "file" && (
+                                <div className="space-y-2">
+                                    <FormLabel>Upload File (Max 500KB)</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                            onChange={handleFileChange}
+                                            className="cursor-pointer"
+                                        />
+                                    </div>
+                                    {form.watch("supportingDocFileName") && (
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                            <FileText className="w-3 h-3" />
+                                            Selected: {form.watch("supportingDocFileName")}
+                                        </p>
+                                    )}
+                                    <FormMessage>
+                                        {form.formState.errors.supportingDocFile?.message}
+                                    </FormMessage>
+                                </div>
+                            )}
+                        </div>
 
                         <Separator />
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -2975,12 +2975,53 @@ function MoocResponsesView() {
                     <p className="mt-1 text-sm bg-muted p-3 rounded-md whitespace-pre-wrap">{selectedSubmission.unansweredQuestions}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Enjoyed Most</Label>
-                    <p className="mt-1 text-sm bg-muted p-3 rounded-md">{selectedSubmission.enjoyedMost}</p>
+                    <Label className="text-muted-foreground">Self-Assessment</Label>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-4 h-4 text-primary fill-primary" />
+                      <span className="font-bold">{selectedSubmission.effectivenessRating}/10</span>
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* Supporting Documents Section */}
+              {(selectedSubmission.supportingDocType || selectedSubmission.supportingDocLink || selectedSubmission.supportingDocFile) && (
+                <div>
+                  <div className="h-px bg-border my-4" />
+                  <h4 className="font-semibold flex items-center gap-2 mb-3">
+                    <Paperclip className="w-4 h-4" /> Supporting Documents
+                  </h4>
+
+                  {selectedSubmission.supportingDocType === 'link' && selectedSubmission.supportingDocLink && (
+                    <div>
+                      <Label className="text-muted-foreground block mb-2">External Link</Label>
+                      <a
+                        href={selectedSubmission.supportingDocLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-primary hover:underline border px-4 py-2 rounded-md bg-primary/5"
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                        Open Attached Document
+                      </a>
+                    </div>
+                  )}
+
+                  {selectedSubmission.supportingDocType === 'file' && selectedSubmission.supportingDocFile && (
+                    <div>
+                      <Label className="text-muted-foreground block mb-2">Attached File</Label>
+                      <a
+                        href={selectedSubmission.supportingDocFile}
+                        download={selectedSubmission.supportingDocFileName || "supporting-document"}
+                        className="inline-flex items-center gap-2 text-primary hover:underline border px-4 py-2 rounded-md bg-primary/5"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download {selectedSubmission.supportingDocFileName || "Document"}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="h-px bg-border my-4" />
 
               <div>
