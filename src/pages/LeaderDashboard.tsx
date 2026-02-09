@@ -1772,11 +1772,41 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGoal, setSelectedGoal] = useState<typeof initialGoals[0] | null>(null);
   const [reviewFeedback, setReviewFeedback] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [teacherFilter, setTeacherFilter] = useState("All");
+  const [progressFilter, setProgressFilter] = useState("All");
 
-  const filteredGoals = goals.filter(g =>
-    g.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    g.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get unique teachers for filter
+  const uniqueTeachers = Array.from(new Set(goals.map(g => g.teacher)));
+
+  // Apply all filters
+  const filteredGoals = goals.filter(g => {
+    const matchesSearch = g.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory = categoryFilter === "All" || g.category === categoryFilter;
+    const matchesStatus = statusFilter === "All" || g.status === statusFilter;
+    const matchesTeacher = teacherFilter === "All" || g.teacher === teacherFilter;
+
+    let matchesProgress = true;
+    if (progressFilter === "<50%") matchesProgress = g.progress < 50;
+    else if (progressFilter === "50-79%") matchesProgress = g.progress >= 50 && g.progress < 80;
+    else if (progressFilter === "≥80%") matchesProgress = g.progress >= 80;
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesTeacher && matchesProgress;
+  });
+
+  // Count active filters
+  const activeFilterCount = [categoryFilter, statusFilter, teacherFilter, progressFilter].filter(f => f !== "All").length;
+
+  const clearAllFilters = () => {
+    setCategoryFilter("All");
+    setStatusFilter("All");
+    setTeacherFilter("All");
+    setProgressFilter("All");
+  };
 
   const handleReviewSubmit = () => {
     toast.success(`Review submitted for ${selectedGoal?.teacher}'s goal.`);
@@ -1835,9 +1865,96 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon" className="rounded-xl">
-                <Filter className="w-4 h-4" />
-              </Button>
+              <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-xl relative">
+                    <Filter className="w-4 h-4" />
+                    {activeFilterCount > 0 && (
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-sm">Filters</h4>
+                      {activeFilterCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="h-8 text-xs"
+                        >
+                          Clear all
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Category</Label>
+                        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="All categories" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="All">All Categories</SelectItem>
+                            <SelectItem value="Instruction">Instruction</SelectItem>
+                            <SelectItem value="Assessment">Assessment</SelectItem>
+                            <SelectItem value="Management">Management</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="All statuses" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="All">All Statuses</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="Near Completion">Near Completion</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Teacher</Label>
+                        <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="All teachers" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="All">All Teachers</SelectItem>
+                            {uniqueTeachers.map(teacher => (
+                              <SelectItem key={teacher} value={teacher}>{teacher}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Progress Level</Label>
+                        <Select value={progressFilter} onValueChange={setProgressFilter}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="All progress levels" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="All">All Progress Levels</SelectItem>
+                            <SelectItem value="<50%">Below 50%</SelectItem>
+                            <SelectItem value="50-79%">50% - 79%</SelectItem>
+                            <SelectItem value="≥80%">80% and above</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardHeader>
