@@ -1045,6 +1045,7 @@ function PDHoursView() {
 
 function InsightsView() {
   const navigate = useNavigate();
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const handleDownloadPortfolio = () => {
     const doc = new jsPDF();
 
@@ -1139,10 +1140,27 @@ function InsightsView() {
           title="Professional Insights"
           subtitle="Data-driven overview of your teaching competencies and growth"
         />
-        <Button variant="outline" className="gap-2" onClick={handleDownloadPortfolio}>
-          <Download className="w-4 h-4" />
-          Download Growth Portfolio
-        </Button>
+        <div className="flex items-center gap-2">
+          <AIAnalysisModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            data={{ insights: mockInsights }}
+            type="teacher"
+            title="Personalized Professional Growth Analysis"
+          />
+          <Button
+            onClick={() => setIsAIModalOpen(true)}
+            variant="outline"
+            className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-600" />
+            AI Smart Insights
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={handleDownloadPortfolio}>
+            <Download className="w-4 h-4" />
+            Download Growth Portfolio
+          </Button>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

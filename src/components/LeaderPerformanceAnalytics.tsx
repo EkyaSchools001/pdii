@@ -16,6 +16,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Observation } from "@/types/observation";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { AIAnalysisModal } from "./AIAnalysisModal";
+import { Sparkles } from "lucide-react";
 
 interface TeamMember {
     id: string;
@@ -36,6 +38,7 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
     const navigate = useNavigate();
     const [selectedRole, setSelectedRole] = useState("all");
     const [selectedStatus, setSelectedStatus] = useState("all");
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
     // Extract unique roles
     const roles = Array.from(new Set(team.map(t => t.role)));
@@ -161,11 +164,25 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
                     <PageHeader
                         title="Performance Analytics"
                         subtitle="Deep dive into school-wide teaching effectiveness and growth trends."
-
                     />
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <AIAnalysisModal
+                        isOpen={isAIModalOpen}
+                        onClose={() => setIsAIModalOpen(false)}
+                        data={{ team: filteredTeam, observations: filteredObservations }}
+                        type="admin"
+                        title="Performance Trends AI Analysis"
+                    />
+                    <Button
+                        onClick={() => setIsAIModalOpen(true)}
+                        variant="outline"
+                        className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
+                    >
+                        <Sparkles className="w-4 h-4 text-indigo-600" />
+                        AI Smart Insights
+                    </Button>
                     {/* Role Filter */}
                     <Select value={selectedRole} onValueChange={setSelectedRole}>
                         <SelectTrigger className="w-[150px]">

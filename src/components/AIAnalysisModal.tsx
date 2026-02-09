@@ -64,9 +64,6 @@ export function AIAnalysisModal({ isOpen, onClose, data, type, title }: AIAnalys
                             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
                                 <Sparkles className="w-5 h-5 text-amber-300" />
                             </div>
-                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 px-2 py-0 text-[10px] uppercase tracking-widest font-bold">
-                                Groq AI Powered
-                            </Badge>
                         </div>
                         <DialogTitle className="text-2xl font-black tracking-tight">{title || "AI Smart Analysis"}</DialogTitle>
                         <DialogDescription className="text-blue-100 font-medium">
@@ -106,17 +103,6 @@ export function AIAnalysisModal({ isOpen, onClose, data, type, title }: AIAnalys
                                 {analysis && formatContent(analysis)}
                             </div>
 
-                            <div className="pt-6 border-t">
-                                <div className="p-4 bg-muted/30 rounded-xl border flex items-start gap-3">
-                                    <CheckCircle className="w-5 h-5 text-success mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="font-bold text-sm">Actionable Insight</p>
-                                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                                            These insights are generated based on identified historical patterns in pedagogical growth and competency development cycles.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </ScrollArea>
@@ -124,8 +110,8 @@ export function AIAnalysisModal({ isOpen, onClose, data, type, title }: AIAnalys
                 <div className="p-4 bg-muted/20 border-t flex justify-end">
                     <Button onClick={onClose} variant="secondary" className="font-bold px-8">Close Analysis</Button>
                 </div>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     );
 }
 
