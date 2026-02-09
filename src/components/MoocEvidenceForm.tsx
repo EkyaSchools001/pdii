@@ -63,8 +63,11 @@ const formSchema = z.object({
         required_error: "Please select a platform",
     }),
     otherPlatform: z.string().optional(),
-    completionDate: z.date({
-        required_error: "Date of completion is required",
+    startDate: z.date({
+        required_error: "Date of start is required",
+    }).max(new Date(), "Date cannot be in the future"),
+    endDate: z.date({
+        required_error: "Date of end is required",
     }).max(new Date(), "Date cannot be in the future"),
 
     // Section 3: Certificate / Proof
@@ -164,8 +167,9 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             hasCertificate: "yes",
             proofLink: "",
             otherPlatform: "",
-            otherPlatform: "",
             additionalFeedback: "",
+            startDate: new Date(),
+            endDate: new Date(),
             supportingDocType: undefined,
             supportingDocLink: "",
             supportingDocFile: "",
@@ -173,7 +177,6 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
         },
     });
 
-    const hasCertificate = form.watch("hasCertificate");
     const hasCertificate = form.watch("hasCertificate");
     const selectedPlatform = form.watch("platform");
     const supportingDocType = form.watch("supportingDocType");
@@ -209,7 +212,8 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                 submittedAt: new Date().toISOString(),
                 ...values,
                 // Ensure dates are strings for JSON storage
-                completionDate: values.completionDate.toISOString()
+                startDate: values.startDate.toISOString(),
+                endDate: values.endDate.toISOString()
             };
 
             submissions.push(newSubmission);
@@ -348,10 +352,51 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="completionDate"
+                                        name="startDate"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
-                                                <FormLabel>Date of Completion *</FormLabel>
+                                                <FormLabel>Date of Start *</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant={"outline"}
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value ? (
+                                                                    format(field.value, "PPP")
+                                                                ) : (
+                                                                    <span>Pick a date</span>
+                                                                )}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={field.value}
+                                                            onSelect={field.onChange}
+                                                            disabled={(date) =>
+                                                                date > new Date() || date < new Date("1900-01-01")
+                                                            }
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="endDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Date of End *</FormLabel>
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <FormControl>
