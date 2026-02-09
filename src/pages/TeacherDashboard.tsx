@@ -281,7 +281,7 @@ const DashboardOverview = ({
       <PageHeader
         title="Welcome back, Emily!"
         subtitle="Here's your professional development overview"
-        priority={1}
+
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -291,7 +291,7 @@ const DashboardOverview = ({
           subtitle="This school year"
           icon={Clock}
           trend={{ value: 12, isPositive: true }}
-          priority={3}
+
           onClick={() => navigate("/teacher/hours")}
         />
         <StatCard
@@ -299,7 +299,7 @@ const DashboardOverview = ({
           value={observations.length}
           subtitle={`${reflectionsCount} with reflections`}
           icon={Eye}
-          priority={1}
+
           onClick={() => navigate("/teacher/observations")}
         />
         <StatCard
@@ -307,7 +307,7 @@ const DashboardOverview = ({
           value={goals.length}
           subtitle={`${schoolAlignedGoals} school-aligned`}
           icon={Target}
-          priority={2}
+
           onClick={() => navigate("/teacher/goals")}
         />
         <StatCard
@@ -315,7 +315,7 @@ const DashboardOverview = ({
           value={upcomingTrainings}
           subtitle="Next: Jan 25"
           icon={Calendar}
-          priority={1}
+
           onClick={() => navigate("/teacher/calendar")}
         />
       </div>
@@ -427,6 +427,17 @@ function ObservationsView({ observations, onReflect }: { observations: Observati
                   onSubmit={(data) => {
                     // Map dynamic data to DetailedReflection structure
                     const reflection: DetailedReflection = {
+                      teacherName: selectedObs?.teacher || "Emily Rodriguez",
+                      teacherEmail: "emily.r@ekyaschools.com",
+                      submissionDate: new Date().toISOString(),
+                      sections: {
+                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
+                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
+                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
+                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
+                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
+                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
+                      },
                       strengths: data.r23 || "See details",
                       improvements: data.r24 || "See details",
                       goal: data.r25 || "Assigned by teacher",

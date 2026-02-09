@@ -108,7 +108,7 @@ export function ReflectionForm({ observation, isOpen, onClose, onSubmit, teacher
         setFormData(prev => {
             const section = prev.sections[sectionId];
             const existingRatingIndex = section.ratings.findIndex(r => r.indicator === indicator);
-            let newRatings = [...section.ratings];
+            const newRatings = [...section.ratings];
 
             if (existingRatingIndex >= 0) {
                 newRatings[existingRatingIndex] = { indicator, rating: value as any };

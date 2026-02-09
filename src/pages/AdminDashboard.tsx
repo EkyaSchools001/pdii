@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { PriorityBadge } from "@/components/PriorityBadge";
 import { Users, FileText, Book, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, Routes, Route, useNavigate } from "react-router-dom";
@@ -42,7 +41,6 @@ const adminModules = [
     description: "Manage users, roles, and permissions across the platform",
     icon: Users,
     path: "/admin/users",
-    priority: 1 as const,
     stats: "248 active users",
   },
   {
@@ -50,7 +48,6 @@ const adminModules = [
     description: "Create and manage observation and goal-setting forms",
     icon: FileText,
     path: "/admin/forms",
-    priority: 1 as const,
     stats: "4 templates",
   },
   {
@@ -58,7 +55,6 @@ const adminModules = [
     description: "Manage courses, prerequisites, and PD hour assignments",
     icon: Book,
     path: "/admin/courses",
-    priority: 3 as const,
     stats: "34 courses",
   },
   {
@@ -66,7 +62,6 @@ const adminModules = [
     description: "Schedule and manage training events across campuses",
     icon: Calendar,
     path: "/admin/calendar",
-    priority: 2 as const,
     stats: "12 events this month",
   },
   {
@@ -74,7 +69,6 @@ const adminModules = [
     description: "Generate cross-campus analytics and comparison reports",
     icon: Activity,
     path: "/admin/reports",
-    priority: 2 as const,
     stats: "Export to PDF/Excel",
   },
   {
@@ -82,7 +76,6 @@ const adminModules = [
     description: "Configure observation rules, workflows, and system settings",
     icon: Settings,
     path: "/admin/settings",
-    priority: 1 as const,
     stats: "System configuration",
   },
 ];
@@ -95,7 +88,6 @@ function DashboardOverview() {
       <PageHeader
         title="Admin Dashboard"
         subtitle="Manage platform settings, users, and content"
-        priority={1}
       />
 
       {/* Stats Overview */}
@@ -106,28 +98,24 @@ function DashboardOverview() {
           subtitle="+12 this month"
           icon={Users}
           trend={{ value: 5, isPositive: true }}
-          priority={1}
         />
         <StatCard
           title="Active Forms"
           value="4"
           subtitle="All systems active"
           icon={FileText}
-          priority={1}
         />
         <StatCard
           title="Courses"
           value="34"
           subtitle="5 new this quarter"
           icon={Book}
-          priority={3}
         />
         <StatCard
           title="Training Events"
           value="12"
           subtitle="This month"
           icon={Calendar}
-          priority={2}
         />
       </div>
 
@@ -258,7 +246,6 @@ function DashboardOverview() {
                 <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                   <module.icon className="w-6 h-6" />
                 </div>
-                <PriorityBadge priority={module.priority} showLabel={false} />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{module.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">{module.description}</p>
@@ -275,7 +262,6 @@ function DashboardOverview() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
-              <PriorityBadge priority={2} showLabel={false} />
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/admin/reports">View Audit Log</Link>
@@ -303,7 +289,6 @@ function DashboardOverview() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">System Status</h2>
-              <PriorityBadge priority={1} showLabel={false} />
             </div>
           </div>
 

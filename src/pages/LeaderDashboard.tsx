@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { PriorityBadge } from "@/components/PriorityBadge";
 import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -136,7 +135,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
       <PageHeader
         title="School Leader Dashboard"
         subtitle="Track team performance and professional development"
-        priority={1}
         actions={
           <Button onClick={() => navigate("/leader/observe")}>
             <Plus className="mr-2 w-4 h-4" />
@@ -152,7 +150,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           value={team.length}
           subtitle="Direct reports"
           icon={Users}
-          priority={1}
           onClick={() => navigate("/leader/team")}
         />
         <StatCard
@@ -161,7 +158,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           subtitle="Goal: 24"
           icon={Eye}
           trend={{ value: 15, isPositive: true }}
-          priority={1}
           onClick={() => navigate("/leader/observations")}
         />
         <StatCard
@@ -169,7 +165,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           value="3.9"
           subtitle="System wide"
           icon={TrendingUp}
-          priority={3}
           onClick={() => navigate("/leader/performance")}
         />
         <StatCard
@@ -177,7 +172,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           value={`${Math.round(team.reduce((acc, m) => acc + m.pdHours, 0) / team.length)}h`}
           subtitle="Avg hours per staff"
           icon={Clock}
-          priority={3}
           onClick={() => navigate("/leader/participation")}
         />
       </div>
@@ -189,7 +183,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">Team Overview</h2>
-              <PriorityBadge priority={1} showLabel={false} />
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/leader/team")}>
               View All
@@ -243,7 +236,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">Domain Performance</h2>
-              <PriorityBadge priority={3} showLabel={false} />
             </div>
           </div>
 
@@ -267,7 +259,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold text-foreground">Recent Observations</h2>
-            <PriorityBadge priority={1} showLabel={false} />
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/leader/team")}>
             View All
@@ -304,7 +295,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
             <p className="font-medium">Teacher Goals</p>
             <p className="text-sm text-muted-foreground">Manage development goals</p>
           </div>
-          <PriorityBadge priority={2} showLabel={false} className="mt-2" />
         </Button>
 
         <Button variant="outline" className="h-auto p-6 flex flex-col items-start gap-2" onClick={() => navigate("/leader/calendar")}>
@@ -313,7 +303,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
             <p className="font-medium">Manage Calendar</p>
             <p className="text-sm text-muted-foreground">Schedule training events</p>
           </div>
-          <PriorityBadge priority={3} showLabel={false} className="mt-2" />
         </Button>
 
         <Button variant="outline" className="h-auto p-6 flex flex-col items-start gap-2" onClick={() => navigate("/leader/reports")}>
@@ -322,7 +311,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
             <p className="font-medium">Export Reports</p>
             <p className="text-sm text-muted-foreground">Generate data exports</p>
           </div>
-          <PriorityBadge priority={2} showLabel={false} className="mt-2" />
         </Button>
       </div>
     </>
@@ -723,7 +711,6 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
       <PageHeader
         title="PD Participation Tracking"
         subtitle="Monitor professional development hours and compliance"
-        priority={3}
         actions={
           <Button onClick={() => navigate("/leader/calendar")}>
             <Calendar className="mr-2 w-4 h-4" />
@@ -738,21 +725,18 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
           value={totalHours}
           subtitle="Accrued across all staff"
           icon={Clock}
-          priority={1}
         />
         <StatCard
           title="Avg. Completion"
           value={`${avgCompletion}%`}
           subtitle="Mandatory training"
           icon={CheckCircle2}
-          priority={2}
         />
         <StatCard
           title="Active Learners"
           value={team.filter(m => m.pdHours > 20).length}
           subtitle="Staff > 20 hours"
           icon={Award}
-          priority={1}
         />
       </div>
 
@@ -880,7 +864,6 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
       <PageHeader
         title="Training & PD Calendar"
         subtitle="Schedule and manage professional development sessions"
-        priority={3}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate("/leader/calendar/responses")}>
@@ -901,21 +884,18 @@ function PDCalendarView({ training }: { training: typeof initialTrainingEvents }
           value={training.length}
           subtitle="Scheduled this month"
           icon={Calendar}
-          priority={1}
         />
         <StatCard
           title="Total Registrations"
           value={training.reduce((acc, e) => acc + e.registered, 0)}
           subtitle="Staff enrolled"
           icon={Users2}
-          priority={2}
         />
         <StatCard
           title="Capacity Util."
           value={`${Math.round((training.reduce((acc, e) => acc + e.registered, 0) / training.reduce((acc, e) => acc + e.capacity, 0)) * 100)}%`}
           subtitle="Seat occupancy"
           icon={Rocket}
-          priority={1}
         />
       </div>
 
@@ -1280,7 +1260,6 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
       <PageHeader
         title="Export Reports"
         subtitle="Generate and share teacher performance summaries"
-        priority={1}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1289,21 +1268,18 @@ function ReportsView({ team }: { team: typeof teamMembers }) {
           value="24"
           subtitle="Last 30 days"
           icon={FileText}
-          priority={2}
         />
         <StatCard
           title="Pending Reviews"
           value="5"
           subtitle="Require approval"
           icon={Clock}
-          priority={1}
         />
         <StatCard
           title="Shared Reports"
           value="18"
           subtitle="Sent to teachers"
           icon={Mail}
-          priority={3}
         />
       </div>
 
@@ -1442,7 +1418,6 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
       <PageHeader
         title="Teacher Professional Goals"
         subtitle="Manage and track performance targets for your staff"
-        priority={2}
         actions={
           <Button onClick={() => navigate("/leader/goals/assign")}>
             <Plus className="mr-2 w-4 h-4" />
@@ -1457,21 +1432,18 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
           value={goals.length}
           subtitle="Total in progress"
           icon={Target}
-          priority={1}
         />
         <StatCard
           title="Near Completion"
           value={goals.filter(g => g.progress >= 80).length}
           subtitle="Progress > 80%"
           icon={Rocket}
-          priority={2}
         />
         <StatCard
           title="Avg. Progress"
           value={`${Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length)}%`}
           subtitle="System wide"
           icon={TrendingUp}
-          priority={1}
         />
       </div>
 
@@ -1564,6 +1536,8 @@ function ObservationReportView({ observations, team }: { observations: Observati
   const observation = observations.find(o => o.id === obsId);
   const teacher = team.find(t => t.name === observation?.teacher);
 
+  const [showReflection, setShowReflection] = useState(false);
+
   if (!observation) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
@@ -1573,8 +1547,6 @@ function ObservationReportView({ observations, team }: { observations: Observati
       </div>
     );
   }
-
-  const [showReflection, setShowReflection] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -1922,7 +1894,6 @@ function ObservationsManagementView({ observations }: { observations: Observatio
           value={observations.filter(o => o.score === 5).length}
           subtitle="Top tier performance"
           icon={TrendingUp}
-          priority={1}
           onClick={() => navigate("/leader/performance")}
         />
         <StatCard
@@ -1930,7 +1901,6 @@ function ObservationsManagementView({ observations }: { observations: Observatio
           value="2"
           subtitle="Requires attention"
           icon={FileText}
-          priority={3}
           onClick={() => navigate("/leader/reports")}
         />
       </div>

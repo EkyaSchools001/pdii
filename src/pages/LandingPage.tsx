@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { GraduationCap, Users, Shield, ArrowRight, CheckCircle2, BarChart3, Calendar, Target, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PriorityBadge } from "@/components/PriorityBadge";
 
 
 const features = [
@@ -15,7 +14,6 @@ const features = [
     icon: Target,
     title: "Goal Management",
     description: "Set, track, and achieve professional development goals",
-    priority: 2 as const,
   },
   {
     icon: Calendar,
@@ -27,7 +25,6 @@ const features = [
     icon: CheckCircle2,
     title: "PD Hours Tracking",
     description: "Automatic tracking of professional development hours",
-    priority: 3 as const,
   },
 ];
 
@@ -142,7 +139,6 @@ export default function LandingPage() {
                   <div className="p-3 rounded-xl bg-primary/10">
                     <feature.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <PriorityBadge priority={feature.priority} showLabel={false} />
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">{feature.description}</p>
