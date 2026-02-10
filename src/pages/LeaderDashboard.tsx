@@ -57,10 +57,46 @@ const initialGoals = [
 ];
 
 const initialTrainingEvents = [
-  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
-  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
-  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
-  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
+  {
+    id: "1",
+    title: "Differentiated Instruction Workshop",
+    topic: "Pedagogy",
+    type: "Pedagogy",
+    date: "Feb 15, 2026",
+    time: "09:00 AM",
+    location: "Auditorium A",
+    registered: 12,
+    capacity: 20,
+    status: "Approved",
+    spotsLeft: 8,
+    isAdminCreated: true,
+    registrants: [
+      { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
+      { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
+      { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+    ]
+  },
+  {
+    id: "2",
+    title: "Digital Literacy in Classroom",
+    topic: "Technology",
+    type: "Technology",
+    date: "Feb 18, 2026",
+    time: "02:00 PM",
+    location: "Computer Lab 1",
+    registered: 18,
+    capacity: 25,
+    status: "Approved",
+    spotsLeft: 7,
+    isAdminCreated: true,
+    registrants: [
+      { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
+      { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+    ]
+  },
+  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isAdminCreated: true, registrants: [] },
+  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5, isAdminCreated: true, registrants: [] },
+  { id: "5", title: "Instructional Design Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 13, 2026", time: "09:00 AM", location: "TRC 1", registered: 10, capacity: 15, status: "Approved", spotsLeft: 5, isAdminCreated: true, registrants: [] },
 ];
 
 export default function LeaderDashboard() {
@@ -132,7 +168,12 @@ export default function LeaderDashboard() {
       const saved = localStorage.getItem('training_events_data');
       if (saved) {
         try {
-          setTraining(JSON.parse(saved));
+          const newData = JSON.parse(saved);
+          setTraining(prev => {
+            // Prevent infinite loops by comparing with current state
+            if (JSON.stringify(prev) === JSON.stringify(newData)) return prev;
+            return newData;
+          });
         } catch (err) {
           console.error("Failed to sync training data via custom event", err);
         }
@@ -140,12 +181,10 @@ export default function LeaderDashboard() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    // Removed training-events-updated listener here to prevent infinite loop.
-    // LeaderDashboard is the source of truth and dispatches this event itself.
-    // window.addEventListener('training-events-updated', handleCustomTrainingEvent);
+    window.addEventListener('training-events-updated', handleCustomTrainingEvent);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      // window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
+      window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
     };
   }, []);
 
@@ -180,12 +219,6 @@ function DashboardOverview({ team, observations }: { team: typeof teamMembers, o
       <PageHeader
         title="School Leader Dashboard"
         subtitle="Track team performance and professional development"
-        actions={
-          <Button onClick={() => navigate("/leader/observe")}>
-            <Plus className="mr-2 w-4 h-4" />
-            New Observation
-          </Button>
-        }
       />
 
       {/* Stats Overview */}
@@ -803,7 +836,34 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
 
     setTraining(prev => prev.map(ev => ev.id === editingEvent.id ? editingEvent : ev));
     setEditingEvent(null);
-    toast.success("Event details updated successfully.");
+    toast.success("Event details updated successfully");
+  };
+
+  const handleRegister = (eventId: string) => {
+    setTraining(prev => prev.map(event => {
+      if (event.id === eventId) {
+        toast.success(`Successfully registered for ${event.title}`);
+
+        // Add current user (Leader) to registrants list
+        const newRegistrant = {
+          id: `u-${Date.now()}`,
+          name: "Dr. Sarah Johnson",
+          email: "s.johnson@school.edu",
+          dateRegistered: format(new Date(), "MMM d, yyyy")
+        };
+
+        const updatedRegistrants = [...(event.registrants || []), newRegistrant];
+
+        return {
+          ...event,
+          isRegistered: true,
+          registered: event.registered + 1,
+          spotsLeft: (event.spotsLeft || 0) - 1,
+          registrants: updatedRegistrants
+        };
+      }
+      return event;
+    }));
   };
 
   return (
@@ -1029,14 +1089,21 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
                             </span>
                           </td>
                           <td className="p-6 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 hover:bg-primary/10 hover:text-primary"
-                              onClick={() => setEditingEvent(session)}
-                            >
-                              Edit
-                            </Button>
+                            {(session as any).isRegistered ? (
+                              <div className="flex items-center justify-end gap-2 text-emerald-600 font-bold">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Registered
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-end gap-2 text-right">
+                                <Button
+                                  className="h-10 px-6 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white shadow-lg shadow-slate-900/20 transition-all active:scale-[0.98] font-black uppercase tracking-tighter text-xs"
+                                  onClick={() => handleRegister(session.id)}
+                                >
+                                  Register Now
+                                </Button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1175,7 +1242,9 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
       registered: 0,
       status: "Pending", // Automatically pending approval
       topic: formData.type, // Map type to topic
-      spotsLeft: formData.capacity
+      isAdminCreated: false,
+      spotsLeft: formData.capacity,
+      registrants: []
     };
 
     setTraining(prev => [...prev, newSession]);
@@ -2403,6 +2472,8 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
     </div>
   );
 }
+
+
 
 function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateAction<any[]>> }) {
   const navigate = useNavigate();

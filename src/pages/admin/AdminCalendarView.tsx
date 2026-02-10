@@ -14,13 +14,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from "@/components/ui/table";
 
 // Mock Data (Reusing structure for consistency)
 const initialTrainingEvents = [
-    { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8 },
-    { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7 },
-    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7 },
-    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5 },
+    {
+        id: "1",
+        title: "Differentiated Instruction Workshop",
+        topic: "Pedagogy",
+        type: "Pedagogy",
+        date: "Feb 15, 2026",
+        time: "09:00 AM",
+        location: "Auditorium A",
+        registered: 12,
+        capacity: 20,
+        status: "Approved",
+        spotsLeft: 8,
+        isAdminCreated: true,
+        registrants: [
+            { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
+            { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
+            { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+        ]
+    },
+    {
+        id: "2",
+        title: "Digital Literacy in Classroom",
+        topic: "Technology",
+        type: "Technology",
+        date: "Feb 18, 2026",
+        time: "02:00 PM",
+        location: "Computer Lab 1",
+        registered: 18,
+        capacity: 25,
+        status: "Approved",
+        spotsLeft: 7,
+        isAdminCreated: true,
+        registrants: [
+            { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
+            { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+        ]
+    },
+    { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isAdminCreated: true, registrants: [] },
+    { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5, isAdminCreated: true, registrants: [] },
 ];
 
 export function AdminCalendarView() {
@@ -56,7 +94,12 @@ export function AdminCalendarView() {
             const saved = localStorage.getItem('training_events_data');
             if (saved) {
                 try {
-                    setTraining(JSON.parse(saved));
+                    const newData = JSON.parse(saved);
+                    setTraining((prev: any) => {
+                        // Prevent infinite loops by comparing with current state
+                        if (JSON.stringify(prev) === JSON.stringify(newData)) return prev;
+                        return newData;
+                    });
                 } catch (err) {
                     console.error("Failed to sync training data via custom event", err);
                 }
@@ -64,12 +107,10 @@ export function AdminCalendarView() {
         };
 
         window.addEventListener('storage', handleStorageChange);
-        // Removed training-events-updated listener to prevent infinite loop.
-        // This component is a source of truth and dispatches the event itself.
-        // window.addEventListener('training-events-updated', handleCustomEvent);
+        window.addEventListener('training-events-updated', handleCustomEvent);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            // window.removeEventListener('training-events-updated', handleCustomEvent);
+            window.removeEventListener('training-events-updated', handleCustomEvent);
         };
     }, []);
 
@@ -78,7 +119,9 @@ export function AdminCalendarView() {
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isRegistrantsOpen, setIsRegistrantsOpen] = useState(false);
     const [currentEvent, setCurrentEvent] = useState<any>(null);
+    const [selectedRegistrants, setSelectedRegistrants] = useState<any[]>([]);
     const [newEvent, setNewEvent] = useState({ title: "", type: "Pedagogy", date: new Date(2026, 1, 15), time: "09:00 AM", location: "" });
 
     // Helper to format Date object to "MMM d, yyyy" string
@@ -98,8 +141,9 @@ export function AdminCalendarView() {
             registered: 0,
             capacity: 30,
             status: "Approved",
-            topic: newEvent.type, // Map type to topic for shared schema
-            spotsLeft: 30
+            isAdminCreated: true,
+            spotsLeft: 30,
+            registrants: []
         };
         setTraining([...training, event]);
         setIsScheduleOpen(false);
@@ -113,7 +157,6 @@ export function AdminCalendarView() {
             return;
         }
 
-        // Ensure date is string if it was changed to Date object in dialog
         const updatedEvent = {
             ...currentEvent,
             date: typeof currentEvent.date === 'string' ? currentEvent.date : formatDateStr(currentEvent.date),
@@ -141,10 +184,15 @@ export function AdminCalendarView() {
         setIsEditOpen(true);
     }
 
+    const handleViewRegistrants = (event: any) => {
+        setSelectedRegistrants(event.registrants || []);
+        setCurrentEvent(event);
+        setIsRegistrantsOpen(true);
+    }
+
     // Helper to parse "MMM d, yyyy" string to Date object
     const parseEventDate = (dateStr: string) => {
         try {
-            // Handle both "MMM d, yyyy" and potential legacy "MMM d"
             const parts = dateStr.includes(',') ? dateStr : `${dateStr}, 2026`;
             return new Date(parts);
         } catch (e) {
@@ -370,7 +418,7 @@ export function AdminCalendarView() {
                     </CardContent>
                 </Card>
 
-                {/* Events List - Now below the calendar */}
+                {/* Events List - Fixed duplication */}
                 <Card className="border-none shadow-2xl bg-background/60 backdrop-blur-xl rounded-[2rem] overflow-hidden border border-muted/20">
                     <CardHeader className="px-8 py-8 border-b bg-muted/5">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -426,18 +474,18 @@ export function AdminCalendarView() {
                                                 </td>
                                                 <td className="px-8 py-7">
                                                     <div className="space-y-2">
-                                                        <p className="text-sm font-bold text-foreground flex items-center gap-2.5">
+                                                        <div className="text-sm font-bold text-foreground flex items-center gap-2.5">
                                                             <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                                                 <Clock className="w-4 h-4 text-orange-500" />
                                                             </div>
                                                             {session.time}
-                                                        </p>
-                                                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-2.5 pl-0.5">
+                                                        </div>
+                                                        <div className="text-sm font-medium text-muted-foreground flex items-center gap-2.5 pl-0.5">
                                                             <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                                                                 <MapPin className="w-4 h-4 text-blue-500" />
                                                             </div>
                                                             {session.location}
-                                                        </p>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-7">
@@ -451,9 +499,20 @@ export function AdminCalendarView() {
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-7 text-right">
-                                                    <Button variant="ghost" className="h-10 px-6 rounded-xl hover:bg-primary hover:text-white transition-all font-bold" onClick={() => handleManageSession(session)}>
-                                                        Manage
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-9 px-4 rounded-xl border-primary/20 text-primary hover:bg-primary/5 font-bold flex items-center gap-2"
+                                                            onClick={() => handleViewRegistrants(session)}
+                                                        >
+                                                            <Users className="w-4 h-4" />
+                                                            Registrants
+                                                        </Button>
+                                                        <Button variant="ghost" className="h-10 px-6 rounded-xl hover:bg-primary hover:text-white transition-all font-bold" onClick={() => handleManageSession(session)}>
+                                                            Manage
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -558,6 +617,79 @@ export function AdminCalendarView() {
                         <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
                         <Button onClick={handleEditEvent}>Save Changes</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Registrants Dialog */}
+            <Dialog open={isRegistrantsOpen} onOpenChange={setIsRegistrantsOpen}>
+                <DialogContent className="sm:max-w-[700px] rounded-[2rem] overflow-hidden border-none shadow-2xl p-0">
+                    <div className="bg-zinc-950 text-white p-8 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-20 translate-x-20 pointer-events-none" />
+                        <div className="relative z-10">
+                            <h2 className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
+                                Registered Participants
+                            </h2>
+                            <p className="text-zinc-400 font-medium text-sm mt-1 uppercase tracking-[0.2em]">
+                                {currentEvent?.title}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="p-8 bg-background">
+                        <div className="rounded-2xl border border-muted/20 overflow-hidden">
+                            <Table>
+                                <TableHeader className="bg-muted/5">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="font-black uppercase tracking-widest text-[10px] py-4">Participant Name</TableHead>
+                                        <TableHead className="font-black uppercase tracking-widest text-[10px] py-4">Contact Detail</TableHead>
+                                        <TableHead className="font-black uppercase tracking-widest text-[10px] py-4 text-right">Registration Date</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {selectedRegistrants.length > 0 ? (
+                                        selectedRegistrants.map((registrant) => (
+                                            <TableRow key={registrant.id} className="hover:bg-primary/5 transition-colors group">
+                                                <TableCell className="py-5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-sm group-hover:bg-primary group-hover:text-white transition-all">
+                                                            {registrant.name.split(' ').map((n: string) => n[0]).join('')}
+                                                        </div>
+                                                        <span className="font-bold text-foreground">{registrant.name}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="py-5">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-muted-foreground">{registrant.email}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="py-5 text-right font-medium text-muted-foreground">
+                                                    {registrant.dateRegistered}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                                    <div className="w-16 h-16 rounded-3xl bg-muted/50 flex items-center justify-center">
+                                                        <Users className="w-8 h-8 opacity-20" />
+                                                    </div>
+                                                    <p className="font-bold italic">No registrations for this event yet.</p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        <div className="mt-8 flex justify-end">
+                            <Button
+                                className="h-12 px-8 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-black uppercase tracking-widest text-xs"
+                                onClick={() => setIsRegistrantsOpen(false)}
+                            >
+                                Close View
+                            </Button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 

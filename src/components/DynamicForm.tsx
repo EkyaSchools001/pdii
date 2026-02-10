@@ -5,10 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, Upload, FileText } from "lucide-react";
+import { Star, Upload, FileText, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormField } from "@/pages/admin/FormTemplatesView";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface DynamicFormProps {
     fields: FormField[];
@@ -65,10 +68,42 @@ export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit"
                             />
                         )}
 
-                        {(field.type === "date" || field.type === "time") && (
+                        {field.type === "date" && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !formData[field.id] && "text-muted-foreground"
+                                        )}
+                                    >
+                                        {formData[field.id] ? (
+                                            format(new Date(formData[field.id]), "PPP")
+                                        ) : (
+                                            <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={formData[field.id] ? new Date(formData[field.id]) : undefined}
+                                        onSelect={(date) => handleInputChange(field.id, date?.toISOString())}
+                                        disabled={(date) =>
+                                            date > new Date() || date < new Date("1900-01-01")
+                                        }
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        )}
+
+                        {field.type === "time" && (
                             <Input
                                 id={field.id}
-                                type={field.type}
+                                type="time"
                                 value={formData[field.id] || ""}
                                 onChange={(e) => handleInputChange(field.id, e.target.value)}
                             />

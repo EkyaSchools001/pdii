@@ -232,9 +232,9 @@ export function AdminReportsView() {
                 <Card className="col-span-1 lg:col-span-4">
                     <CardHeader>
                         <CardTitle>User Growth Overview</CardTitle>
-                        <CardDescription>
+                        <div className="text-sm text-muted-foreground">
                             Comparing teacher and student enrollment over the last 6 months.
-                        </CardDescription>
+                        </div>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <div className="h-[350px]">
@@ -269,9 +269,9 @@ export function AdminReportsView() {
                 <Card className="col-span-1 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Course Enrollment by Category</CardTitle>
-                        <CardDescription>
+                        <div className="text-sm text-muted-foreground">
                             Distribution of active enrollments across categories.
-                        </CardDescription>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[350px] relative">
@@ -307,9 +307,9 @@ export function AdminReportsView() {
                 <Card className="col-span-2">
                     <CardHeader>
                         <CardTitle>Campus Activity Levels</CardTitle>
-                        <CardDescription>
+                        <div className="text-sm text-muted-foreground">
                             Observations and Goals created per campus.
-                        </CardDescription>
+                        </div>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <div className="h-[300px]">

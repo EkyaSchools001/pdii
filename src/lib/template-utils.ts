@@ -29,7 +29,7 @@ export const initialTemplates: FormTemplate[] = [
             { id: "g1", label: "Name of the Educator", type: "text", required: true },
             { id: "g2", label: "Name of the Coach", type: "text", required: true },
             { id: "g3", label: "Campus", type: "select", required: true, options: ["CMR NPS", "EJPN", "EITPL", "EBTM", "EBYR", "ENICE", "ENAVA", "PU BTM", "PU BYR", "PU HRBR", "PU ITPL"] },
-            { id: "g4", label: "Date of Goal Setting Conversation", type: "text", required: true },
+            { id: "g4", label: "Date of Goal Setting Conversation", type: "date", required: true },
             { id: "g5", label: "Was the teacher informed and aware of the goal setting process?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g6", label: "Was the teacher informed and aware about the Ekya Danielson Framework?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g7", label: "Did the teacher complete her self-reflection on Ekya Danielson Form?", type: "radio", required: true, options: ["Yes", "No"] },
@@ -189,6 +189,15 @@ export const getTemplates = (): FormTemplate[] => {
                         const newFields = [...t.fields];
                         newFields.splice(dateIndex + 1, 0, { id: "o5", label: "Time", type: "time", required: true });
                         t.fields = newFields;
+                        needsUpdate = true;
+                    }
+                }
+
+                // Auto-migration: Fix Goal Setting Date field
+                if (t.type === "Goal Setting") {
+                    const goalDateField = t.fields.find((f: any) => f.label === "Date of Goal Setting Conversation");
+                    if (goalDateField && goalDateField.type !== "date") {
+                        goalDateField.type = "date";
                         needsUpdate = true;
                     }
                 }

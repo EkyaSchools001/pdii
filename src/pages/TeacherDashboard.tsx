@@ -39,7 +39,20 @@ import {
   FileText,
   User,
   Share2,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  ChevronLeft,
+  Save,
+  Mail,
+  Phone,
+  MapPin,
+  Award,
+  CheckCircle,
+  Printer,
+  Rocket,
+  History as HistoryIcon,
+  Link as LinkIcon,
+  Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
@@ -90,6 +103,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
+import { Progress } from "@/components/ui/progress";
 
 
 import { Observation, DetailedReflection } from "@/types/observation";
@@ -149,10 +163,48 @@ const initialGoals = [
 ];
 
 const initialEvents = [
-  { id: "1", title: "Differentiated Instruction Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 15, 2026", time: "09:00 AM", location: "Auditorium A", registered: 12, capacity: 20, status: "Approved", spotsLeft: 8, isRegistered: false },
-  { id: "2", title: "Digital Literacy in Classroom", topic: "Technology", type: "Technology", date: "Feb 18, 2026", time: "02:00 PM", location: "Computer Lab 1", registered: 18, capacity: 25, status: "Approved", spotsLeft: 7, isRegistered: true },
-  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isRegistered: false },
-  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5, isRegistered: false },
+  {
+    id: "1",
+    title: "Differentiated Instruction Workshop",
+    topic: "Pedagogy",
+    type: "Pedagogy",
+    date: "Feb 15, 2026",
+    time: "09:00 AM",
+    location: "Auditorium A",
+    registered: 12,
+    capacity: 20,
+    status: "Approved",
+    spotsLeft: 8,
+    isRegistered: false,
+    isAdminCreated: true,
+    registrants: [
+      { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
+      { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
+      { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+    ]
+  },
+  {
+    id: "2",
+    title: "Digital Literacy in Classroom",
+    topic: "Technology",
+    type: "Technology",
+    date: "Feb 18, 2026",
+    time: "02:00 PM",
+    location: "Computer Lab 1",
+    registered: 18,
+    capacity: 25,
+    status: "Approved",
+    spotsLeft: 7,
+    isRegistered: true,
+    isAdminCreated: true,
+    registrants: [
+      { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
+      { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+    ]
+  },
+  { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isRegistered: false, isAdminCreated: true, registrants: [] },
+  { id: "4", title: "Advanced Formative Assessment", topic: "Assessment", type: "Assessment", date: "Feb 25, 2026", time: "03:30 PM", location: "Main Library", registered: 15, capacity: 20, status: "Pending", spotsLeft: 5, isRegistered: false, isAdminCreated: true, registrants: [] },
+  { id: "5", title: "Instructional Design Workshop", topic: "Pedagogy", type: "Pedagogy", date: "Feb 13, 2026", time: "09:00 AM", location: "TRC 1", registered: 10, capacity: 15, status: "Approved", spotsLeft: 5, isRegistered: false, isAdminCreated: true, registrants: [] },
 ];
 
 const mockCourses = [
@@ -266,12 +318,16 @@ const DashboardOverview = ({
   goals,
   events,
   observations,
-  onRegister
+  onRegister,
+  onView,
+  onReflect
 }: {
   goals: typeof initialGoals,
   events: typeof initialEvents,
   observations: Observation[],
-  onRegister: (id: string) => void
+  onRegister: (id: string) => void,
+  onView: (id: string) => void,
+  onReflect: (obs: Observation) => void
 }) => {
   const navigate = useNavigate();
   const schoolAlignedGoals = goals.filter(g => g.isSchoolAligned).length;
@@ -344,7 +400,12 @@ const DashboardOverview = ({
           </div>
           <div className="space-y-4">
             {observations.slice(0, 3).map((obs) => (
-              <ObservationCard key={obs.id} observation={obs} />
+              <ObservationCard
+                key={obs.id}
+                observation={obs}
+                onView={() => onView(obs.id)}
+                onReflect={() => onReflect(obs)}
+              />
             ))}
           </div>
         </div>
@@ -385,17 +446,15 @@ const DashboardOverview = ({
   );
 }
 
-function ObservationsView({ observations, onReflect }: { observations: Observation[], onReflect: (id: string, reflection: DetailedReflection) => void }) {
-  const [selectedObs, setSelectedObs] = useState<Observation | null>(null);
-  const navigate = useNavigate();
-
-  const handleSubmit = (reflection: DetailedReflection) => {
-    if (selectedObs) {
-      onReflect(selectedObs.id, reflection);
-      setSelectedObs(null);
-    }
-  };
-
+function ObservationsView({
+  observations,
+  onReflect,
+  onView
+}: {
+  observations: Observation[],
+  onReflect: (obs: Observation) => void,
+  onView: (id: string) => void
+}) {
   return (
     <div className="space-y-6">
       <PageHeader title="My Observations" subtitle="Manage and reflect on your classroom observations" />
@@ -404,8 +463,8 @@ function ObservationsView({ observations, onReflect }: { observations: Observati
           <ObservationCard
             key={obs.id}
             observation={obs}
-            onReflect={() => setSelectedObs(obs)}
-            onView={() => navigate(`/teacher/observations/${obs.id}`)}
+            onReflect={() => onReflect(obs)}
+            onView={() => onView(obs.id)}
           />
         ))}
         {/* Placeholder for more observations */}
@@ -422,55 +481,6 @@ function ObservationsView({ observations, onReflect }: { observations: Observati
         ))}
       </div>
 
-      {selectedObs && (
-        <>
-          {getActiveTemplateByType("Reflection") ? (
-            <Dialog open={!!selectedObs} onOpenChange={() => setSelectedObs(null)}>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Teacher Self-Reflection (Master)</DialogTitle>
-                  <DialogDescription>Based on the Ekya Danielson Framework</DialogDescription>
-                </DialogHeader>
-                <DynamicForm
-                  fields={getActiveTemplateByType("Reflection")!.fields}
-                  submitLabel="Submit Reflection"
-                  onCancel={() => setSelectedObs(null)}
-                  onSubmit={(data) => {
-                    // Map dynamic data to DetailedReflection structure
-                    const reflection: DetailedReflection = {
-                      teacherName: selectedObs?.teacher || "Emily Rodriguez",
-                      teacherEmail: "emily.r@ekyaschools.com",
-                      submissionDate: new Date().toISOString(),
-                      sections: {
-                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
-                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
-                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
-                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
-                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
-                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
-                      },
-                      strengths: data.r23 || "See details",
-                      improvements: data.r24 || "See details",
-                      goal: data.r25 || "Assigned by teacher",
-                      comments: data.r26 || "Master form reflection submitted.",
-                    };
-                    handleSubmit(reflection);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <ReflectionForm
-              isOpen={!!selectedObs}
-              onClose={() => setSelectedObs(null)}
-              onSubmit={handleSubmit}
-              observation={selectedObs}
-              teacherName={selectedObs.teacher || "Emily Rodriguez"}
-              teacherEmail="emily.r@ekyaschools.com"
-            />
-          )}
-        </>
-      )}
     </div>
   );
 }
@@ -565,125 +575,250 @@ function CalendarView({
   events: typeof initialEvents,
   onRegister: (id: string) => void
 }) {
-  const [date, setDate] = useState<Date | undefined>(new Date(2026, 0, 25)); // Set a default date in center of mock data
+  const [date, setDate] = useState<Date | undefined>(new Date(2026, 1, 25)); // Set a default date in center of mock data
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const eventDates = events.map(event => parse(event.date, "MMM d, yyyy", new Date()));
+  const parseEventDate = (dateStr: string) => {
+    try {
+      return parse(dateStr, "MMM d, yyyy", new Date());
+    } catch (e) {
+      return new Date();
+    }
+  };
 
-  const selectedDateEvents = events.filter(event => {
-    if (!date) return false;
-    const eventDate = parse(event.date, "MMM d, yyyy", new Date());
-    return isSameDay(eventDate, date);
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.topic.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!date) return matchesSearch;
+
+    const eventDate = parseEventDate(event.date);
+    return isSameDay(eventDate, date) && matchesSearch;
   });
+
+  const formatDateStr = (d: Date | string) => {
+    if (typeof d === 'string') return d;
+    return format(d, "MMM d, yyyy");
+  };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Training Calendar"
+        title="Training & PD Calendar"
         subtitle="Discover and register for professional development sessions"
       />
 
-      <div className="grid lg:grid-cols-12 gap-8">
-        {/* Left: Calendar Control */}
-        <Card className="lg:col-span-5 p-4 bg-background/50 backdrop-blur-sm shadow-xl border-none">
-          <CalendarUI
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            className="rounded-md border-none w-full"
-            modifiers={{
-              hasEvent: eventDates
-            }}
-            modifiersStyles={{
-              hasEvent: {
-                fontWeight: 'bold',
-                textDecoration: 'underline',
-                color: 'var(--primary)'
-              }
-            }}
-          />
-          <div className="mt-4 p-4 rounded-xl bg-primary/5 space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Legend
-            </h4>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span>Available Training</span>
+      <div className="w-full space-y-6">
+        <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden relative">
+          {/* decorative gradient blob */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-info/20 rounded-full blur-3xl translate-y-10 -translate-x-10 pointer-events-none" />
+
+          <CardContent className="p-6 md:p-10 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+              {/* Left side: Header and Calendar */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="text-left w-full">
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent">
+                    Activity Summary
+                  </h3>
+                  <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
+                    {formatDateStr(new Date())}
+                  </p>
+                </div>
+
+                <CalendarUI
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="rounded-2xl border-none bg-zinc-900/50 p-6 w-full"
+                  classNames={{
+                    months: "flex flex-col space-y-4",
+                    month: "space-y-4 w-full",
+                    caption: "flex justify-center pt-1 relative items-center mb-6",
+                    caption_label: "text-base font-bold text-white",
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-8 w-8 bg-transparent p-0 text-zinc-400 hover:text-white border-zinc-700 hover:bg-zinc-800",
+                    nav_button_previous: "absolute left-2",
+                    nav_button_next: "absolute right-2",
+                    table: "w-full border-collapse",
+                    head_row: "flex w-full mt-2",
+                    head_cell: "text-zinc-400 rounded-md w-10 font-bold text-[0.85rem] uppercase tracking-wider flex items-center justify-center",
+                    row: "flex w-full mt-3",
+                    cell: "h-10 w-10 text-center text-base p-0 relative [&:has([aria-selected])]:bg-zinc-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-10 w-10 p-0 font-semibold aria-selected:opacity-100 text-white hover:bg-zinc-800 rounded-full transition-all flex items-center justify-center",
+                    day_selected: "bg-primary text-white hover:bg-primary/90 focus:bg-primary shadow-lg shadow-primary/30",
+                    day_today: "bg-zinc-800 text-white font-black ring-2 ring-zinc-700",
+                    day_outside: "text-zinc-500 opacity-40",
+                  }}
+                  modifiers={{
+                    hasEvent: events.map(e => parseEventDate(e.date))
+                  }}
+                  modifiersStyles={{
+                    hasEvent: { border: '2px solid hsl(var(--primary))', color: 'white' }
+                  }}
+                />
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-accent" />
-                <span>Selected</span>
+
+              {/* Right side: Legend and Actions */}
+              <div className="lg:col-span-5 h-full flex flex-col justify-center pt-10">
+                <div className="space-y-6">
+                  <h4 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-4">Legend</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
+                      <span className="flex items-center gap-3 text-sm text-zinc-300">
+                        <span className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.6)]"></span> Pedagogy
+                      </span>
+                      <span className="font-mono text-white text-sm bg-primary/20 px-2 py-0.5 rounded-md">
+                        {events.filter((t: any) => (t.topic || t.type) === 'Pedagogy').length}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info/5 border border-info/10">
+                      <span className="flex items-center gap-3 text-sm text-zinc-300">
+                        <span className="w-3 h-3 rounded-full bg-info shadow-[0_0_10px_rgba(var(--info),0.6)]"></span> Technology
+                      </span>
+                      <span className="font-mono text-white text-sm bg-info/20 px-2 py-0.5 rounded-md">
+                        {events.filter((t: any) => (t.topic || t.type) === 'Technology').length}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-accent/5 border border-accent/10">
+                      <span className="flex items-center gap-3 text-sm text-zinc-300">
+                        <span className="w-3 h-3 rounded-full bg-accent shadow-[0_0_10px_rgba(var(--accent),0.6)]"></span> Culture
+                      </span>
+                      <span className="font-mono text-white text-sm bg-accent/20 px-2 py-0.5 rounded-md">
+                        {events.filter((t: any) => (t.topic || t.type) === 'Culture').length}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-8">
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                      <Input
+                        placeholder="Search sessions..."
+                        className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-xl focus:ring-primary"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full py-6 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-base rounded-xl"
+                      onClick={() => setDate(undefined)}
+                      disabled={!date}
+                    >
+                      Clear Selection Filter
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
+      </div>
 
-        {/* Right: Event Details */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              {date ? format(date, "MMMM d, yyyy") : "Selected Date"}
-              <Badge variant="secondary" className="ml-2">
-                {selectedDateEvents.length} {selectedDateEvents.length === 1 ? 'Event' : 'Events'}
-              </Badge>
-            </h3>
-          </div>
-
-          <ScrollArea className="h-[500px] pr-4">
-            {selectedDateEvents.length > 0 ? (
-              <div className="space-y-4">
-                {selectedDateEvents.map((event) => (
-                  <div key={event.id} className="animate-in slide-in-from-right-4 duration-300">
-                    <TrainingEventCard
-                      event={event}
-                      onRegister={() => onRegister(event.id)}
-                    />
-                  </div>
-                ))}
+      <div className="pt-10">
+        <Card className="border-none shadow-2xl bg-background/60 backdrop-blur-xl rounded-[2rem] overflow-hidden border border-muted/20">
+          <CardHeader className="px-8 py-8 border-b bg-muted/5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <CardTitle className="text-2xl font-black text-foreground tracking-tight">
+                  {date ? `Sessions for ${formatDateStr(date)}` : "Upcoming Training Sessions"}
+                </CardTitle>
+                <p className="text-sm font-medium text-muted-foreground mt-1">
+                  {filteredEvents.length} session{filteredEvents.length !== 1 && 's'} identified for this period
+                </p>
               </div>
-            ) : (
-              <Card className="border-dashed h-[200px] flex flex-col items-center justify-center text-center p-8 text-muted-foreground bg-muted/20">
-                <Calendar className="w-8 h-8 mb-2 opacity-20" />
-                <p>No training sessions scheduled for this date.</p>
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setDate(undefined)}
-                  className="mt-2"
-                >
-                  Show all suggestions
-                </Button>
-              </Card>
-            )}
-
-            {!date && (
-              <div className="space-y-4 pt-4">
-                <h3 className="font-semibold px-1">Upcoming Suggestions</h3>
-                {events.map(event => (
-                  <TrainingEventCard
-                    key={event.id}
-                    event={event}
-                    onRegister={() => onRegister(event.id)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {date && selectedDateEvents.length === 0 && (
-              <div className="mt-8 space-y-4 pt-4 border-t border-muted">
-                <h3 className="font-semibold text-sm text-muted-foreground px-1 uppercase tracking-wider">Other Suggestions</h3>
-                {events.filter(e => !selectedDateEvents.some(s => s.id === e.id)).map(event => (
-                  <TrainingEventCard
-                    key={event.id}
-                    event={event}
-                    onRegister={() => onRegister(event.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/10 border-b">
+                    <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Session Title</th>
+                    <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Type</th>
+                    <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Time</th>
+                    <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Location</th>
+                    <th className="text-left px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Status</th>
+                    <th className="text-right px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-muted/10">
+                  {filteredEvents.length > 0 ? (
+                    filteredEvents.map((session) => (
+                      <tr key={session.id} className="hover:bg-primary/[0.02] transition-colors group">
+                        <td className="px-8 py-7">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{session.title}</span>
+                            {!date && (
+                              <span className="text-xs font-bold text-muted-foreground mt-1 flex items-center gap-1.5 uppercase tracking-wide">
+                                <Calendar className="w-3 h-3" /> {session.date}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-8 py-7">
+                          <Badge variant="outline" className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
+                            {session.topic || session.type}
+                          </Badge>
+                        </td>
+                        <td className="px-8 py-7">
+                          <div className="text-sm font-bold text-foreground flex items-center gap-2.5">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            {session.time}
+                          </div>
+                        </td>
+                        <td className="px-8 py-7">
+                          <div className="text-sm font-medium text-muted-foreground flex items-center gap-2.5">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            {session.location}
+                          </div>
+                        </td>
+                        <td className="px-8 py-7">
+                          <span className={cn(
+                            "inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border shadow-sm",
+                            session.status === "Approved"
+                              ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20"
+                              : "bg-amber-500/5 text-amber-600 border-amber-500/20"
+                          )}>
+                            {session.status}
+                          </span>
+                        </td>
+                        <td className="px-8 py-7 text-right">
+                          {session.isRegistered ? (
+                            <div className="flex items-center justify-end gap-2 text-emerald-600 font-bold">
+                              <CheckCircle2 className="w-5 h-5" />
+                              Registered
+                            </div>
+                          ) : (
+                            <Button
+                              className="h-10 px-6 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white shadow-lg shadow-slate-900/20 transition-all active:scale-[0.98] font-bold"
+                              onClick={() => onRegister(session.id)}
+                            >
+                              Register Now
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground">
+                            <Calendar className="w-8 h-8" />
+                          </div>
+                          <p className="text-muted-foreground font-bold italic">No sessions found for this selection.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -1596,7 +1731,20 @@ export default function TeacherDashboard() {
       return mockPDHours;
     }
   });
+  const [selectedReflectObs, setSelectedReflectObs] = useState<Observation | null>(null);
   const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleReflectionSubmit = (reflection: DetailedReflection) => {
+    if (selectedReflectObs) {
+      handleReflect(selectedReflectObs.id, reflection);
+      setSelectedReflectObs(null);
+    }
+  };
+
+  const handleViewReport = (id: string) => {
+    navigate(`/teacher/observations/${id}`);
+  };
 
   useEffect(() => {
     localStorage.setItem('observations_data', JSON.stringify(observations));
@@ -1731,7 +1879,24 @@ export default function TeacherDashboard() {
     setEvents(prev => prev.map(event => {
       if (event.id === eventId) {
         toast.success(`Successfully registered for ${event.title}`);
-        return { ...event, isRegistered: true, spotsLeft: event.spotsLeft - 1 };
+
+        // Add current user to registrants list
+        const newRegistrant = {
+          id: `u-${Date.now()}`,
+          name: userName,
+          email: `${userName.toLowerCase().replace(' ', '.')}@school.edu`,
+          dateRegistered: format(new Date(), "MMM d, yyyy")
+        };
+
+        const updatedRegistrants = [...(event.registrants || []), newRegistrant];
+
+        return {
+          ...event,
+          isRegistered: true,
+          registered: event.registered + 1,
+          spotsLeft: event.spotsLeft - 1,
+          registrants: updatedRegistrants
+        };
       }
       return event;
     }));
@@ -1740,8 +1905,23 @@ export default function TeacherDashboard() {
   return (
     <DashboardLayout role={role as any} userName={userName}>
       <Routes>
-        <Route index element={<DashboardOverview goals={goals} events={events} observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))} onRegister={handleRegister} />} />
-        <Route path="observations" element={<ObservationsView observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))} onReflect={handleReflect} />} />
+        <Route index element={
+          <DashboardOverview
+            goals={goals}
+            events={events}
+            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))}
+            onRegister={handleRegister}
+            onView={handleViewReport}
+            onReflect={setSelectedReflectObs}
+          />
+        } />
+        <Route path="observations" element={
+          <ObservationsView
+            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))}
+            onReflect={setSelectedReflectObs}
+            onView={handleViewReport}
+          />
+        } />
         <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
         <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} />} />
         <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
@@ -1766,6 +1946,56 @@ export default function TeacherDashboard() {
           />
         } />
       </Routes>
+
+      {/* Reflection Dialog */}
+      {selectedReflectObs && (
+        <>
+          {getActiveTemplateByType("Reflection") ? (
+            <Dialog open={!!selectedReflectObs} onOpenChange={() => setSelectedReflectObs(null)}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Teacher Self-Reflection (Master)</DialogTitle>
+                  <DialogDescription>Based on the Ekya Danielson Framework</DialogDescription>
+                </DialogHeader>
+                <DynamicForm
+                  fields={getActiveTemplateByType("Reflection")!.fields}
+                  submitLabel="Submit Reflection"
+                  onCancel={() => setSelectedReflectObs(null)}
+                  onSubmit={(data) => {
+                    const reflection: DetailedReflection = {
+                      teacherName: selectedReflectObs?.teacher || "Emily Rodriguez",
+                      teacherEmail: "emily.r@ekyaschools.com",
+                      submissionDate: new Date().toISOString(),
+                      sections: {
+                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
+                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
+                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
+                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
+                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
+                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
+                      },
+                      strengths: data.r23 || "See details",
+                      improvements: data.r24 || "See details",
+                      goal: data.r25 || "Assigned by teacher",
+                      comments: data.r26 || "Master form reflection submitted.",
+                    };
+                    handleReflectionSubmit(reflection);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <ReflectionForm
+              isOpen={!!selectedReflectObs}
+              onClose={() => setSelectedReflectObs(null)}
+              onSubmit={handleReflectionSubmit}
+              observation={selectedReflectObs}
+              teacherName={selectedReflectObs.teacher || "Emily Rodriguez"}
+              teacherEmail="emily.r@ekyaschools.com"
+            />
+          )}
+        </>
+      )}
 
       {/* Credit Request Dialog */}
       <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>

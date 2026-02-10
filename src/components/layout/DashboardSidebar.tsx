@@ -33,7 +33,7 @@ const teacherNav = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/teacher" },
   { title: "Observations", icon: Eye, path: "/teacher/observations" },
   { title: "Goals", icon: Target, path: "/teacher/goals" },
-  { title: "Training Calendar", icon: Calendar, path: "/teacher/calendar" },
+  { title: "Training & PD Calendar", icon: Calendar, path: "/teacher/calendar" },
   { title: "Courses", icon: Book, path: "/teacher/courses" },
   { title: "PD Hours", icon: Clock, path: "/teacher/hours" },
   { title: "Documents", icon: FileCheck, path: "/teacher/documents" },
@@ -43,12 +43,12 @@ const teacherNav = [
 
 const leaderNav = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/leader" },
-  { title: "Observe Teachers", icon: Eye, path: "/leader/observe" },
+  { title: "Observe Teacher", icon: Eye, path: "/leader/observe" },
   { title: "Team Overview", icon: Users, path: "/leader/team" },
   { title: "Set Goals", icon: Target, path: "/leader/goals" },
   { title: "PD Participation", icon: Clock, path: "/leader/participation" },
   { title: "Performance", icon: TrendingUp, path: "/leader/performance" },
-  { title: "Training Calendar", icon: Calendar, path: "/leader/calendar" },
+  { title: "Training & PD Calendar", icon: Calendar, path: "/leader/calendar" },
   { title: "Reports", icon: FileText, path: "/leader/reports" },
 ];
 
@@ -57,7 +57,7 @@ const adminNav = [
   { title: "User Management", icon: Users, path: "/admin/users" },
   { title: "Form Templates", icon: FileText, path: "/admin/forms" },
   { title: "Course Catalogue", icon: Book, path: "/admin/courses" },
-  { title: "Training Calendar", icon: Calendar, path: "/admin/calendar" },
+  { title: "Training & PD Calendar", icon: Calendar, path: "/admin/calendar" },
   { title: "Reports", icon: FileText, path: "/admin/reports" },
   { title: "Settings", icon: Settings, path: "/admin/settings" },
 ];

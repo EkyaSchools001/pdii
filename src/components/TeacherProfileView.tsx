@@ -3,7 +3,7 @@ import {
     Users, Eye, TrendingUp, Calendar, FileText, Target,
     Award, CheckCircle, Clock, Mail, Phone, MapPin,
     ChevronLeft, Sparkles, Star, Rocket, ArrowUpRight,
-    Shield, BookOpen, GraduationCap, Microscope
+    Shield, BookOpen, GraduationCap, Microscope, Plus, Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -34,6 +34,7 @@ export interface TeacherProfileViewProps {
 
 export function TeacherProfileView({ teacher, observations, goals, onBack, userRole = "teacher" }: TeacherProfileViewProps) {
     const navigate = useNavigate();
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
     const isReadOnly = true; // explicitly non-editable as requested
 
     // Filter observations for this specific teacher

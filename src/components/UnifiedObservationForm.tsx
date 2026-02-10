@@ -129,84 +129,99 @@ const META_TAGS = [
 
 export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }: UnifiedObservationFormProps) {
     const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState<Partial<Observation>>({
-        id: Math.random().toString(36).substr(2, 9),
-        date: new Date().toISOString().split('T')[0],
-        teacher: "",
-        teacherEmail: "",
-        observerName: "Dr. Sarah Johnson",
-        observerRole: "Head of School",
-        campus: "CMR NPS",
-        domains: DOMAINS.map(d => ({
-            domainId: d.id,
-            title: d.title,
-            indicators: d.indicators.map(i => ({ name: i, rating: "Not Observed" })),
-            evidence: ""
-        })),
-        routines: [],
-        cultureTools: [],
-        instructionalTools: [],
-        learningAreaTools: [],
-        metaTags: [],
-        discussionMet: false,
-        classroom: {
-            block: "",
-            grade: "",
-            section: "",
-            learningArea: ""
-        },
-        strengths: "",
-        areasOfGrowth: "",
-        feedback: "",
-        actionSteps: "",
-        nextSteps: "",
-        score: 0,
-        status: "Draft",
-        hasReflection: false,
-        reflection: "",
-        ...initialData
+
+    // Internal state uses flattened classroom fields for stability
+    const [formData, setFormData] = useState<Partial<Observation> & { block: string; grade: string; section: string }>(() => {
+        const obs = {
+            id: Math.random().toString(36).substr(2, 9),
+            date: new Date().toISOString().split('T')[0],
+            teacher: "",
+            teacherEmail: "",
+            observerName: "Dr. Sarah Johnson",
+            observerRole: "Head of School",
+            campus: "CMR NPS",
+            domains: DOMAINS.map(d => ({
+                domainId: d.id,
+                title: d.title,
+                indicators: d.indicators.map(i => ({ name: i, rating: "Not Observed" })),
+                evidence: ""
+            })),
+            routines: [],
+            cultureTools: [],
+            instructionalTools: [],
+            learningAreaTools: [],
+            metaTags: [],
+            discussionMet: false,
+            strengths: "",
+            areasOfGrowth: "",
+            feedback: "",
+            actionSteps: "",
+            nextSteps: "",
+            score: 0,
+            status: "Draft",
+            hasReflection: false,
+            reflection: "",
+            // Classroom fields flattened
+            block: initialData.classroom?.block || "",
+            grade: initialData.classroom?.grade || "",
+            section: initialData.classroom?.section || "",
+            ...initialData,
+            learningArea: initialData.learningArea || initialData.classroom?.learningArea || ""
+        };
+        return obs as any;
     });
 
-    const updateFormData = (updates: Partial<Observation>) => {
-        setFormData(prev => ({ ...prev, ...updates }));
-    };
-
-    const updateClassroom = (updates: Partial<Observation["classroom"]>) => {
-        setFormData(prev => ({
-            ...prev,
-            classroom: { ...(prev.classroom || {}), ...updates } as any
-        }));
+    const updateField = <K extends keyof (Partial<Observation> & { block: string; grade: string; section: string })>(
+        field: K,
+        value: (Partial<Observation> & { block: string; grade: string; section: string })[K]
+    ) => {
+        setFormData(prev => {
+            if (prev[field] === value) return prev;
+            return { ...prev, [field]: value };
+        });
     };
 
     const updateIndicatorRating = (domainId: string, indicatorName: string, rating: DanielsonRatingScale) => {
-        setFormData(prev => ({
-            ...prev,
-            domains: prev.domains?.map(d => d.domainId === domainId ? {
-                ...d,
-                indicators: d.indicators.map(i => i.name === indicatorName ? { ...i, rating } : i)
-            } : d)
-        }));
+        setFormData(prev => {
+            const domain = prev.domains?.find(d => d.domainId === domainId);
+            if (!domain) return prev;
+
+            const indicator = domain.indicators.find(i => i.name === indicatorName);
+            if (indicator?.rating === rating) return prev;
+
+            return {
+                ...prev,
+                domains: prev.domains?.map(d => d.domainId === domainId ? {
+                    ...d,
+                    indicators: d.indicators.map(i => i.name === indicatorName ? { ...i, rating } : i)
+                } : d)
+            };
+        });
     };
 
     const updateDomainEvidence = (domainId: string, evidence: string) => {
-        setFormData(prev => ({
-            ...prev,
-            domains: prev.domains?.map(d => d.domainId === domainId ? { ...d, evidence } : d)
-        }));
+        setFormData(prev => {
+            const domain = prev.domains?.find(d => d.domainId === domainId);
+            if (domain?.evidence === evidence) return prev;
+
+            return {
+                ...prev,
+                domains: prev.domains?.map(d => d.domainId === domainId ? { ...d, evidence } : d)
+            };
+        });
     };
 
-    const toggleMultiSelect = (field: keyof Observation, value: string) => {
+    const setMultiSelect = (field: keyof Observation, item: string, checked: boolean) => {
         setFormData(prev => {
             const current = Array.isArray(prev[field]) ? (prev[field] as string[]) : [];
-            const isSelected = current.includes(value);
-            const newValues = isSelected
-                ? current.filter(v => v !== value)
-                : [...current, value];
+            const exists = current.includes(item);
 
-            // Only update if value actually changed
-            if (JSON.stringify(current) === JSON.stringify(newValues)) return prev;
-
-            return { ...prev, [field]: newValues };
+            if (checked && !exists) {
+                return { ...prev, [field]: [...current, item] };
+            } else if (!checked && exists) {
+                return { ...prev, [field]: current.filter(i => i !== item) };
+            }
+            return prev;
         });
     };
 
@@ -218,7 +233,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
             }
         }
         if (step === 2) {
-            if (!formData.classroom?.block || !formData.classroom?.grade || !formData.classroom?.learningArea) {
+            if (!formData.block || !formData.grade || !formData.learningArea) {
                 toast.error("Please fill in all required classroom details");
                 return false;
             }
@@ -267,8 +282,6 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateStep()) {
-            // Calculate overall score based on Effective (3) and Highly Effective (4) etc.
-            // Simplified logic: average of all non-"Not Observed" indicators
             let totalPoints = 0;
             let observedCount = 0;
             formData.domains?.forEach(d => {
@@ -282,14 +295,21 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                     }
                 });
             });
-            const avgScore = observedCount > 0 ? Number((totalPoints / (observedCount * 4) * 100).toFixed(0)) : 0;
             const scoreValue = observedCount > 0 ? Number((totalPoints / observedCount).toFixed(1)) : 0;
 
-            onSubmit({
+            const finalData: Partial<Observation> = {
                 ...formData,
                 score: scoreValue,
-                domain: formData.metaTags?.[0] || "General Instruction"
-            });
+                domain: formData.metaTags?.[0] || "General Instruction",
+                classroom: {
+                    block: formData.block || "",
+                    grade: formData.grade || "",
+                    section: formData.section || "",
+                    learningArea: formData.learningArea || ""
+                }
+            };
+
+            onSubmit(finalData);
         }
     };
 
@@ -341,7 +361,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <Input
                                             placeholder="Full Name"
                                             value={formData.teacher || ""}
-                                            onChange={(e) => updateFormData({ teacher: e.target.value })}
+                                            onChange={(e) => updateField("teacher", e.target.value)}
                                             className="h-12 text-base rounded-xl border-muted-foreground/20"
                                         />
                                     </div>
@@ -351,7 +371,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                             type="email"
                                             placeholder="teacher@ekya.in"
                                             value={formData.teacherEmail || ""}
-                                            onChange={(e) => updateFormData({ teacherEmail: e.target.value })}
+                                            onChange={(e) => updateField("teacherEmail", e.target.value)}
                                             className="h-12 text-base rounded-xl border-muted-foreground/20"
                                         />
                                     </div>
@@ -362,7 +382,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Observer's Name *</Label>
                                         <Input
                                             value={formData.observerName || ""}
-                                            onChange={(e) => updateFormData({ observerName: e.target.value })}
+                                            onChange={(e) => updateField("observerName", e.target.value)}
                                             className="h-12 text-base rounded-xl border-muted-foreground/20"
                                         />
                                     </div>
@@ -371,7 +391,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <Input
                                             type="date"
                                             value={formData.date || ""}
-                                            onChange={(e) => updateFormData({ date: e.target.value })}
+                                            onChange={(e) => updateField("date", e.target.value)}
                                             className="h-12 text-base rounded-xl border-muted-foreground/20"
                                         />
                                     </div>
@@ -388,7 +408,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                                     "cursor-pointer px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105",
                                                     formData.campus === c ? "bg-primary text-white" : "border-primary/20 text-muted-foreground hover:bg-primary/5"
                                                 )}
-                                                onClick={() => updateFormData({ campus: c })}
+                                                onClick={() => updateField("campus", c)}
                                             >
                                                 {c}
                                             </Badge>
@@ -400,7 +420,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                     <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Observer's Role *</Label>
                                     <RadioGroup
                                         value={formData.observerRole}
-                                        onValueChange={(val) => updateFormData({ observerRole: val })}
+                                        onValueChange={(val) => updateField("observerRole", val)}
                                         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
                                     >
                                         {["Academic Coordinator", "CCA Coordinator", "Head of School", "ELC Team Member", "PDI Team Member", "Other"].map(r => (
@@ -440,11 +460,11 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                                 key={b}
                                                 className={cn(
                                                     "flex items-center gap-2 p-4 border-2 rounded-2xl transition-all cursor-pointer",
-                                                    formData.classroom?.block === b ? "border-primary bg-primary/5" : "border-muted-foreground/10 hover:border-primary/40 hover:bg-muted/20"
+                                                    formData.block === b ? "border-primary bg-primary/5" : "border-muted-foreground/10 hover:border-primary/40 hover:bg-muted/20"
                                                 )}
-                                                onClick={() => updateClassroom({ block: b })}
+                                                onClick={() => updateField("block", b)}
                                             >
-                                                <div className={cn("w-4 h-4 rounded-full border-2", formData.classroom?.block === b ? "bg-primary border-primary" : "border-muted-foreground/20")} />
+                                                <div className={cn("w-4 h-4 rounded-full border-2", formData.block === b ? "bg-primary border-primary" : "border-muted-foreground/20")} />
                                                 <span className="font-bold">{b}</span>
                                             </div>
                                         ))}
@@ -455,8 +475,8 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Grade *</Label>
                                         <Select
-                                            value={formData.classroom?.grade || ""}
-                                            onValueChange={(val) => updateClassroom({ grade: val })}
+                                            value={formData.grade || ""}
+                                            onValueChange={(val) => updateField("grade", val)}
                                         >
                                             <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
                                                 <SelectValue placeholder="Select Grade" />
@@ -472,8 +492,8 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Section</Label>
                                         <Input
                                             placeholder="e.g., A, B, Emerald"
-                                            value={formData.classroom?.section}
-                                            onChange={(e) => updateClassroom({ section: e.target.value })}
+                                            value={formData.section}
+                                            onChange={(e) => updateField("section", e.target.value)}
                                             className="h-12 text-base rounded-xl border-muted-foreground/20"
                                         />
                                     </div>
@@ -485,12 +505,12 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         {["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Technology", "Languages"].map(la => (
                                             <Badge
                                                 key={la}
-                                                variant={formData.classroom?.learningArea === la ? "default" : "outline"}
+                                                variant={formData.learningArea === la ? "default" : "outline"}
                                                 className={cn(
                                                     "cursor-pointer px-4 py-3 justify-center text-center rounded-xl transition-all border-muted-foreground/10",
-                                                    formData.classroom?.learningArea === la ? "bg-indigo-500 hover:bg-indigo-600" : "text-muted-foreground hover:bg-indigo-50 px-2"
+                                                    formData.learningArea === la ? "bg-indigo-500 hover:bg-indigo-600" : "text-muted-foreground hover:bg-indigo-50 px-2"
                                                 )}
-                                                onClick={() => updateClassroom({ learningArea: la })}
+                                                onClick={() => updateField("learningArea", la)}
                                             >
                                                 {la}
                                             </Badge>
@@ -588,13 +608,17 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                                                 formData.routines?.includes(item) ? "bg-primary/5 border-primary shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => toggleMultiSelect("routines", item)}
+                                            onClick={() => setMultiSelect("routines", item, !formData.routines?.includes(item))}
                                         >
-                                            <Checkbox checked={formData.routines?.includes(item)} className="pointer-events-none" />
-                                            <span className="font-medium text-sm">{item}</span>
+                                            <Checkbox
+                                                checked={formData.routines?.includes(item)}
+                                                onCheckedChange={(checked) => setMultiSelect("routines", item, !!checked)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className="font-medium text-sm flex-1">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -611,13 +635,17 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                                                 formData.cultureTools?.includes(item) ? "bg-indigo-500/5 border-indigo-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => toggleMultiSelect("cultureTools", item)}
+                                            onClick={() => setMultiSelect("cultureTools", item, !formData.cultureTools?.includes(item))}
                                         >
-                                            <Checkbox checked={formData.cultureTools?.includes(item)} className="pointer-events-none" />
-                                            <span className="font-medium text-sm">{item}</span>
+                                            <Checkbox
+                                                checked={formData.cultureTools?.includes(item)}
+                                                onCheckedChange={(checked) => setMultiSelect("cultureTools", item, !!checked)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className="font-medium text-sm flex-1">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -634,13 +662,17 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                                                 formData.instructionalTools?.includes(item) ? "bg-emerald-500/5 border-emerald-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => toggleMultiSelect("instructionalTools", item)}
+                                            onClick={() => setMultiSelect("instructionalTools", item, !formData.instructionalTools?.includes(item))}
                                         >
-                                            <Checkbox checked={formData.instructionalTools?.includes(item)} className="pointer-events-none" />
-                                            <span className="font-medium text-sm">{item}</span>
+                                            <Checkbox
+                                                checked={formData.instructionalTools?.includes(item)}
+                                                onCheckedChange={(checked) => setMultiSelect("instructionalTools", item, !!checked)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className="font-medium text-sm flex-1">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -657,13 +689,17 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                                                 formData.learningAreaTools?.includes(item) ? "bg-orange-500/5 border-orange-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => toggleMultiSelect("learningAreaTools", item)}
+                                            onClick={() => setMultiSelect("learningAreaTools", item, !formData.learningAreaTools?.includes(item))}
                                         >
-                                            <Checkbox checked={formData.learningAreaTools?.includes(item)} className="pointer-events-none" />
-                                            <span className="font-medium text-sm">{item}</span>
+                                            <Checkbox
+                                                checked={formData.learningAreaTools?.includes(item)}
+                                                onCheckedChange={(checked) => setMultiSelect("learningAreaTools", item, !!checked)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className="font-medium text-sm flex-1">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -693,7 +729,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                     <RadioGroup
                                         className="flex gap-10"
                                         value={formData.discussionMet ? "yes" : "no"}
-                                        onValueChange={(val) => updateFormData({ discussionMet: val === "yes" })}
+                                        onValueChange={(val) => updateField("discussionMet", val === "yes")}
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="met-yes" />
@@ -712,7 +748,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         placeholder="Summarize key strengths and areas observed..."
                                         className="min-h-[150px] bg-background text-base p-6 rounded-2xl border-muted-foreground/20 leading-relaxed shadow-sm focus:ring-4 focus:ring-primary/10 transition-all"
                                         value={formData.notes || ""}
-                                        onChange={(e) => updateFormData({ notes: e.target.value })}
+                                        onChange={(e) => updateField("notes", e.target.value)}
                                     />
                                 </div>
 
@@ -722,7 +758,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         placeholder="What did the teacher share during your conversation?"
                                         className="min-h-[100px] bg-background text-base p-6 rounded-2xl border-muted-foreground/20 leading-relaxed shadow-sm focus:ring-4 focus:ring-primary/10 transition-all"
                                         value={formData.teacherReflection || ""}
-                                        onChange={(e) => updateFormData({ teacherReflection: e.target.value })}
+                                        onChange={(e) => updateField("teacherReflection", e.target.value)}
                                     />
                                 </div>
 
@@ -732,7 +768,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         placeholder="Specific, actionable next step for the educator..."
                                         className="min-h-[100px] bg-primary/5 text-base font-medium p-6 rounded-2xl border-primary/20 leading-relaxed shadow-sm focus:ring-4 focus:ring-primary/10 transition-all"
                                         value={formData.actionStep || ""}
-                                        onChange={(e) => updateFormData({ actionStep: e.target.value })}
+                                        onChange={(e) => updateField("actionStep", e.target.value)}
                                     />
                                 </div>
 
@@ -742,7 +778,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         placeholder="Internal notes or context..."
                                         className="min-h-[80px] bg-background rounded-xl border-muted-foreground/20"
                                         value={formData.additionalNotes || ""}
-                                        onChange={(e) => updateFormData({ additionalNotes: e.target.value })}
+                                        onChange={(e) => updateField("additionalNotes", e.target.value)}
                                     />
                                 </div>
                             </CardContent>
@@ -785,7 +821,7 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                                     ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105"
                                                     : "bg-background text-muted-foreground border-muted-foreground/10 hover:border-primary/40 hover:bg-primary/5"
                                             )}
-                                            onClick={() => toggleMultiSelect("metaTags", tag)}
+                                            onClick={() => setMultiSelect("metaTags", tag, !formData.metaTags?.includes(tag))}
                                         >
                                             {tag}
                                         </Badge>
