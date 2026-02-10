@@ -3,8 +3,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { Users, FileText, Book, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, Routes, Route, useNavigate } from "react-router-dom";
+import { Link, Routes, Route, useNavigate, useLocation, useParams } from "react-router-dom";
 import { UserManagementView } from "./admin/UserManagementView";
+import { TeacherProfileView } from "@/components/TeacherProfileView";
+import { Observation } from "@/types/observation";
+import { useState, useEffect } from "react";
 import { FormTemplatesView } from "./admin/FormTemplatesView";
 import { CourseManagementView } from "./admin/CourseManagementView";
 import { AdminCalendarView } from "./admin/AdminCalendarView";
@@ -12,11 +15,23 @@ import { AdminReportsView } from "./admin/AdminReportsView";
 import { SystemSettingsView } from "./admin/SystemSettingsView";
 
 export default function AdminDashboard() {
+  const location = useLocation();
+  const { role = "admin", userName = "Admin User" } = location.state || {};
+  const [observations, setObservations] = useState<Observation[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('observations_data');
+    if (saved) {
+      setObservations(JSON.parse(saved));
+    }
+  }, []);
+
   return (
-    <DashboardLayout role="admin" userName="Admin User">
+    <DashboardLayout role={role} userName={userName}>
       <Routes>
         <Route index element={<DashboardOverview />} />
         <Route path="users" element={<UserManagementView />} />
+        <Route path="profile/:userId" element={<AdminTeacherProfileView observations={observations} />} />
         <Route path="forms" element={<FormTemplatesView />} />
         <Route path="courses" element={<CourseManagementView />} />
         <Route path="calendar" element={<AdminCalendarView />} />
@@ -332,6 +347,36 @@ function DashboardOverview() {
         </div>
       </div>
     </>
+  );
+}
+
+function AdminTeacherProfileView({ observations }: { observations: Observation[] }) {
+  const { userId } = useParams();
+  const navigate = useNavigate();
+
+  // In a real app, this would fetch the user from a database
+  // Here we'll mock it based on common names used in the app
+  const teacher = {
+    id: userId || "1",
+    name: userId === "3" ? "Emily Rodriguez" : userId === "2" ? "David Kim" : "James Wilson",
+    role: "Teacher",
+    observations: 8,
+    lastObserved: "Jan 15",
+    avgScore: 4.2,
+    pdHours: 32,
+    completionRate: 85
+  };
+
+  return (
+    <div className="space-y-6">
+      <TeacherProfileView
+        teacher={teacher}
+        observations={observations}
+        goals={[]} // We can mock goals here too
+        onBack={() => navigate("/admin/users")}
+        userRole="admin"
+      />
+    </div>
   );
 }
 

@@ -29,13 +29,16 @@ export default function Auth() {
 
             if (email === "teacher@pms.com") {
                 toast.success("Welcome, Teacher!");
-                navigate("/teacher");
+                navigate("/teacher", { state: { role: "teacher", userName: "Emily Rodriguez" } });
             } else if (email === "schoolleader@pms.com") {
                 toast.success("Welcome, School Leader!");
-                navigate("/leader");
+                navigate("/leader", { state: { role: "leader", userName: "Dr. Sarah Johnson" } });
             } else if (email === "admin@pms.com") {
                 toast.success("Welcome, Administrator!");
-                navigate("/admin");
+                navigate("/admin", { state: { role: "admin", userName: "Admin User" } });
+            } else if (email === "superadmin@pms.com") {
+                toast.success("Welcome, Superadmin!");
+                navigate("/admin", { state: { role: "superadmin", userName: "Superadmin User" } });
             } else {
                 toast.error("Invalid email. Please use one of the test emails.");
             }
@@ -55,17 +58,16 @@ export default function Auth() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
             <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-500">
-                <div className="text-center">
-                    <Link to="/" className="inline-flex items-center gap-4 mb-8 group">
-                        <div className="p-2.5 rounded-2xl bg-white shadow-xl group-hover:scale-110 transition-transform duration-300">
-                            <img src="/EKYA.png" alt="Ekya Schools" className="h-10 w-auto" />
-                        </div>
-                        <span className="text-2xl font-black text-foreground tracking-tight">EKYA PD PLATFORM</span>
+                <div className="flex justify-center mb-6">
+                    <Link to="/" className="group">
+                        <img src="/EKYA.png" alt="Ekya PDI" className="h-28 w-auto object-contain drop-shadow-lg group-hover:scale-105 transition-transform duration-300" />
                     </Link>
+                </div>
+                <div className="text-center space-y-2">
                     <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
                         Welcome Back
                     </h2>
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="text-muted-foreground font-medium">
                         Sign in to your professional development account
                     </p>
                 </div>
@@ -73,7 +75,7 @@ export default function Auth() {
                 <Alert className="bg-primary/5 border-primary/20">
                     <AlertCircle className="h-4 w-4 text-primary" />
                     <AlertDescription className="text-xs text-primary/80">
-                        <strong>Test Credentials:</strong> teacher@pms.com, schoolleader@pms.com, or admin@pms.com with password123
+                        <strong>Test Credentials:</strong> teacher@pms.com, schoolleader@pms.com, admin@pms.com, or superadmin@pms.com with password123
                     </AlertDescription>
                 </Alert>
 
@@ -193,6 +195,6 @@ export default function Auth() {
                     </Link>
                 </p>
             </div>
-        </div>
+        </div >
     );
 }

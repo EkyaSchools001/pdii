@@ -16,10 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-    Search, Plus, MoreVertical, Shield, Mail, Pencil, Trash2, UserCheck, UserX
+    Search, Plus, MoreVertical, Shield, Mail, Pencil, Trash2, UserCheck, UserX, Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 // Mock Data
 const initialUsers = [
@@ -31,6 +32,7 @@ const initialUsers = [
 ];
 
 export function UserManagementView() {
+    const navigate = useNavigate();
     const [users, setUsers] = useState(initialUsers);
     const [searchQuery, setSearchQuery] = useState("");
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -121,6 +123,8 @@ export function UserManagementView() {
         } else if (action === "Deactivate" || action === "Activate") {
             setSelectedUser(user);
             setIsDeactivateDialogOpen(true);
+        } else if (action === "View Profile") {
+            navigate(`/admin/profile/${user.id}`);
         }
     }
 
@@ -435,6 +439,11 @@ export function UserManagementView() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    {user.role === "Teacher" && (
+                                                        <DropdownMenuItem onClick={() => handleAction("View Profile", user)}>
+                                                            <Users className="w-4 h-4 mr-2" /> View Performance Profile
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuItem onClick={() => handleAction("Edit Details", user)}>
                                                         <Pencil className="w-4 h-4 mr-2" /> Edit Details
                                                     </DropdownMenuItem>

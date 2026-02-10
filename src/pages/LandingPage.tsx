@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { GraduationCap, Users, Shield, ArrowRight, CheckCircle2, BarChart3, Calendar, Target, Building2 } from "lucide-react";
+import { GraduationCap, Users, Shield, ArrowRight, CheckCircle2, BarChart3, Calendar, Target, Building2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 
@@ -61,6 +61,14 @@ const roles = [
     path: "/login",
     color: "bg-orange-500/10 text-orange-500",
   },
+  {
+    role: "superadmin",
+    title: "Superadmin",
+    description: "Full system access, global configuration, and multi-campus management",
+    icon: Crown,
+    path: "/login",
+    color: "bg-purple-600/10 text-purple-600",
+  },
 ];
 
 export default function LandingPage() {
@@ -70,10 +78,9 @@ export default function LandingPage() {
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-6 py-6">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img src="/EKYA.png" alt="Ekya Schools" className="h-[70px] w-auto drop-shadow-2xl" />
-              <span className="text-2xl font-black tracking-tight text-white drop-shadow-sm">EKYA <span className="text-accent">PD</span> PLATFORM</span>
-            </div>
+            <Link to="/" className="group">
+              <img src="/EKYA.png" alt="Ekya PDI" className="h-24 w-auto drop-shadow-xl group-hover:scale-105 transition-transform duration-300" />
+            </Link>
             <Button variant="secondary" asChild>
               <Link to="/login">Sign In</Link>
             </Button>
@@ -165,7 +172,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
             {roles.map((role, index) => (
               <Link
                 key={role.role}
@@ -193,10 +200,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-4">
-              <div className="bg-white p-2 rounded-xl shadow-lg">
-                <img src="/EKYA.png" alt="Ekya Schools" className="h-10 w-auto" />
-              </div>
-              <span className="font-black tracking-tight text-xl">EKYA PD PLATFORM</span>
+              <img src="/EKYA.png" alt="Ekya PDI" className="h-20 w-auto" />
             </div>
             <p className="text-sm text-primary-foreground/60 font-medium">
               © 2024 Professional Development Platform. All rights reserved.

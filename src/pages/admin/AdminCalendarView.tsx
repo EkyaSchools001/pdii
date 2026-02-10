@@ -64,10 +64,12 @@ export function AdminCalendarView() {
         };
 
         window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('training-events-updated', handleCustomEvent);
+        // Removed training-events-updated listener to prevent infinite loop.
+        // This component is a source of truth and dispatches the event itself.
+        // window.addEventListener('training-events-updated', handleCustomEvent);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('training-events-updated', handleCustomEvent);
+            // window.removeEventListener('training-events-updated', handleCustomEvent);
         };
     }, []);
 

@@ -21,11 +21,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth />} />
-          <Route path="/teacher" element={<TeacherDashboard />} />
           <Route path="/teacher/*" element={<TeacherDashboard />} />
-          <Route path="/leader" element={<LeaderDashboard />} />
           <Route path="/leader/*" element={<LeaderDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -15,10 +15,12 @@ interface DynamicFormProps {
     onSubmit: (data: Record<string, any>) => void;
     onCancel?: () => void;
     submitLabel?: string;
+    initialData?: Record<string, any>;
+    className?: string;
 }
 
-export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit" }: DynamicFormProps) {
-    const [formData, setFormData] = useState<Record<string, any>>({});
+export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit", initialData = {}, className }: DynamicFormProps) {
+    const [formData, setFormData] = useState<Record<string, any>>(initialData);
 
     const handleInputChange = (id: string, value: any) => {
         setFormData(prev => ({ ...prev, [id]: value }));
@@ -37,7 +39,7 @@ export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit"
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-6">
+            <div className={cn("grid gap-6", className)}>
                 {fields.map((field) => (
                     <div key={field.id} className="space-y-2">
                         <Label htmlFor={field.id} className="text-sm font-semibold">

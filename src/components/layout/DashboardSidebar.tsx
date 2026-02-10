@@ -11,6 +11,7 @@ import {
   Lightbulb,
   Users,
   FileText,
+  FileCheck,
   Settings,
   LogOut,
   ChevronLeft,
@@ -35,7 +36,9 @@ const teacherNav = [
   { title: "Training Calendar", icon: Calendar, path: "/teacher/calendar" },
   { title: "Courses", icon: Book, path: "/teacher/courses" },
   { title: "PD Hours", icon: Clock, path: "/teacher/hours" },
+  { title: "Documents", icon: FileCheck, path: "/teacher/documents" },
   { title: "Insights", icon: Lightbulb, path: "/teacher/insights" },
+  { title: "My Profile", icon: Users, path: "/teacher/profile" },
 ];
 
 const leaderNav = [
@@ -63,6 +66,7 @@ const navByRole = {
   teacher: teacherNav,
   leader: leaderNav,
   admin: adminNav,
+  superadmin: adminNav, // Use admin navigation for superadmin for now
 };
 
 export function DashboardSidebar({ role, userName, collapsed, onToggle }: DashboardSidebarProps) {

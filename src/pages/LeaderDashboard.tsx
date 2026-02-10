@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { getActiveTemplateByType } from "@/lib/template-utils";
 import { DynamicForm } from "@/components/DynamicForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UnifiedObservationForm } from "@/components/UnifiedObservationForm";
+import { TeacherProfileView } from "@/components/TeacherProfileView";
 
 const teamMembers = [
   { id: "1", name: "Emily Rodriguez", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
@@ -138,10 +140,12 @@ export default function LeaderDashboard() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('training-events-updated', handleCustomTrainingEvent);
+    // Removed training-events-updated listener here to prevent infinite loop.
+    // LeaderDashboard is the source of truth and dispatches this event itself.
+    // window.addEventListener('training-events-updated', handleCustomTrainingEvent);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
+      // window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
     };
   }, []);
 
@@ -520,10 +524,7 @@ function TeamManagementView({ team }: { team: typeof teamMembers }) {
 function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMembers, observations: Observation[], goals: typeof initialGoals }) {
   const { teacherId } = useParams();
   const navigate = useNavigate();
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const teacher = team.find(t => t.id === teacherId);
-  const teacherObservations = observations.filter(obs => obs.teacher === teacher?.name);
-  const teacherGoals = goals.filter(g => g.teacher === teacher?.name);
 
   if (!teacher) {
     return (
@@ -537,218 +538,14 @@ function TeacherDetailsView({ team, observations, goals }: { team: typeof teamMe
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/leader/team")} className="-ml-2">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <PageHeader
-            title={teacher.name}
-            subtitle={`${teacher.role} • Staff ID #EDU-${teacher.id}00${teacher.id}`}
-            actions={
-              <>
-                <AIAnalysisModal
-                  isOpen={isAIModalOpen}
-                  onClose={() => setIsAIModalOpen(false)}
-                  data={{ teacher, observations: teacherObservations, goals: teacherGoals }}
-                  type="admin"
-                  title={`Performance Analysis: ${teacher.name}`}
-                />
-                <Button
-                  onClick={() => setIsAIModalOpen(true)}
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700 font-bold"
-                >
-                  <Sparkles className="w-4 h-4 text-indigo-600" />
-                  AI Smart Insights
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/leader/observe")} className="hidden md:flex">
-                  Schedule Observation
-                </Button>
-                <Button onClick={() => navigate("/leader/observe")}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Observation
-                </Button>
-              </>
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Performance Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-none shadow-lg bg-primary/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  <span className="text-xs font-bold uppercase text-primary">Status</span>
-                </div>
-                <p className="text-3xl font-bold text-foreground">{teacher.avgScore}</p>
-                <p className="text-sm text-muted-foreground mt-1">Average Performance</p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-lg bg-info/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Eye className="w-5 h-5 text-info" />
-                  <span className="text-xs font-bold uppercase text-info">Cycle</span>
-                </div>
-                <p className="text-3xl font-bold text-foreground">{teacher.observations}/10</p>
-                <p className="text-sm text-muted-foreground mt-1">Observations Completed</p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-lg bg-success/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Award className="w-5 h-5 text-success" />
-                  <span className="text-xs font-bold uppercase text-success">Standing</span>
-                </div>
-                <p className="text-3xl font-bold text-foreground">{teacher.avgScore >= 4 ? "Proficient" : "Progressing"}</p>
-                <p className="text-sm text-muted-foreground mt-1">Current Tier</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Observation History */}
-          <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm">
-            <CardHeader className="border-b bg-muted/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Observation History</CardTitle>
-                  <CardDescription>Archive of recent instructional assessments.</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm">Download All</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/30 border-b">
-                      <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Date</th>
-                      <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Domain</th>
-                      <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Score</th>
-                      <th className="text-right p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-muted-foreground/10">
-                    {teacherObservations.length > 0 ? (
-                      teacherObservations.map((obs) => (
-                        <tr key={obs.id} className="hover:bg-primary/5 transition-colors group">
-                          <td className="p-6 text-sm font-bold text-muted-foreground">{obs.date}, 2026</td>
-                          <td className="p-6">
-                            <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary">
-                              {obs.domain}
-                            </span>
-                          </td>
-                          <td className="p-6">
-                            <div className={cn(
-                              "w-10 h-10 rounded-lg flex items-center justify-center font-bold border",
-                              obs.score >= 4 ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"
-                            )}>
-                              {obs.score}
-                            </div>
-                          </td>
-                          <td className="p-6 text-right">
-                            <Button variant="ghost" size="sm" className="h-10 px-4 hover:bg-primary/10 hover:text-primary" onClick={() => navigate(`/leader/observations/${obs.id}`)}>
-                              View Report
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="p-12 text-center text-muted-foreground italic">
-                          No observation data available for the current cycle.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="border-none shadow-lg bg-background/50 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b bg-muted/10">
-              <CardTitle className="text-lg">PD Participation</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Clock className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold">{teacher.pdHours} Hours</p>
-                    <p className="text-xs text-muted-foreground">Accrued this year</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-primary">{teacher.completionRate}%</p>
-                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Complete</p>
-                </div>
-              </div>
-              <Progress value={teacher.completionRate} className="h-2" />
-              <Button variant="outline" className="w-full mt-2" onClick={() => navigate("/leader/participation")}>
-                View PD History
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg bg-background/50 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b bg-muted/10">
-              <CardTitle className="text-lg">Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">{teacher.name.toLowerCase().replace(' ', '.')}@school.edu</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Phone className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">+1 (555) 123-456{teacher.id}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">Main Campus, Room 30{teacher.id}</span>
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                Edit Personnel File
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg bg-background/50 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b bg-muted/10">
-              <CardTitle className="text-lg">Development Goals</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-5">
-              {teacherGoals.length > 0 ? (
-                teacherGoals.map((goal) => (
-                  <div key={goal.id} className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
-                      <span>{goal.title}</span>
-                      <span className="text-primary">{goal.progress}%</span>
-                    </div>
-                    <Progress value={goal.progress} className="h-1.5" />
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No active goals assigned.</p>
-              )}
-              <Button className="w-full bg-muted hover:bg-muted/80 text-foreground border-none mt-2" onClick={() => navigate("/leader/goals")}>
-                Assign New Goal
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div >
+      <TeacherProfileView
+        teacher={teacher}
+        observations={observations}
+        goals={goals}
+        onBack={() => navigate("/leader/team")}
+        userRole="leader"
+      />
+    </div>
   );
 }
 
@@ -2542,562 +2339,68 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
   observations: Observation[]
 }) {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-
-  const [formData, setFormData] = useState({
-    teacherName: "",
-    teacherEmail: "",
-    observerName: "Dr. Sarah Johnson",
-    observerRole: "Head of School",
-    observationDate: new Date().toISOString().split('T')[0],
-    // Classroom Details
-    block: "",
-    grade: "",
-    section: "",
-    learningArea: "",
-    // Assessment
-    domain: "",
-    score: 0,
-    notes: "",
-    // Extended Details
-    strengths: "",
-    areasForImprovement: "",
-    teachingStrategies: [] as string[]
-  });
-
-  const roles = [
-    "Academic Coordinator",
-    "CCA Coordinator",
-    "Head of School",
-    "ELC Team Member",
-    "PDI Team Member",
-    "Other"
-  ];
-
-  const blocks = ["Early Years", "Primary", "Middle", "Senior", "Specialist"];
-  const grades = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
-  const learningAreas = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Technology", "Languages"];
-
-  const validateStep1 = () => {
-    if (!formData.teacherName || !formData.teacherEmail || !formData.observerName || !formData.observationDate || !formData.observerRole) {
-      toast.error("Please fill in all required fields marked with *");
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep2 = () => {
-    if (!formData.block || !formData.grade || !formData.learningArea) {
-      toast.error("Please complete all required classroom details marked with *");
-      return false;
-    }
-    return true;
-  };
-
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    if (step === 2 && validateStep2()) setStep(3);
-  };
-
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.domain || formData.score === 0) {
-      toast.error("Please complete the assessment scoring");
-      return;
-    }
-
-    // Add to observations state
-    const newObs = {
-      id: Math.random().toString(36).substr(2, 9),
-      teacher: formData.teacherName,
-      domain: formData.domain,
-      date: new Date(formData.observationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      score: formData.score,
-      notes: formData.notes,
-      observerName: formData.observerName,
-      observerRole: formData.observerRole,
-      // Add new fields to observation object if needed for storage/display later
-      classroom: {
-        block: formData.block,
-        grade: formData.grade,
-        section: formData.section,
-        learningArea: formData.learningArea
-      },
-      hasReflection: false,
-      reflection: "",
-      // Extended fields
-      learningArea: formData.learningArea,
-      strengths: formData.strengths,
-      improvements: formData.areasForImprovement,
-      teachingStrategies: formData.teachingStrategies,
-    } as Observation;
-
-
-    setObservations(prev => [newObs, ...prev]);
-
-    // Update teacher stats if they exist, otherwise add them
-    setTeam(prev => {
-      const existing = prev.find(t => t.name.toLowerCase() === formData.teacherName.toLowerCase());
-      if (existing) {
-        return prev.map(t => t.name.toLowerCase() === formData.teacherName.toLowerCase() ? {
-          ...t,
-          observations: t.observations + 1,
-          lastObserved: newObs.date,
-          avgScore: Number(((t.avgScore * t.observations + formData.score) / (t.observations + 1)).toFixed(1))
-        } : t);
-      } else {
-        return [...prev, {
-          id: (prev.length + 1).toString(),
-          name: formData.teacherName,
-          role: "Subject Teacher",
-          observations: 1,
-          lastObserved: newObs.date,
-          avgScore: formData.score,
-          pdHours: 0,
-          completionRate: 0
-        }];
-      }
-    });
-
-    toast.success(`Observation for ${formData.teacherName} recorded successfully!`);
-    navigate("/leader");
-  };
 
   if (!team || !observations) {
     return <div className="p-8 text-center text-muted-foreground">Loading dashboard data...</div>;
   }
 
-  if (getActiveTemplateByType("Observation")) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/leader")}>
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <PageHeader
-            title="New Observation"
-            subtitle="Record teacher performance using Master Template"
-          />
-        </div>
-        <Card className="border-none shadow-xl bg-background overflow-hidden">
-          <CardHeader className="bg-primary/5 border-b py-6">
-            <CardTitle className="text-xl font-bold">Instructional Review (Master)</CardTitle>
-            <CardDescription>All fields are mandatory unless marked optional</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-8">
-            <DynamicForm
-              fields={getActiveTemplateByType("Observation")!.fields}
-              submitLabel="Submit Observation"
-              onCancel={() => navigate("/leader")}
-              onSubmit={(data) => {
-                const newObs = {
-                  id: Math.random().toString(36).substr(2, 9),
-                  teacher: data.t1 || "Unknown Teacher",
-                  domain: data.a1 || "General",
-                  date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  score: Number(data.a2) || 0,
-                  notes: data.a3 || "",
-                  observerName: data.o1 || "Dr. Sarah Johnson",
-                  observerRole: data.o3 || "Head of School",
-                  classroom: {
-                    block: data.c1 || "",
-                    grade: data.c2 || "",
-                    section: data.c3 || "",
-                    learningArea: data.c4 || ""
-                  },
-                  hasReflection: false,
-                  reflection: "",
-                  learningArea: data.c4 || "",
-                  strengths: data.a4 || "",
-                  improvements: data.a5 || "",
-                  teachingStrategies: data.a6 ? data.a6.split(",").map(s => s.trim()) : [],
-                } as Observation;
-
-                setObservations(prev => [newObs, ...prev]);
-                toast.success("Observation recorded using Master Template!");
-                navigate("/leader");
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="icon" onClick={() => navigate("/leader")}>
           <ChevronLeft className="w-5 h-5" />
         </Button>
         <PageHeader
-          title="New Observation"
-          subtitle="Record teacher performance and provide growth feedback"
+          title="Ekya Danielson Framework"
+          subtitle="Unified Observation, Feedback & Improvement Form"
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card className="border-none shadow-xl bg-background overflow-visible">
-            <CardHeader className="bg-primary/5 border-b mb-6 py-8">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-2xl font-bold">Observation Details</CardTitle>
-                  <CardDescription className="text-base">Step {step} of 3: {step === 1 ? "Basic Info" : step === 2 ? "Classroom Context" : "Assessment"}</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map(s => (
-                    <div key={s} className={cn("w-3 h-3 rounded-full transition-colors", step >= s ? "bg-primary" : "bg-muted")} />
-                  ))}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-10 px-2 lg:px-4">
+      <UnifiedObservationForm
+        onCancel={() => navigate("/leader")}
+        onSubmit={(data) => {
+          const newObs = {
+            ...data,
+            id: Math.random().toString(36).substr(2, 9),
+            date: data.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            hasReflection: false,
+            reflection: "",
+          } as Observation;
 
-                {/* Step 1: Basic Info */}
-                {step === 1 && (
-                  <div className="space-y-8">
-                    {/* Teacher Details Section */}
-                    <div className="space-y-6">
-                      <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                        <Users className="w-5 h-5" />
-                        Teacher Information
-                      </h3>
-                      <div className="grid md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                          <Label htmlFor="teacherName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Name of the Teacher <span className="text-destructive">*</span></Label>
-                          <Input
-                            id="teacherName"
-                            placeholder="Enter teacher's full name"
-                            value={formData.teacherName}
-                            onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
-                            className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="space-y-3">
-                          <Label htmlFor="teacherEmail" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Teacher Email ID <span className="text-destructive">*</span></Label>
-                          <Input
-                            id="teacherEmail"
-                            type="email"
-                            placeholder="teacher@school.com"
-                            value={formData.teacherEmail}
-                            onChange={(e) => setFormData({ ...formData, teacherEmail: e.target.value })}
-                            className="h-14 bg-background border-muted-foreground/20 focus:ring-4 focus:ring-primary/10 transition-all text-base px-4 rounded-xl"
-                          />
-                        </div>
-                      </div>
-                    </div>
+          setObservations(prev => [newObs, ...prev]);
 
-                    {/* Observer Details Section */}
-                    <div className="space-y-6 pt-6 border-t border-dashed">
-                      <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                        <Eye className="w-5 h-5" />
-                        Observer Information
-                      </h3>
-                      <div className="grid md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                          <Label htmlFor="observerName" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Name <span className="text-destructive">*</span></Label>
-                          <Input
-                            id="observerName"
-                            value={formData.observerName}
-                            onChange={(e) => setFormData({ ...formData, observerName: e.target.value })}
-                            className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
-                          />
-                        </div>
-                        <div className="space-y-3">
-                          <Label htmlFor="obsDate" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Date of Observation <span className="text-destructive">*</span></Label>
-                          <Input
-                            id="obsDate"
-                            type="date"
-                            value={formData.observationDate}
-                            onChange={(e) => setFormData({ ...formData, observationDate: e.target.value })}
-                            className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
-                          />
-                        </div>
-                      </div>
+          // Update teacher stats
+          setTeam(prev => {
+            const teacherName = newObs.teacher;
+            if (!teacherName) return prev;
 
-                      <div className="space-y-5 pt-4">
-                        <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observer's Role <span className="text-destructive">*</span></Label>
-                        <RadioGroup
-                          value={formData.observerRole}
-                          onValueChange={(val) => setFormData({ ...formData, observerRole: val })}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                        >
-                          {roles.map((role) => (
-                            <div key={role} className="flex items-center space-x-3 p-4 rounded-xl border bg-background hover:bg-muted/30 transition-all cursor-pointer group has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-2 has-[:checked]:ring-primary/10">
-                              <RadioGroupItem value={role} id={role} className="w-5 h-5" />
-                              <Label htmlFor={role} className="flex-1 cursor-pointer font-semibold group-hover:text-primary transition-colors text-base">
-                                {role}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            const existing = prev.find(t => t.name.toLowerCase() === teacherName.toLowerCase());
+            if (existing) {
+              return prev.map(t => t.name.toLowerCase() === teacherName.toLowerCase() ? {
+                ...t,
+                observations: t.observations + 1,
+                lastObserved: newObs.date,
+                avgScore: Number(((t.avgScore * t.observations + newObs.score) / (t.observations + 1)).toFixed(1))
+              } : t);
+            } else {
+              return [...prev, {
+                id: (prev.length + 1).toString(),
+                name: teacherName,
+                role: "Subject Teacher",
+                observations: 1,
+                lastObserved: newObs.date,
+                avgScore: newObs.score,
+                pdHours: 0,
+                completionRate: 0
+              }];
+            }
+          });
 
-                {/* Step 2: Classroom Details */}
-                {step === 2 && (
-                  <div className="space-y-8">
-                    <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                      <Book className="w-5 h-5" />
-                      Classroom Details
-                    </h3>
-
-                    <div className="space-y-5">
-                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Block <span className="text-destructive">*</span></Label>
-                      <RadioGroup
-                        value={formData.block}
-                        onValueChange={(val) => setFormData({ ...formData, block: val })}
-                        className="space-y-3"
-                      >
-                        {blocks.map((block) => (
-                          <div key={block} className="flex items-center space-x-3">
-                            <RadioGroupItem value={block} id={block} className="w-5 h-5" />
-                            <Label htmlFor={block} className="cursor-pointer text-base font-medium">{block}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="grade" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Grade <span className="text-destructive">*</span></Label>
-                      <select
-                        id="grade"
-                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium"
-                        value={formData.grade}
-                        onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                      >
-                        <option value="">Choose</option>
-                        {grades.map(g => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="section" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Section</Label>
-                      <Input
-                        id="section"
-                        placeholder="Your answer"
-                        value={formData.section}
-                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                        className="h-14 bg-background border-muted-foreground/20 border-t-0 border-x-0 border-b-2 rounded-none px-0 focus:ring-0 focus:border-primary transition-all text-base"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="learningArea" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Learning Area <span className="text-destructive">*</span></Label>
-                      <select
-                        id="learningArea"
-                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium"
-                        value={formData.learningArea}
-                        onChange={(e) => setFormData({ ...formData, learningArea: e.target.value })}
-                      >
-                        <option value="">Choose</option>
-                        {learningAreas.map(area => (
-                          <option key={area} value={area}>{area}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-
-                {/* Step 3: Assessment */}
-                {step === 3 && (
-                  <div className="space-y-8">
-                    <h3 className="text-lg font-bold flex items-center gap-2 text-primary border-l-4 border-primary pl-4 -ml-4 lg:-ml-6">
-                      <Target className="w-5 h-5" />
-                      Instructional Assessment
-                    </h3>
-                    <div className="space-y-3">
-                      <Label htmlFor="domain" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Domain <span className="text-destructive">*</span></Label>
-                      <select
-                        id="domain"
-                        className="w-full flex h-14 rounded-xl border border-muted-foreground/20 bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 transition-all disabled:cursor-not-allowed disabled:opacity-50 font-medium"
-                        value={formData.domain}
-                        onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                        autoFocus
-                      >
-                        <option value="">Select a domain...</option>
-                        {domainAverages.map(d => (
-                          <option key={d.domain} value={d.domain}>{d.domain}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-4 pt-4">
-                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Performance Score <span className="text-destructive">*</span></Label>
-                      <div className="flex items-center gap-3 p-5 rounded-2xl bg-muted/20 border border-muted/50">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <button
-                            key={s}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, score: s })}
-                            className={cn(
-                              "w-14 h-14 rounded-2xl font-bold transition-all flex items-center justify-center text-xl",
-                              formData.score === s
-                                ? "bg-primary text-primary-foreground scale-110 shadow-xl ring-4 ring-primary/20"
-                                : "bg-background border text-muted-foreground hover:border-primary/50 hover:text-primary"
-                            )}
-                          >
-                            {s}
-                          </button>
-                        ))}
-                        <div className="ml-auto text-base font-bold text-muted-foreground">
-                          {formData.score > 0 ? (
-                            <span className="flex items-center gap-2 text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-                              <Star className="w-5 h-5 fill-current" />
-                              {formData.score === 5 ? "Distinguished" : formData.score === 4 ? "Proficient" : formData.score === 3 ? "Developing" : "Needs Improvement"}
-                            </span>
-                          ) : "Select score"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4">
-                      <Label htmlFor="notes" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Observation Notes & Feedback</Label>
-                      <Textarea
-                        id="notes"
-                        placeholder="Provide specific, actionable feedback based on class observation..."
-                        className="min-h-[120px] text-base p-6 bg-background resize-none focus:ring-4 focus:ring-primary/10 rounded-2xl border-muted-foreground/20 leading-relaxed"
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6 pt-4">
-                      <div className="space-y-3">
-                        <Label htmlFor="strengths" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Strengths Observed</Label>
-                        <Textarea
-                          id="strengths"
-                          placeholder="What went well?"
-                          className="min-h-[100px] bg-background resize-none focus:ring-4 focus:ring-success/10 rounded-xl border-muted-foreground/20"
-                          value={formData.strengths}
-                          onChange={(e) => setFormData({ ...formData, strengths: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="improvements" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Areas for Growth</Label>
-                        <Textarea
-                          id="improvements"
-                          placeholder="What needs improvement?"
-                          className="min-h-[100px] bg-background resize-none focus:ring-4 focus:ring-orange-500/10 rounded-xl border-muted-foreground/20"
-                          value={formData.areasForImprovement}
-                          onChange={(e) => setFormData({ ...formData, areasForImprovement: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4">
-                      <Label htmlFor="strategies" className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">Teaching Strategies (Comma separated)</Label>
-                      <Input
-                        id="strategies"
-                        placeholder="e.g., Differentiation, Group Work, Scaffolding"
-                        className="h-14 bg-background border-muted-foreground/20 text-base px-4 rounded-xl"
-                        value={formData.teachingStrategies.join(", ")}
-                        onChange={(e) => setFormData({ ...formData, teachingStrategies: e.target.value.split(",").map(s => s.trim()) })}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-8 border-t flex justify-end gap-5 pb-6">
-                  {step > 1 ? (
-                    <Button variant="outline" type="button" size="lg" onClick={handleBack} className="h-14 px-10 text-base font-semibold rounded-xl">
-                      Back
-                    </Button>
-                  ) : (
-                    <Button variant="outline" type="button" size="lg" onClick={() => navigate("/leader")} className="h-14 px-10 text-base font-semibold rounded-xl">
-                      Cancel
-                    </Button>
-                  )}
-
-                  {step < 3 ? (
-                    <Button type="button" size="lg" onClick={handleNext} className="h-14 px-10 gap-3 text-base font-bold rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0">
-                      Next
-                      <ChevronRight className="w-5 h-5" />
-                    </Button>
-                  ) : (
-                    <Button type="submit" size="lg" className="h-14 px-10 gap-3 text-base font-bold rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0 text-white">
-                      <Save className="w-6 h-6" />
-                      Complete Observation
-                    </Button>
-                  )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="border-none shadow-lg bg-info/5 border-info/10 rounded-2xl">
-            <CardHeader className="pb-3 px-6 pt-6">
-              <CardTitle className="text-xl flex items-center gap-3 font-bold">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Eye className="w-6 h-6 text-primary" />
-                </div>
-                Observation Guide
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6 text-base space-y-5 text-muted-foreground leading-relaxed">
-              <p>When conducting a formal instructional review, please focus on these core pillars:</p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
-                  <span><strong>Engagement:</strong> Are students actively participating?</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
-                  <span><strong>Clarity:</strong> Are learning objectives clear and visible?</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
-                  <span><strong>Pacing:</strong> Is the lesson flow appropriate for the content?</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
-                  <span><strong>Culture:</strong> Is the classroom environment supportive?</span>
-                </li>
-              </ul>
-              <div className="p-4 rounded-xl bg-background border border-primary/20 text-sm font-medium text-primary shadow-sm italic">
-                "Growth-focused feedback is specific, timely, and evidence-based."
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg bg-warning/5 border-warning/10 rounded-2xl">
-            <CardHeader className="pb-3 px-6 pt-6">
-              <CardTitle className="text-xl flex items-center gap-3 font-bold text-warning">
-                <div className="p-2 rounded-lg bg-warning/20">
-                  <HistoryIcon className="w-6 h-6" />
-                </div>
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6 space-y-5">
-              {observations.slice(0, 3).map(obs => (
-                <div key={obs.id} className="group cursor-default border-b border-warning/10 pb-4 last:border-0 last:pb-0">
-                  <p className="font-bold text-foreground group-hover:text-warning transition-colors">{obs.teacher}</p>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
-                    <span className="bg-background/50 px-2 py-0.5 rounded border text-xs">{obs.domain}</span>
-                    <span className="font-medium">{obs.date}</span>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div >
+          toast.success(`Observation for ${newObs.teacher} recorded successfully!`);
+          navigate("/leader");
+        }}
+      />
+    </div>
   );
 }
 

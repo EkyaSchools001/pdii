@@ -28,24 +28,58 @@ export interface DetailedReflection {
     comments?: string;
 }
 
+export type DanielsonRatingScale = "Basic" | "Developing" | "Effective" | "Highly Effective" | "Not Observed";
+
+export interface DanielsonIndicator {
+    name: string;
+    rating: DanielsonRatingScale;
+}
+
+export interface DanielsonDomain {
+    domainId: string;
+    title: string;
+    indicators: DanielsonIndicator[];
+    evidence: string;
+}
+
 export interface Observation {
     id: string;
     teacher?: string; // Optional for leader dashboard view context
+    teacherEmail?: string;
     date: string;
+    endDate?: string;
+    time?: string;
     observerName?: string;
+    observerEmail?: string;
     observerRole?: string;
+    campus?: string;
     domain: string;
     score: number;
     notes?: string;
     hasReflection: boolean;
     reflection?: string; // Legacy simple string
     detailedReflection?: DetailedReflection; // New structured data
+    // Unified Danielson Framework Data
+    domains?: DanielsonDomain[];
+    routines?: string[];
+    cultureTools?: string[];
+    instructionalTools?: string[];
+    learningAreaTools?: string[];
+    metaTags?: string[];
+    discussionMet?: boolean;
+    teacherReflection?: string;
+    actionStep?: string;
+    additionalNotes?: string;
     // Extended fields for full reporting
     learningArea?: string;
     strengths?: string;
+    areasOfGrowth?: string;
     improvements?: string;
+    feedback?: string;
+    actionSteps?: string;
+    nextSteps?: string;
+    status?: "Draft" | "Submitted" | "Certified" | "In Progress";
     teachingStrategies?: string[];
-    // Extended fields for full reporting
     classroom?: {
         block: string;
         grade: string;
