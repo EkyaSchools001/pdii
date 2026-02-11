@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import routes from './api/routes';
-import { globalErrorHandler } from './api/middlewares/errorHandler';
+import { globalAppErrorHandler } from './api/middlewares/errorHandler';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
@@ -40,7 +40,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1', routes);
 
 // Global Error Handler
-app.use(globalErrorHandler);
+app.use(globalAppErrorHandler);
 
 // Health Check
 app.get('/health', (req: Request, res: Response) => {

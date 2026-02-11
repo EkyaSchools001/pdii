@@ -111,7 +111,7 @@ import { Progress } from "@/components/ui/progress";
 import { Observation, DetailedReflection } from "@/types/observation";
 import { ReflectionForm } from "@/components/ReflectionForm";
 import { MoocEvidenceForm } from "@/components/MoocEvidenceForm";
-import { AcknowledgementsView } from "@/components/documents/AcknowledgementsView";
+
 import { TeacherProfileView } from "@/components/TeacherProfileView";
 
 // Removed local Observation interface in favor of shared type
