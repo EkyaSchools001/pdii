@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -327,7 +327,8 @@ const DashboardOverview = ({
   onRegister,
   onView,
   onReflect,
-  userName = "Emily Rodriguez"
+  userName,
+  pdHours
 }: {
   goals: typeof initialGoals,
   events: typeof initialEvents,
@@ -335,7 +336,8 @@ const DashboardOverview = ({
   onRegister: (id: string) => void,
   onView: (id: string) => void,
   onReflect: (obs: Observation) => void,
-  userName?: string
+  userName: string,
+  pdHours: typeof mockPDHours
 }) => {
   const navigate = useNavigate();
   const schoolAlignedGoals = goals.filter(g => g.isSchoolAligned).length;
@@ -362,7 +364,7 @@ const DashboardOverview = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <StatCard
           title="PD Hours Completed"
-          value={mockPDHours.total}
+          value={pdHours.total}
           subtitle="This school year"
           icon={Clock}
           trend={{ value: 12, isPositive: true }}
@@ -426,7 +428,7 @@ const DashboardOverview = ({
             </Button>
           </div>
           <div className="space-y-4">
-            {goals.filter(g => !g.teacher || g.teacher.toLowerCase().includes(userName.toLowerCase())).map((goal) => (
+            {goals.map((goal) => (
               <GoalCard key={goal.id} goal={goal} />
             ))}
           </div>
@@ -475,25 +477,19 @@ function ObservationsView({
             onView={() => onView(obs.id)}
           />
         ))}
-        {/* Placeholder for more observations */}
-        {[3, 4, 5].map((id) => (
-          <Card key={id} className="opacity-60 grayscale-[0.5]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft Observation #{id}</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">Historical data from previous semester</div>
-            </CardContent>
-          </Card>
-        ))}
+        {observations.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/20 rounded-2xl border border-dashed">
+            <Eye className="w-12 h-12 text-muted-foreground opacity-20 mb-4" />
+            <p className="text-muted-foreground">No observations recorded yet.</p>
+          </div>
+        )}
       </div>
 
     </div>
   );
 }
 
-function GoalsView({ goals, onAddGoal, userName = "Emily Rodriguez" }: { goals: typeof initialGoals, onAddGoal: (goal: NewGoal) => void, userName?: string }) {
+function GoalsView({ goals, onAddGoal, userName }: { goals: typeof initialGoals, onAddGoal: (goal: NewGoal) => void, userName: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ title: "", description: "", dueDate: "" });
 
@@ -509,7 +505,7 @@ function GoalsView({ goals, onAddGoal, userName = "Emily Rodriguez" }: { goals: 
     <div className="space-y-6">
       <PageHeader title="Professional Goals" subtitle="Track your growth and align with school priorities" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {goals.filter(g => !g.teacher || g.teacher.toLowerCase() === userName.toLowerCase()).map((goal) => (
+        {goals.map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
         ))}
 
@@ -833,6 +829,9 @@ function CalendarView({
 }
 
 function CoursesView() {
+  const { user } = useAuth();
+  const userName = user?.fullName || "Teacher";
+  const userEmail = user?.email || "";
   const [isMoocFormOpen, setIsMoocFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | "all">("all");
@@ -959,8 +958,8 @@ function CoursesView() {
             <MoocEvidenceForm
               onCancel={() => setIsMoocFormOpen(false)}
               onSubmitSuccess={() => setIsMoocFormOpen(false)}
-              userEmail="emily.r@ekyaschools.com"
-              userName="Emily Rodriguez"
+              userEmail={userEmail}
+              userName={userName}
             />
           )}
         </DialogContent>
@@ -1079,6 +1078,8 @@ function CourseCard({ course }: { course: typeof mockCourses[0] & { isDownloadab
 }
 
 function PDHoursView({ pdHours, onOpenCreditDialog }: { pdHours: typeof mockPDHours, onOpenCreditDialog: () => void }) {
+  const { user } = useAuth();
+  const userName = user?.fullName || "Teacher";
   const [selectedActivity, setSelectedActivity] = useState<typeof mockPDHours.history[0] | null>(null);
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -1092,11 +1093,11 @@ function PDHoursView({ pdHours, onOpenCreditDialog }: { pdHours: typeof mockPDHo
     doc.text(`Generated on: ${format(new Date(), "MMM d, yyyy")}`, 14, 30);
 
     // Add teacher info
-    doc.text("Teacher: Emily Rodriguez", 14, 38);
+    doc.text(`Teacher: ${userName}`, 14, 38);
 
     // Create table
     const tableColumn = ["Activity", "Category", "Date", "Hours", "Status"];
-    const tableRows = mockPDHours.history.map(item => [
+    const tableRows = pdHours.history.map(item => [
       item.activity,
       item.category,
       item.date,
@@ -1393,6 +1394,8 @@ function PDHoursView({ pdHours, onOpenCreditDialog }: { pdHours: typeof mockPDHo
 }
 
 function InsightsView() {
+  const { user } = useAuth();
+  const userName = user?.fullName || "Teacher";
   const navigate = useNavigate();
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const handleDownloadPortfolio = () => {
@@ -1406,7 +1409,7 @@ function InsightsView() {
     // Subtitle
     doc.setFontSize(16);
     doc.setTextColor(100);
-    doc.text("Emily Rodriguez - Teacher", 20, 30);
+    doc.text(`${userName} - Teacher`, 20, 30);
     doc.setFontSize(10);
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 36);
 
@@ -1837,29 +1840,37 @@ export default function TeacherDashboard() {
     };
   }, [userName, userEmail, user?.id]);
 
-  const handleReflect = async (id: string, reflection: DetailedReflection) => {
+  const handleReflect = (id: string, reflection: DetailedReflection) => {
+    // In a real app, this would be an API call
+    console.log("Saving reflection for observation:", id, reflection);
+    setObservations(prev => prev.map(obs =>
+      obs.id === id ? { ...obs, hasReflection: true, reflection: reflection.comments } : obs
+    ));
+    setSelectedReflectObs(null);
+    toast.success("Reflection saved successfully!");
+  };
+
+  const handleReflectionSubmit = async (reflection: DetailedReflection) => {
+    if (!selectedReflectObs) return;
     try {
-      const response = await api.patch(`/observations/${id}`, {
+      // Patch observation with reflection status
+      await api.patch(`/observations/${selectedReflectObs.id}`, {
         hasReflection: true,
-        detailedReflection: reflection,
-        status: "Reviewed"
+        teacherReflection: reflection.comments,
+        detailedReflection: reflection, // Store the full detailed reflection
+        status: "Submitted" // Mark as submitted after reflection
       });
 
-      if (response.data.status === 'success') {
-        const updated = response.data.data.observation;
-        setObservations(prev => prev.map(obs => obs.id === id ? updated : obs));
-        toast.success("Reflection submitted successfully!");
-      }
+      setObservations(prev => prev.map(obs =>
+        obs.id === selectedReflectObs.id
+          ? { ...obs, hasReflection: true, reflection: reflection.comments, detailedReflection: reflection, status: "Submitted" }
+          : obs
+      ));
+      setSelectedReflectObs(null);
+      toast.success("Reflection submitted successfully!");
     } catch (error) {
       console.error(error);
       toast.error("Failed to submit reflection");
-    }
-  };
-
-  const handleReflectionSubmit = (reflection: DetailedReflection) => {
-    if (selectedReflectObs) {
-      handleReflect(selectedReflectObs.id, reflection);
-      setSelectedReflectObs(null);
     }
   };
 
@@ -1927,77 +1938,105 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleRegister = (eventId: string) => {
-    setEvents(prev => prev.map(event => {
-      if (event.id === eventId) {
-        toast.success(`Successfully registered for ${event.title}`);
+  const handleRegister = async (eventId: string) => {
+    try {
+      // In a real app, this would be an API call: await api.post(`/training/${eventId}/register`);
 
-        // Add current user to registrants list
-        const newRegistrant = {
-          id: `u-${Date.now()}`,
-          name: userName,
-          email: `${userName.toLowerCase().replace(' ', '.')}@school.edu`,
-          dateRegistered: format(new Date(), "MMM d, yyyy")
-        };
+      setEvents(prev => prev.map(event => {
+        if (event.id === eventId) {
+          toast.success(`Successfully registered for ${event.title}`);
 
-        const updatedRegistrants = [...(event.registrants || []), newRegistrant];
+          // Add current user to registrants list
+          const newRegistrant = {
+            id: user?.id || `u-${Date.now()}`,
+            name: userName,
+            email: userEmail,
+            dateRegistered: format(new Date(), "MMM d, yyyy")
+          };
 
-        return {
-          ...event,
-          isRegistered: true,
-          registered: event.registered + 1,
-          spotsLeft: event.spotsLeft - 1,
-          registrants: updatedRegistrants
-        };
-      }
-      return event;
-    }));
+          const updatedRegistrants = [...(event.registrants || []), newRegistrant];
+
+          return {
+            ...event,
+            isRegistered: true,
+            registered: (event.registered || 0) + 1,
+            spotsLeft: (event.spotsLeft || 1) - 1,
+            registrants: updatedRegistrants
+          };
+        }
+        return event;
+      }));
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to register for event");
+    }
   };
+
+  // Filtered data for current user
+  const userObservations = useMemo(() => {
+    return observations.filter(o =>
+      o.teacherId === user?.id ||
+      o.teacher?.toLowerCase() === userName.toLowerCase() ||
+      o.teacherEmail?.toLowerCase() === userEmail?.toLowerCase()
+    );
+  }, [observations, user?.id, userName, userEmail]);
+
+  const userGoals = useMemo(() => {
+    return goals.filter(g =>
+      g.teacherId === user?.id ||
+      g.teacher?.toLowerCase() === userName.toLowerCase()
+    );
+  }, [goals, user?.id, userName]);
 
   return (
     <DashboardLayout role={role.toLowerCase() as any} userName={userName}>
       <Routes>
         <Route index element={
           <DashboardOverview
-            goals={goals}
+            goals={userGoals}
             events={events}
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
+            observations={userObservations}
             onRegister={handleRegister}
             onView={handleViewReport}
             onReflect={setSelectedReflectObs}
             userName={userName}
+            pdHours={pdHours}
           />
         } />
         <Route path="observations" element={
           <ObservationsView
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
+            observations={userObservations}
             onReflect={setSelectedReflectObs}
             onView={handleViewReport}
           />
         } />
-        <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
-        <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} userName={userName} />} />
+        <Route path="observations/:id" element={<ObservationDetailView observations={userObservations} />} />
+        <Route path="goals" element={<GoalsView goals={userGoals} onAddGoal={handleAddGoal} userName={userName} />} />
         <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
         <Route path="courses" element={<CoursesView />} />
         <Route path="hours" element={<PDHoursView pdHours={pdHours} onOpenCreditDialog={() => setIsCreditDialogOpen(true)} />} />
-        <Route path="documents" element={<AcknowledgementsView teacherId={user?.id || "1"} />} />
+        <Route path="documents" element={<AcknowledgementsView teacherId={user?.id || "unknown"} />} />
         <Route path="insights" element={<InsightsView />} />
         <Route path="profile" element={
           <TeacherProfileView
             teacher={{
-              id: user?.id || "1",
+              id: user?.id || "unknown",
               name: userName,
-              role: "Math Teacher",
-              observations: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length,
-              lastObserved: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))[0]?.date || "N/A",
-              avgScore: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length > 0
-                ? Number((observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).reduce((acc, o) => acc + (o.score || 0), 0) / observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length).toFixed(1))
+              role: user?.department ? `${user.department} Teacher` : "Teacher",
+              observations: userObservations.length,
+              lastObserved: userObservations[0]?.date || "N/A",
+              avgScore: userObservations.length > 0
+                ? Number((userObservations.reduce((acc, o) => acc + (o.score || 0), 0) / userObservations.length).toFixed(1))
                 : 0,
               pdHours: pdHours.total,
-              completionRate: 85
+              completionRate: userGoals.length > 0
+                ? Math.round(userGoals.filter(g => g.progress === 100).length / userGoals.length * 100)
+                : 85,
+              email: userEmail,
+              campus: user?.campusId || "Main Campus"
             }}
-            observations={observations}
-            goals={goals}
+            observations={userObservations}
+            goals={userGoals}
             userRole="teacher"
           />
         } />
@@ -2046,8 +2085,8 @@ export default function TeacherDashboard() {
               onClose={() => setSelectedReflectObs(null)}
               onSubmit={handleReflectionSubmit}
               observation={selectedReflectObs}
-              teacherName={selectedReflectObs.teacher || "Emily Rodriguez"}
-              teacherEmail="emily.r@ekyaschools.com"
+              teacherName={userName}
+              teacherEmail={userEmail}
             />
           )}
         </>

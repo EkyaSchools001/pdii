@@ -1,7 +1,22 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+// Smart API URL detection
+// If accessed via tunnel (loca.lt), use tunnel backend
+// If accessed via localhost, use localhost backend
+const getApiUrl = () => {
+    const hostname = window.location.hostname;
+
+    // If accessed via localtunnel, use the tunnel backend
+    if (hostname.includes('loca.lt')) {
+        return 'https://tough-hands-refuse.loca.lt/api/v1';
+    }
+
+    // Otherwise use localhost or env variable
+    return import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+};
+
+const API_URL = getApiUrl();
 
 const api: AxiosInstance = axios.create({
     baseURL: API_URL,

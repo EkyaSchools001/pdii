@@ -19,11 +19,15 @@ app.use(cors({
         'http://localhost:8080',
         'http://127.0.0.1:8080',
         'http://localhost:5173',
-        'http://localhost:3000'
+        'http://localhost:3000',
+        'https://brave-aliens-sleep.loca.lt',
+        'https://sad-days-knock.loca.lt',
+        'https://tough-hands-refuse.loca.lt',
+        /\.loca\.lt$/  // Allow all localtunnel subdomains
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder']
 }));
 
 app.use(express.json());

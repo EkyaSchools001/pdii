@@ -25,6 +25,8 @@ export interface TeacherProfileViewProps {
         avgScore: number;
         pdHours: number;
         completionRate: number;
+        email?: string;
+        campus?: string;
     };
     observations: Observation[];
     goals: any[];
@@ -39,8 +41,9 @@ export function TeacherProfileView({ teacher, observations, goals, onBack, userR
 
     // Filter observations for this specific teacher
     const teacherObservations = observations.filter(obs =>
+        obs.teacherId === teacher.id ||
         obs.teacher?.toLowerCase() === teacher.name.toLowerCase() ||
-        obs.teacherEmail === `${teacher.name.toLowerCase().replace(" ", ".")}@school.edu`
+        obs.teacherEmail?.toLowerCase() === teacher.email?.toLowerCase()
     );
 
     return (
@@ -75,11 +78,11 @@ export function TeacherProfileView({ teacher, observations, goals, onBack, userR
                             </span>
                             <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground border-l border-muted-foreground/20 pl-4">
                                 <Mail className="w-4 h-4" />
-                                {teacher.name.toLowerCase().replace(" ", ".")}@school.edu
+                                {teacher.email || `${teacher.name.toLowerCase().replace(" ", ".")}@ekyaschools.com`}
                             </span>
                             <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground border-l border-muted-foreground/20 pl-4">
                                 <MapPin className="w-4 h-4" />
-                                Main Campus
+                                {teacher.campus || "Main Campus"}
                             </span>
                         </div>
                     </div>
@@ -278,7 +281,7 @@ export function TeacherProfileView({ teacher, observations, goals, onBack, userR
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            {(goals.filter(g => g.teacher === teacher.name)).map((goal) => (
+                            {(goals.filter(g => g.teacherId === teacher.id || g.teacher === teacher.name)).map((goal) => (
                                 <div key={goal.id} className="p-4 rounded-2xl bg-muted/20 border border-muted-foreground/10 space-y-3 relative group overflow-hidden">
                                     <div className="absolute top-0 right-0 w-2 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
                                     <div className="flex justify-between items-start">

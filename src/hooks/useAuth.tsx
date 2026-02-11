@@ -7,6 +7,9 @@ interface User {
     fullName: string;
     email: string;
     role: 'ADMIN' | 'LEADER' | 'TEACHER' | 'MANAGEMENT' | 'SUPERADMIN';
+    avatarUrl?: string;
+    department?: string;
+    campusId?: string;
 }
 
 interface AuthContextType {
