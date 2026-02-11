@@ -89,6 +89,9 @@ const formSchema = z.object({
     goalForYear: z.string().min(10, "Please provide a detailed goal"),
     reasonForGoal: z.string().min(10, "Please explain the reason for this goal"),
     actionStep: z.string().min(10, "Please provide the first action step"),
+    goalEndDate: z.date({
+        required_error: "Target end date is required",
+    }).min(new Date(), "End date must be in the future"),
     pillarTag: z.enum(pillars, {
         required_error: "Please select a pillar",
     }),
@@ -432,6 +435,49 @@ export function GoalSettingForm({ onSubmit, defaultCoachName = "", onCancel }: G
                                                     {...field}
                                                 />
                                             </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="goalEndDate"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Goal Target End Date *</FormLabel>
+                                            <FormDescription>By when should this goal be achieved?</FormDescription>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(field.value, "PPP")
+                                                            ) : (
+                                                                <span>Pick a target date</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) =>
+                                                            date < new Date()
+                                                        }
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
