@@ -30,6 +30,7 @@ export const initialTemplates: FormTemplate[] = [
             { id: "g2", label: "Name of the Coach", type: "text", required: true },
             { id: "g3", label: "Campus", type: "select", required: true, options: ["CMR NPS", "EJPN", "EITPL", "EBTM", "EBYR", "ENICE", "ENAVA", "PU BTM", "PU BYR", "PU HRBR", "PU ITPL"] },
             { id: "g4", label: "Date of Goal Setting Conversation", type: "date", required: true },
+            { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true },
             { id: "g5", label: "Was the teacher informed and aware of the goal setting process?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g6", label: "Was the teacher informed and aware about the Ekya Danielson Framework?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g7", label: "Did the teacher complete her self-reflection on Ekya Danielson Form?", type: "radio", required: true, options: ["Yes", "No"] },
@@ -37,7 +38,6 @@ export const initialTemplates: FormTemplate[] = [
             { id: "g9", label: "Goal for the Academic Year", type: "textarea", required: true },
             { id: "g10", label: "Reason for the Goal", type: "textarea", required: true },
             { id: "g11", label: "Action Step", type: "textarea", required: true },
-            { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true },
             { id: "g12", label: "Pillar Tag", type: "select", required: true, options: ["Live the Lesson", "Authentic Assessments", "Instruct to Inspire", "Care about Culture", "Engaging Environment", "Professional Practice"] },
             { id: "g13", label: "Additional Notes (Optional)", type: "textarea", required: false }
         ]
@@ -202,13 +202,20 @@ export const getTemplates = (): FormTemplate[] => {
                         needsUpdate = true;
                     }
 
-                    const endDateField = t.fields.find((f: any) => f.label === "Goal Target End Date");
-                    if (!endDateField) {
-                        const actionStepIndex = t.fields.findIndex((f: any) => f.label === "Action Step");
-                        if (actionStepIndex !== -1) {
-                            const newFields = [...t.fields];
-                            newFields.splice(actionStepIndex + 1, 0, { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true });
-                            t.fields = newFields;
+                    const conversationDateIndex = t.fields.findIndex((f: any) => f.label === "Date of Goal Setting Conversation");
+                    if (conversationDateIndex !== -1) {
+                        const currentPos = t.fields.findIndex((f: any) => f.id === "g_end_date" || f.label === "Goal Target End Date");
+                        if (currentPos !== conversationDateIndex + 1) {
+                            let fields = [...t.fields];
+                            let fieldToMove;
+                            if (currentPos !== -1) {
+                                [fieldToMove] = fields.splice(currentPos, 1);
+                            } else {
+                                fieldToMove = { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true };
+                            }
+                            const newConvIndex = fields.findIndex((f: any) => f.label === "Date of Goal Setting Conversation");
+                            fields.splice(newConvIndex + 1, 0, fieldToMove);
+                            t.fields = fields;
                             needsUpdate = true;
                         }
                     }
