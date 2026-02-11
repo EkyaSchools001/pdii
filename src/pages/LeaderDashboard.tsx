@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import api from "@/lib/api";
+import { getSocket } from "@/lib/socket";
+import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles, ClipboardCheck, Tag } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles, ClipboardCheck, Tag, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +19,13 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate, Routes, Route, useParams } from "react-router-dom";
+import { Link, useNavigate, Routes, Route, useParams, useLocation } from "react-router-dom";
+
+// ... (rest of imports)
+
+// ... (previous code)
+
+
 import { Observation } from "@/types/observation";
 import { GoalSettingForm } from "@/components/GoalSettingForm";
 import { TeacherAnalyticsReport } from "@/components/TeacherAnalyticsReport";
@@ -31,10 +40,10 @@ import { UnifiedObservationForm } from "@/components/UnifiedObservationForm";
 import { TeacherProfileView } from "@/components/TeacherProfileView";
 
 const teamMembers = [
-  { id: "1", name: "Emily Rodriguez", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
-  { id: "2", name: "James Wilson", role: "Science Teacher", observations: 6, lastObserved: "Jan 12", avgScore: 3.8, pdHours: 24, completionRate: 60 },
-  { id: "3", name: "Maria Santos", role: "English Teacher", observations: 7, lastObserved: "Jan 10", avgScore: 4.0, pdHours: 40, completionRate: 100 },
-  { id: "4", name: "David Kim", role: "History Teacher", observations: 5, lastObserved: "Dec 20", avgScore: 3.5, pdHours: 18, completionRate: 45 },
+  { id: "1", name: "Emily Rodriguez", email: "teacher@pms.com", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
+  { id: "2", name: "James Wilson", email: "james.wilson@pms.com", role: "Science Teacher", observations: 6, lastObserved: "Jan 12", avgScore: 3.8, pdHours: 24, completionRate: 60 },
+  { id: "3", name: "Maria Santos", email: "maria.santos@pms.com", role: "English Teacher", observations: 7, lastObserved: "Jan 10", avgScore: 4.0, pdHours: 40, completionRate: 100 },
+  { id: "4", name: "David Kim", email: "david.kim@pms.com", role: "History Teacher", observations: 5, lastObserved: "Dec 20", avgScore: 3.5, pdHours: 18, completionRate: 45 },
 ];
 
 const recentObservations = [
@@ -101,17 +110,12 @@ const initialTrainingEvents = [
 ];
 
 export default function LeaderDashboard() {
+  const { user } = useAuth();
+  const userName = user?.fullName || "School Leader";
+  const role = user?.role || "LEADER";
+
   const [team, setTeam] = useState(teamMembers);
-  const [observations, setObservations] = useState<Observation[]>(() => {
-    try {
-      const saved = localStorage.getItem('observations_data');
-      const parsed = saved ? JSON.parse(saved) : recentObservations;
-      return Array.isArray(parsed) ? parsed : recentObservations;
-    } catch (e) {
-      console.error("Failed to parse observations", e);
-      return recentObservations;
-    }
-  });
+  const [observations, setObservations] = useState<Observation[]>([]);
   const [goals, setGoals] = useState(() => {
     try {
       const saved = localStorage.getItem('goals_data');
@@ -133,10 +137,46 @@ export default function LeaderDashboard() {
     }
   });
 
+  // Fetch initial data via API
   useEffect(() => {
-    localStorage.setItem('observations_data', JSON.stringify(observations));
-    window.dispatchEvent(new Event('observations-updated'));
-  }, [observations]);
+    const fetchObservations = async () => {
+      try {
+        const response = await api.get('/observations');
+        if (response.data?.status === 'success') {
+          const apiObservations = response.data?.data?.observations || [];
+          if (apiObservations.length > 0) {
+            setObservations(apiObservations);
+          } else {
+            setObservations(recentObservations);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch observations:", error);
+        // Fallback to recentObservations if API fails or backend not running yet
+        setObservations(recentObservations);
+      }
+    };
+
+    fetchObservations();
+
+    // Socket.io Real-time Sync
+    const socket = getSocket();
+
+    socket.on('observation:created', (newObs: Observation) => {
+      setObservations(prev => [newObs, ...prev]);
+      toast.info(`New observation received for ${newObs.teacher}`);
+    });
+
+    socket.on('observation:updated', (updatedObs: Observation) => {
+      setObservations(prev => prev.map(obs => obs.id === updatedObs.id ? updatedObs : obs));
+      toast.info(`Observation updated for ${updatedObs.teacher}`);
+    });
+
+    return () => {
+      socket.off('observation:created');
+      socket.off('observation:updated');
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('goals_data', JSON.stringify(goals));
@@ -194,9 +234,9 @@ export default function LeaderDashboard() {
   }, []);
 
   return (
-    <DashboardLayout role="leader" userName="Dr. Sarah Johnson">
+    <DashboardLayout role={role.toLowerCase() as any} userName={userName}>
       <Routes>
-        <Route index element={<DashboardOverview team={team} observations={observations} />} />
+        <Route index element={<DashboardOverview team={team} observations={observations} userName={userName} />} />
         <Route path="team" element={<TeamManagementView team={team} />} />
         <Route path="team/:teacherId" element={<TeacherDetailsView team={team} observations={observations} goals={goals} />} />
         <Route path="observations" element={<ObservationsManagementView observations={observations} />} />
@@ -216,13 +256,13 @@ export default function LeaderDashboard() {
   );
 }
 
-function DashboardOverview({ team, observations }: { team: typeof teamMembers, observations: Observation[] }) {
+function DashboardOverview({ team, observations, userName }: { team: typeof teamMembers, observations: Observation[], userName: string }) {
   const navigate = useNavigate();
 
   return (
     <>
       <PageHeader
-        title="School Leader Dashboard"
+        title={`Welcome, ${userName.split(' ')[0]}!`}
         subtitle="Track team performance and professional development"
       />
 
@@ -2010,6 +2050,16 @@ function ObservationReportView({ observations, team }: { observations: Observati
             AI Smart Analysis
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate("/leader/observe", { state: { observation } })}
+          >
+            <Edit className="w-4 h-4" />
+            Edit
+          </Button>
+
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />
             Print
@@ -2497,6 +2547,9 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
   observations: Observation[]
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialData = location.state?.observation || location.state?.initialData || {};
+  const isEditing = !!initialData.id;
 
   if (!team || !observations) {
     return <div className="p-8 text-center text-muted-foreground">Loading dashboard data...</div>;
@@ -2509,52 +2562,69 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
           <ChevronLeft className="w-5 h-5" />
         </Button>
         <PageHeader
-          title="Ekya Danielson Framework"
-          subtitle="Unified Observation, Feedback & Improvement Form"
+          title={isEditing ? "Edit Observation" : "Ekya Danielson Framework"}
+          subtitle={isEditing ? `Updating observation for ${initialData.teacher}` : "Unified Observation, Feedback & Improvement Form"}
         />
       </div>
 
       <UnifiedObservationForm
+        teachers={team}
+        initialData={initialData}
         onCancel={() => navigate("/leader")}
-        onSubmit={(data) => {
-          const newObs = {
-            ...data,
-            id: Math.random().toString(36).substr(2, 9),
-            date: data.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            hasReflection: false,
-            reflection: "",
-          } as Observation;
-
-          setObservations(prev => [newObs, ...prev]);
-
-          // Update teacher stats
-          setTeam(prev => {
-            const teacherName = newObs.teacher;
-            if (!teacherName) return prev;
-
-            const existing = prev.find(t => t.name.toLowerCase() === teacherName.toLowerCase());
-            if (existing) {
-              return prev.map(t => t.name.toLowerCase() === teacherName.toLowerCase() ? {
-                ...t,
-                observations: t.observations + 1,
-                lastObserved: newObs.date,
-                avgScore: Number(((t.avgScore * t.observations + newObs.score) / (t.observations + 1)).toFixed(1))
-              } : t);
-            } else {
-              return [...prev, {
-                id: (prev.length + 1).toString(),
-                name: teacherName,
-                role: "Subject Teacher",
-                observations: 1,
-                lastObserved: newObs.date,
-                avgScore: newObs.score,
-                pdHours: 0,
-                completionRate: 0
-              }];
+        onSubmit={async (data) => {
+          if (isEditing) {
+            try {
+              await api.patch(`/observations/${initialData.id}`, data);
+              toast.success("Observation updated successfully!");
+            } catch (error) {
+              console.error(error);
+              toast.error("Failed to update observation");
             }
-          });
+          } else {
+            const newObs = {
+              ...data,
+              // Let backend handle ID generation or use this one if backend accepts it (our mock backend does)
+              date: data.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              hasReflection: false,
+              reflection: "",
+            } as Observation;
 
-          toast.success(`Observation for ${newObs.teacher} recorded successfully!`);
+            try {
+              await api.post('/observations', newObs);
+              toast.success(`Observation for ${newObs.teacher} recorded successfully!`);
+
+              // Update teacher stats locally immediately for UX
+              setTeam(prev => {
+                const teacherName = newObs.teacher;
+                if (!teacherName) return prev;
+
+                const existing = prev.find(t => t.name.toLowerCase() === teacherName.toLowerCase());
+                if (existing) {
+                  return prev.map(t => t.name.toLowerCase() === teacherName.toLowerCase() ? {
+                    ...t,
+                    observations: t.observations + 1,
+                    lastObserved: newObs.date,
+                    avgScore: Number(((t.avgScore * t.observations + newObs.score) / (t.observations + 1)).toFixed(1))
+                  } : t);
+                } else {
+                  return [...prev, {
+                    id: (prev.length + 1).toString(),
+                    name: teacherName,
+                    email: newObs.teacherEmail || "",
+                    role: "Subject Teacher",
+                    observations: 1,
+                    lastObserved: newObs.date,
+                    avgScore: newObs.score,
+                    pdHours: 0,
+                    completionRate: 0
+                  }];
+                }
+              });
+            } catch (error) {
+              console.error(error);
+              toast.error("Failed to save observation");
+            }
+          }
           navigate("/leader");
         }}
       />
@@ -2590,9 +2660,8 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
               )}
               submitLabel="Assign Goal"
               onCancel={() => navigate("/leader/goals")}
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 const newGoal = {
-                  id: Math.random().toString(36).substr(2, 9),
                   teacher: data.g1 || "Unknown Teacher",
                   title: data.g9 || "New School Goal",
                   category: data.g12 || "General",
@@ -2610,9 +2679,14 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
                   reflectionCompleted: true,
                 };
 
-                setGoals(prev => [...prev, newGoal]);
-                toast.success("Goal successfully assigned using Master Template.");
-                navigate("/leader/goals");
+                try {
+                  await api.post('/goals', newGoal);
+                  toast.success("Goal successfully assigned using Master Template.");
+                  navigate("/leader/goals");
+                } catch (error) {
+                  console.error(error);
+                  toast.error("Failed to assign goal");
+                }
               }}
             />
           </CardContent>
@@ -2622,9 +2696,8 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
           teachers={team}
           defaultCoachName="Dr. Sarah Johnson"
           onCancel={() => navigate("/leader/goals")}
-          onSubmit={(data) => {
+          onSubmit={async (data) => {
             const newGoal = {
-              id: Math.random().toString(36).substr(2, 9),
               teacher: data.educatorName,
               title: data.goalForYear,
               category: data.pillarTag,
@@ -2638,13 +2711,18 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
               campus: data.campus,
               ay: "25-26",
               isSchoolAligned: true,
-              assignedDate: data.dateOfGoalSetting.toISOString(),
+              assignedDate: new Date().toISOString(),
               reflectionCompleted: true,
             };
 
-            setGoals(prev => [...prev, newGoal]);
-            toast.success("Goal successfully assigned.");
-            navigate("/leader/goals");
+            try {
+              await api.post('/goals', newGoal);
+              toast.success("Goal successfully assigned.");
+              navigate("/leader/goals");
+            } catch (error) {
+              console.error(error);
+              toast.error("Failed to assign goal");
+            }
           }}
         />
       )}

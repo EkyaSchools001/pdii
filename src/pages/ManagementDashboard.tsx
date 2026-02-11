@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
     LayoutDashboard,
     HeartPulse,
@@ -796,26 +797,6 @@ function Risk() {
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="border-none shadow-xl bg-background/50 backdrop-blur-md">
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Target className="w-5 h-5 text-primary" /> Recommended Interventions
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-3">
-                                <li className="text-sm flex gap-2 items-start">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                    <span>Initiate bi-weekly leadership check-in for Campus CKC.</span>
-                                </li>
-                                <li className="text-sm flex gap-2 items-start">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                    <span>Deploy subject experts to Kanakapura for Pedagogy support.</span>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </div>
@@ -907,8 +888,12 @@ function Reports() {
 }
 
 export default function ManagementDashboard() {
+    const { user } = useAuth();
+    const userName = user?.fullName || "Management";
+    const role = user?.role || "MANAGEMENT";
+
     return (
-        <DashboardLayout role="management" userName="Management">
+        <DashboardLayout role={role.toLowerCase() as any} userName={userName}>
             <Routes>
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<Overview />} />

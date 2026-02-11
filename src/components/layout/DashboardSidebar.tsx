@@ -88,7 +88,7 @@ const navByRole = {
 export function DashboardSidebar({ role, userName, collapsed, onToggle }: DashboardSidebarProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
-  const navItems = navByRole[role];
+  const navItems = navByRole[role.toLowerCase() as keyof typeof navByRole];
 
   return (
     <aside

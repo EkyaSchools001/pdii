@@ -18,7 +18,8 @@ const roleConfig = {
 };
 
 export function RoleBadge({ role, showIcon = true, className }: RoleBadgeProps) {
-  const config = roleConfig[role];
+  const normalizedRole = (role?.toLowerCase() || "teacher") as keyof typeof roleConfig;
+  const config = roleConfig[normalizedRole] || roleConfig.teacher;
   const Icon = config.icon;
 
   return (

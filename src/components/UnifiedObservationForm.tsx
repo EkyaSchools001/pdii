@@ -21,6 +21,7 @@ interface UnifiedObservationFormProps {
     onSubmit: (observation: Partial<Observation>) => void;
     onCancel: () => void;
     initialData?: Partial<Observation>;
+    teachers?: { id: string; name: string; role?: string; email?: string }[];
 }
 
 const RATING_SCALE: DanielsonRatingScale[] = ["Basic", "Developing", "Effective", "Highly Effective", "Not Observed"];
@@ -127,7 +128,7 @@ const META_TAGS = [
     "Participating in a Professional Community", "Growing and Developing Professionally"
 ];
 
-export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }: UnifiedObservationFormProps) {
+export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {}, teachers }: UnifiedObservationFormProps) {
     const [step, setStep] = useState(1);
 
     // Internal state uses flattened classroom fields for stability
@@ -135,33 +136,34 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
         const obs = {
             id: Math.random().toString(36).substr(2, 9),
             date: new Date().toISOString().split('T')[0],
-            teacher: "",
-            teacherEmail: "",
-            observerName: "Dr. Sarah Johnson",
-            observerRole: "Head of School",
-            campus: "CMR NPS",
-            domains: DOMAINS.map(d => ({
+            observerRole: initialData.observerRole || "Head of School",
+            domains: initialData.domains || DOMAINS.map(d => ({
                 domainId: d.id,
                 title: d.title,
                 indicators: d.indicators.map(i => ({ name: i, rating: "Not Observed" })),
                 evidence: ""
             })),
-            routines: [],
-            cultureTools: [],
-            instructionalTools: [],
-            learningAreaTools: [],
-            metaTags: [],
-            discussionMet: false,
-            strengths: "",
-            areasOfGrowth: "",
-            feedback: "",
-            actionSteps: "",
-            nextSteps: "",
-            score: 0,
-            status: "Draft",
-            hasReflection: false,
-            reflection: "",
+            routines: initialData.routines || [],
+            cultureTools: initialData.cultureTools || [],
+            instructionalTools: initialData.instructionalTools || [],
+            learningAreaTools: initialData.learningAreaTools || [],
+            metaTags: initialData.metaTags || [],
+            discussionMet: initialData.discussionMet || false,
+            strengths: initialData.strengths || "",
+            areasOfGrowth: initialData.areasOfGrowth || "",
+            feedback: initialData.feedback || "",
+            actionSteps: initialData.actionSteps || "",
+            nextSteps: initialData.nextSteps || "",
+            score: initialData.score || 0,
+            status: initialData.status || "Draft",
+            hasReflection: initialData.hasReflection || false,
+            reflection: initialData.reflection || "",
             // Classroom fields flattened
+            campus: initialData.campus || "CMR NPS",
+            teacher: initialData.teacher || "",
+            teacherId: initialData.teacherId || "",
+            teacherEmail: initialData.teacherEmail || "",
+            observerName: initialData.observerName || "Dr. Sarah Johnson",
             block: initialData.classroom?.block || "",
             grade: initialData.classroom?.grade || "",
             section: initialData.classroom?.section || "",
@@ -179,6 +181,18 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
             if (prev[field] === value) return prev;
             return { ...prev, [field]: value };
         });
+    };
+
+    const handleTeacherSelect = (teacherId: string) => {
+        const selectedTeacher = teachers?.find(t => t.id === teacherId);
+        if (selectedTeacher) {
+            setFormData(prev => ({
+                ...prev,
+                teacherId: selectedTeacher.id,
+                teacher: selectedTeacher.name,
+                teacherEmail: selectedTeacher.email || `${selectedTeacher.name.toLowerCase().replace(' ', '.')}@ekya.in`
+            }));
+        }
     };
 
     const updateIndicatorRating = (domainId: string, indicatorName: string, rating: DanielsonRatingScale) => {
@@ -358,12 +372,28 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                 <div className="grid md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Name of the Teacher *</Label>
-                                        <Input
-                                            placeholder="Full Name"
-                                            value={formData.teacher || ""}
-                                            onChange={(e) => updateField("teacher", e.target.value)}
-                                            className="h-12 text-base rounded-xl border-muted-foreground/20"
-                                        />
+                                        {teachers && teachers.length > 0 ? (
+                                            <Select
+                                                value={teachers.find(t => t.name === formData.teacher)?.id || ""}
+                                                onValueChange={handleTeacherSelect}
+                                            >
+                                                <SelectTrigger className="h-12 text-base rounded-xl border-muted-foreground/20">
+                                                    <SelectValue placeholder="Select Teacher" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {teachers.map(t => (
+                                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                placeholder="Full Name"
+                                                value={formData.teacher || ""}
+                                                onChange={(e) => updateField("teacher", e.target.value)}
+                                                className="h-12 text-base rounded-xl border-muted-foreground/20"
+                                            />
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Teacher Email ID *</Label>

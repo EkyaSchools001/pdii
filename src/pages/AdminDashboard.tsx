@@ -14,26 +14,45 @@ import { AdminCalendarView } from "./admin/AdminCalendarView";
 import { AdminReportsView } from "./admin/AdminReportsView";
 import { SystemSettingsView } from "./admin/SystemSettingsView";
 import AdminDocumentManagement from "./AdminDocumentManagement";
+import { useAuth } from "@/hooks/useAuth";
+import api from "@/lib/api";
+import { getSocket } from "@/lib/socket";
 
 export default function AdminDashboard() {
-  const location = useLocation();
-  const { role = "admin", userName = "Admin User" } = location.state || {};
+  const { user } = useAuth();
+  const userName = user?.fullName || "Admin User";
+  const role = user?.role || "ADMIN";
   const [observations, setObservations] = useState<Observation[]>([]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('observations_data');
-      if (saved) {
-        setObservations(JSON.parse(saved));
+    const fetchObservations = async () => {
+      try {
+        const response = await api.get('/observations');
+        setObservations(response.data?.data?.observations || []);
+      } catch (error) {
+        console.error("Failed to fetch observations:", error);
       }
-    } catch (error) {
-      console.error("Failed to parse observations_data from localStorage:", error);
-      setObservations([]);
-    }
+    };
+
+    fetchObservations();
+
+    const socket = getSocket();
+    socket.on('new_observation', (newObs: Observation) => {
+      setObservations(prev => [newObs, ...prev]);
+    });
+
+    socket.on('update_observation', (updatedObs: Observation) => {
+      setObservations(prev => prev.map(obs => obs.id === updatedObs.id ? updatedObs : obs));
+    });
+
+    return () => {
+      socket.off('new_observation');
+      socket.off('update_observation');
+    };
   }, []);
 
   return (
-    <DashboardLayout role={role} userName={userName}>
+    <DashboardLayout role={role.toLowerCase() as any} userName={userName}>
       <Routes>
         <Route index element={<DashboardOverview />} />
         <Route path="users" element={<UserManagementView />} />
@@ -386,5 +405,3 @@ function AdminTeacherProfileView({ observations }: { observations: Observation[]
     </div>
   );
 }
-
-

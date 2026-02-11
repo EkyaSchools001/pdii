@@ -45,6 +45,8 @@ export interface DanielsonDomain {
 export interface Observation {
     id: string;
     teacher?: string; // Optional for leader dashboard view context
+    teacherId?: string;
+    observerId?: string;
     teacherEmail?: string;
     date: string;
     endDate?: string;

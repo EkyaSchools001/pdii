@@ -39,6 +39,20 @@ const MOCK_USERS: Record<string, any> = {
     },
 };
 
+// In-memory storage for observations
+const OBSERVATIONS = new Map<string, any>();
+
+// Seed some initial data
+OBSERVATIONS.set('1', {
+    id: '1',
+    teacher: 'Emily Rodriguez',
+    teacherId: 'teacher-123',
+    score: 4.2,
+    date: 'Jan 15',
+    domain: 'Instructional Practice',
+    notes: 'Great engagement'
+});
+
 class MockPrismaClient {
     user = {
         findUnique: async ({ where }: any) => {
@@ -48,8 +62,29 @@ class MockPrismaClient {
     };
 
     observation = {
-        findMany: async (args: any) => [],
-        create: async (args: any) => ({ ...args.data, id: Math.random().toString(36).substr(2, 9) }),
+        findMany: async (args: any) => {
+            // Simple filter implementation
+            let results = Array.from(OBSERVATIONS.values());
+            if (args?.where?.teacherId) {
+                results = results.filter(obs => obs.teacherId === args.where.teacherId);
+            }
+            // Sort by date descending (mock)
+            return results.reverse();
+        },
+        create: async (args: any) => {
+            const id = Math.random().toString(36).substr(2, 9);
+            const newObs = { ...args.data, id, createdAt: new Date() };
+            OBSERVATIONS.set(id, newObs);
+            return newObs;
+        },
+        update: async (args: any) => {
+            const id = args.where.id;
+            const existing = OBSERVATIONS.get(id);
+            if (!existing) throw new Error("Observation not found");
+            const updated = { ...existing, ...args.data };
+            OBSERVATIONS.set(id, updated);
+            return updated;
+        }
     };
 
     goal = {
