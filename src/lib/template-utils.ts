@@ -37,6 +37,7 @@ export const initialTemplates: FormTemplate[] = [
             { id: "g9", label: "Goal for the Academic Year", type: "textarea", required: true },
             { id: "g10", label: "Reason for the Goal", type: "textarea", required: true },
             { id: "g11", label: "Action Step", type: "textarea", required: true },
+            { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true },
             { id: "g12", label: "Pillar Tag", type: "select", required: true, options: ["Live the Lesson", "Authentic Assessments", "Instruct to Inspire", "Care about Culture", "Engaging Environment", "Professional Practice"] },
             { id: "g13", label: "Additional Notes (Optional)", type: "textarea", required: false }
         ]
@@ -199,6 +200,17 @@ export const getTemplates = (): FormTemplate[] => {
                     if (goalDateField && goalDateField.type !== "date") {
                         goalDateField.type = "date";
                         needsUpdate = true;
+                    }
+
+                    const endDateField = t.fields.find((f: any) => f.label === "Goal Target End Date");
+                    if (!endDateField) {
+                        const actionStepIndex = t.fields.findIndex((f: any) => f.label === "Action Step");
+                        if (actionStepIndex !== -1) {
+                            const newFields = [...t.fields];
+                            newFields.splice(actionStepIndex + 1, 0, { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true });
+                            t.fields = newFields;
+                            needsUpdate = true;
+                        }
                     }
                 }
 

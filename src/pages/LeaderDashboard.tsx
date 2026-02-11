@@ -2595,7 +2595,7 @@ function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateA
                   category: data.g12 || "General",
                   progress: 0,
                   status: "Assigned",
-                  dueDate: data.g_end_date || "Jun 28, 2026",
+                  dueDate: data.g_end_date ? format(new Date(data.g_end_date), "MMM dd, yyyy") : "Jun 28, 2026",
                   assignedBy: data.g2 || "Admin",
                   description: data.g10 || "",
                   actionStep: data.g11 || "",
