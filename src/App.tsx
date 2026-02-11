@@ -8,7 +8,11 @@ import Auth from "./pages/Auth";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import LeaderDashboard from "./pages/LeaderDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import ManagementDashboard from "./pages/ManagementDashboard";
 import NotFound from "./pages/NotFound";
+
+import { AuthProvider } from "./hooks/useAuth";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -18,15 +22,50 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/teacher/*" element={<TeacherDashboard />} />
-          <Route path="/leader/*" element={<LeaderDashboard />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Auth />} />
+
+            <Route
+              path="/teacher/*"
+              element={
+                <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN', 'SUPERADMIN']}>
+                  <TeacherDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/leader/*"
+              element={
+                <ProtectedRoute allowedRoles={['LEADER', 'ADMIN', 'SUPERADMIN']}>
+                  <LeaderDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/management/*"
+              element={
+                <ProtectedRoute allowedRoles={['MANAGEMENT', 'SUPERADMIN']}>
+                  <ManagementDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

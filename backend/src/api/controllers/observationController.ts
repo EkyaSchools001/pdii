@@ -1,40 +1,59 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../middlewares/auth';
+import { AppError } from '../../infrastructure/utils/AppError';
+import { createObservationSchema } from '../../core/models/schemas';
 
-export const getObservations = async (req: Request, res: Response) => {
+export const getAllObservations = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // This would typically call a service and interact with a database
+        const authReq = req as AuthRequest;
+        let filter = {};
+
+        // RBAC logic: Teachers only see their own
+        if (authReq.user?.role === 'TEACHER') {
+            filter = { teacherId: authReq.user.id };
+        }
+
         const mockObservations = [
-            { id: '1', teacher: 'Emily Rodriguez', score: 4.2, date: '2024-01-15' },
-            { id: '2', teacher: 'James Wilson', score: 3.8, date: '2024-02-05' }
+            {
+                id: '1',
+                teacher: 'Emily Rodriguez',
+                score: 4.2,
+                date: 'Jan 15',
+                domain: 'Instructional Practice',
+                notes: 'Great engagement'
+            }
         ];
 
         res.status(200).json({
-            success: true,
-            data: mockObservations
+            status: 'success',
+            results: mockObservations.length,
+            data: { observations: mockObservations }
         });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch observations'
-        });
+    } catch (err) {
+        next(err);
     }
 };
 
-export const createObservation = async (req: Request, res: Response) => {
+export const createObservation = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const observationData = req.body;
+        const authReq = req as AuthRequest;
+        const result = createObservationSchema.safeParse(req.body);
+        if (!result.success) {
+            return next(new AppError('Validation failed', 400));
+        }
 
-        // Validate data here (e.g. using Zod)
+        const newObservation = {
+            ...result.data,
+            id: Math.random().toString(36).substring(7),
+            observerId: authReq.user!.id,
+            createdAt: new Date().toISOString()
+        };
 
         res.status(201).json({
-            success: true,
-            message: 'Observation created successfully',
-            data: { ...observationData, id: Math.random().toString(36).substring(7) }
+            status: 'success',
+            data: { observation: newObservation }
         });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Failed to create observation'
-        });
+    } catch (err) {
+        next(err);
     }
 };

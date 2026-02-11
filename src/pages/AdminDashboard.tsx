@@ -13,6 +13,7 @@ import { CourseManagementView } from "./admin/CourseManagementView";
 import { AdminCalendarView } from "./admin/AdminCalendarView";
 import { AdminReportsView } from "./admin/AdminReportsView";
 import { SystemSettingsView } from "./admin/SystemSettingsView";
+import AdminDocumentManagement from "./AdminDocumentManagement";
 
 export default function AdminDashboard() {
   const location = useLocation();
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
         <Route path="forms" element={<FormTemplatesView />} />
         <Route path="courses" element={<CourseManagementView />} />
         <Route path="calendar" element={<AdminCalendarView />} />
+        <Route path="documents" element={<AdminDocumentManagement />} />
         <Route path="reports" element={<AdminReportsView />} />
         <Route path="settings" element={<SystemSettingsView />} />
       </Routes>

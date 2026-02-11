@@ -18,6 +18,9 @@ import {
   GraduationCap,
   TrendingUp,
   X,
+  Building2,
+  HeartPulse,
+  AlertTriangle,
 } from "lucide-react";
 import { Role, RoleBadge } from "../RoleBadge";
 import { Button } from "../ui/button";
@@ -58,8 +61,20 @@ const adminNav = [
   { title: "Form Templates", icon: FileText, path: "/admin/forms" },
   { title: "Course Catalogue", icon: Book, path: "/admin/courses" },
   { title: "Training & PD Calendar", icon: Calendar, path: "/admin/calendar" },
+  { title: "Documents", icon: FileCheck, path: "/admin/documents" },
   { title: "Reports", icon: FileText, path: "/admin/reports" },
   { title: "Settings", icon: Settings, path: "/admin/settings" },
+];
+
+const managementNav = [
+  { title: "Overview", icon: LayoutDashboard, path: "/management/overview" },
+  { title: "PDI Health", icon: HeartPulse, path: "/management/pdi-health" },
+  { title: "Campus Performance", icon: Building2, path: "/management/campus-performance" },
+  { title: "Pillars", icon: Target, path: "/management/pillars" },
+  { title: "PD Impact", icon: TrendingUp, path: "/management/pd-impact" },
+  { title: "Leadership", icon: Users, path: "/management/leadership" },
+  { title: "Risk & Intervention", icon: AlertTriangle, path: "/management/risk" },
+  { title: "Reports", icon: FileText, path: "/management/reports" },
 ];
 
 const navByRole = {
@@ -67,6 +82,7 @@ const navByRole = {
   leader: leaderNav,
   admin: adminNav,
   superadmin: adminNav, // Use admin navigation for superadmin for now
+  management: managementNav,
 };
 
 export function DashboardSidebar({ role, userName, collapsed, onToggle }: DashboardSidebarProps) {
@@ -131,7 +147,7 @@ export function DashboardSidebar({ role, userName, collapsed, onToggle }: Dashbo
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-hide">
           {navItems.map((item) => {
-            const rootPaths = ["/teacher", "/leader", "/admin"];
+            const rootPaths = ["/teacher", "/leader", "/admin", "/management"];
             const isActive = location.pathname === item.path || (!rootPaths.includes(item.path) && location.pathname.startsWith(item.path));
             return (
               <NavLink

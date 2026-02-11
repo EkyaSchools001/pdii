@@ -7,45 +7,32 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/useAuth";
+import api from "@/lib/api";
 
 export default function Auth() {
     const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Mock Authentication Logic
-        setTimeout(() => {
+        try {
+            const response = await api.post("/auth/login", { email, password });
+            const { token, data } = response.data;
+
+            toast.success(`Welcome back, ${data.user.fullName}!`);
+            login(token, data.user);
+        } catch (error: any) {
+            const message = error.response?.data?.message || "Login failed. Please check your credentials.";
+            toast.error(message);
+        } finally {
             setIsLoading(false);
-
-            if (password !== "password123") {
-                toast.error("Invalid password. Please use 'password123'.");
-                return;
-            }
-
-            if (email === "teacher@pms.com") {
-                toast.success("Welcome, Teacher!");
-                navigate("/teacher", { state: { role: "teacher", userName: "Emily Rodriguez" } });
-            } else if (email === "james.wilson@pms.com") {
-                toast.success("Welcome, Teacher!");
-                navigate("/teacher", { state: { role: "teacher", userName: "James Wilson" } });
-            } else if (email === "schoolleader@pms.com") {
-                toast.success("Welcome, School Leader!");
-                navigate("/leader", { state: { role: "leader", userName: "Dr. Sarah Johnson" } });
-            } else if (email === "admin@pms.com") {
-                toast.success("Welcome, Administrator!");
-                navigate("/admin", { state: { role: "admin", userName: "Admin User" } });
-            } else if (email === "superadmin@pms.com") {
-                toast.success("Welcome, Superadmin!");
-                navigate("/admin", { state: { role: "superadmin", userName: "Superadmin User" } });
-            } else {
-                toast.error("Invalid email. Please use one of the test emails.");
-            }
-        }, 1200);
+        }
     };
 
     const handleSSO = (provider: string) => {
@@ -78,7 +65,7 @@ export default function Auth() {
                 <Alert className="bg-primary/5 border-primary/20">
                     <AlertCircle className="h-4 w-4 text-primary" />
                     <AlertDescription className="text-xs text-primary/80">
-                        <strong>Test Credentials:</strong> teacher@pms.com, schoolleader@pms.com, admin@pms.com, or superadmin@pms.com with password123
+                        <strong>Test Credentials:</strong> teacher@pms.com, schoolleader@pms.com, admin@pms.com, management@pms.com, or superadmin@pms.com with password123
                     </AlertDescription>
                 </Alert>
 

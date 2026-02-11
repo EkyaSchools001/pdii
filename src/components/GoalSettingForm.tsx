@@ -102,9 +102,10 @@ interface GoalSettingFormProps {
     onSubmit: (data: z.infer<typeof formSchema>) => void;
     defaultCoachName?: string;
     onCancel: () => void;
+    teachers: { id: string; name: string }[];
 }
 
-export function GoalSettingForm({ onSubmit, defaultCoachName = "", onCancel }: GoalSettingFormProps) {
+export function GoalSettingForm({ onSubmit, defaultCoachName = "", onCancel, teachers }: GoalSettingFormProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -148,9 +149,20 @@ export function GoalSettingForm({ onSubmit, defaultCoachName = "", onCancel }: G
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Name of the Educator *</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter educator name" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select educator" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {teachers.map((t) => (
+                                                        <SelectItem key={t.id || t.name} value={t.name}>
+                                                            {t.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}

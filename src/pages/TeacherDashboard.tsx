@@ -322,14 +322,16 @@ const DashboardOverview = ({
   observations,
   onRegister,
   onView,
-  onReflect
+  onReflect,
+  userName = "Emily Rodriguez"
 }: {
   goals: typeof initialGoals,
   events: typeof initialEvents,
   observations: Observation[],
   onRegister: (id: string) => void,
   onView: (id: string) => void,
-  onReflect: (obs: Observation) => void
+  onReflect: (obs: Observation) => void,
+  userName?: string
 }) => {
   const navigate = useNavigate();
   const schoolAlignedGoals = goals.filter(g => g.isSchoolAligned).length;
@@ -487,7 +489,7 @@ function ObservationsView({
   );
 }
 
-function GoalsView({ goals, onAddGoal }: { goals: typeof initialGoals, onAddGoal: (goal: NewGoal) => void }) {
+function GoalsView({ goals, onAddGoal, userName = "Emily Rodriguez" }: { goals: typeof initialGoals, onAddGoal: (goal: NewGoal) => void, userName?: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ title: "", description: "", dueDate: "" });
 
@@ -503,7 +505,7 @@ function GoalsView({ goals, onAddGoal }: { goals: typeof initialGoals, onAddGoal
     <div className="space-y-6">
       <PageHeader title="Professional Goals" subtitle="Track your growth and align with school priorities" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {goals.filter(g => !g.teacher || g.teacher.toLowerCase().includes("emily")).map((goal) => (
+        {goals.filter(g => !g.teacher || g.teacher === userName).map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
         ))}
 
@@ -1945,6 +1947,7 @@ export default function TeacherDashboard() {
             onRegister={handleRegister}
             onView={handleViewReport}
             onReflect={setSelectedReflectObs}
+            userName={userName}
           />
         } />
         <Route path="observations" element={
@@ -1955,10 +1958,11 @@ export default function TeacherDashboard() {
           />
         } />
         <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
-        <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} />} />
+        <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} userName={userName} />} />
         <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
         <Route path="courses" element={<CoursesView />} />
         <Route path="hours" element={<PDHoursView pdHours={pdHours} onOpenCreditDialog={() => setIsCreditDialogOpen(true)} />} />
+        <Route path="documents" element={<AcknowledgementsView teacherId="1" />} />
         <Route path="insights" element={<InsightsView />} />
         <Route path="profile" element={
           <TeacherProfileView

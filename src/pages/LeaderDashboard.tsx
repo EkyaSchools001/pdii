@@ -3,7 +3,11 @@ import { format } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
+<<<<<<< Updated upstream
 import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles, Tag, ClipboardCheck } from "lucide-react";
+=======
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles, ClipboardCheck, Tag } from "lucide-react";
+>>>>>>> Stashed changes
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -208,7 +212,7 @@ export default function LeaderDashboard() {
         <Route path="participation" element={<PDParticipationView team={team} />} />
         <Route path="observe" element={<ObserveView setObservations={setObservations} setTeam={setTeam} team={team} observations={observations} />} />
         <Route path="goals" element={<TeacherGoalsView goals={goals} />} />
-        <Route path="goals/assign" element={<AssignGoalView setGoals={setGoals} />} />
+        <Route path="goals/assign" element={<AssignGoalView setGoals={setGoals} team={team} />} />
         <Route path="reports" element={<ReportsView team={team} />} />
       </Routes>
     </DashboardLayout>
@@ -2563,7 +2567,7 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
 
 
 
-function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateAction<any[]>> }) {
+function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.SetStateAction<any[]>>, team: typeof teamMembers }) {
   const navigate = useNavigate();
 
   return (
@@ -2584,7 +2588,9 @@ function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateA
         <Card className="border-none shadow-premium bg-background/50 backdrop-blur-sm">
           <CardContent className="pt-6">
             <DynamicForm
-              fields={getActiveTemplateByType("Goal Setting")!.fields}
+              fields={getActiveTemplateByType("Goal Setting")!.fields.map(f =>
+                f.id === "g1" ? { ...f, type: "select" as const, options: team.map(t => t.name) } : f
+              )}
               submitLabel="Assign Goal"
               onCancel={() => navigate("/leader/goals")}
               onSubmit={(data) => {
@@ -2616,6 +2622,7 @@ function AssignGoalView({ setGoals }: { setGoals: React.Dispatch<React.SetStateA
         </Card>
       ) : (
         <GoalSettingForm
+          teachers={team}
           defaultCoachName="Dr. Sarah Johnson"
           onCancel={() => navigate("/leader/goals")}
           onSubmit={(data) => {
