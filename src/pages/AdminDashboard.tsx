@@ -20,9 +20,14 @@ export default function AdminDashboard() {
   const [observations, setObservations] = useState<Observation[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('observations_data');
-    if (saved) {
-      setObservations(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('observations_data');
+      if (saved) {
+        setObservations(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error("Failed to parse observations_data from localStorage:", error);
+      setObservations([]);
     }
   }, []);
 

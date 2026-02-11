@@ -78,9 +78,10 @@ export default function LandingPage() {
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-6 py-6">
           <nav className="flex items-center justify-between">
-            <Link to="/" className="group">
-              <img src="/EKYA.png" alt="Ekya PDI" className="h-24 w-auto drop-shadow-xl group-hover:scale-105 transition-transform duration-300" />
-            </Link>
+            <div className="flex items-center gap-4">
+              <img src="/EKYA__1_-removebg-preview.png" alt="Ekya Schools" className="h-[70px] w-auto drop-shadow-2xl" />
+              <span className="text-2xl font-black tracking-tight text-white drop-shadow-sm">EKYA <span className="text-accent">PD</span> PLATFORM</span>
+            </div>
             <Button variant="secondary" asChild>
               <Link to="/login">Sign In</Link>
             </Button>

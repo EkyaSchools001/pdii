@@ -21,14 +21,14 @@ import {
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { StatCard } from "@/components/StatCard";
 
-// Mock Data
 const initialUsers = [
-    { id: 1, name: "Maria Santos", email: "maria.s@school.edu", role: "Leader", campus: "North Campus", status: "Active", lastActive: "2 hours ago" },
-    { id: 2, name: "David Kim", email: "d.kim@school.edu", role: "Teacher", campus: "South Campus", status: "Active", lastActive: "5 mins ago" },
-    { id: 3, name: "Emily Rodriguez", email: "e.rod@school.edu", role: "Teacher", campus: "North Campus", status: "Active", lastActive: "1 day ago" },
-    { id: 4, name: "James Wilson", email: "j.wilson@school.edu", role: "Teacher", campus: "West Campus", status: "Inactive", lastActive: "2 weeks ago" },
-    { id: 5, name: "Sarah Johnson", email: "s.johnson@school.edu", role: "Admin", campus: "Main Office", status: "Active", lastActive: "Just now" },
+    { id: "1", name: "Sarah Johnson", email: "sarah.j@school.edu", role: "Admin", campus: "Main Campus", status: "Active", lastActive: "2 hours ago" },
+    { id: "2", name: "Michael Chen", email: "m.chen@school.edu", role: "Teacher", campus: "North Campus", status: "Active", lastActive: "5 hours ago" },
+    { id: "3", name: "Elena Rodriguez", email: "elena.r@school.edu", role: "Teacher", campus: "Main Campus", status: "Inactive", lastActive: "2 days ago" },
+    { id: "4", name: "David Wilson", email: "d.wilson@school.edu", role: "Leader", campus: "South Campus", status: "Active", lastActive: "1 hour ago" },
+    { id: "5", name: "Priya Sharma", email: "p.sharma@school.edu", role: "Teacher", campus: "Main Campus", status: "Active", lastActive: "3 hours ago" },
 ];
 
 export function UserManagementView() {
@@ -45,13 +45,10 @@ export function UserManagementView() {
     const [activeTab, setActiveTab] = useState("all");
     const [campusFilter, setCampusFilter] = useState("all");
 
-    // Get unique campuses for dropdown
-    const uniqueCampuses = Array.from(new Set(initialUsers.map(user => user.campus)));
+    const uniqueCampuses = Array.from(new Set(users.map(user => user.campus)));
 
-    // Calculate stats based on Campus Filter only (ignoring tab processing for the summary)
-    const usersInCampus = campusFilter === "all" ? users : users.filter(u => u.campus === campusFilter);
-    const teacherCount = usersInCampus.filter(u => u.role === "Teacher").length;
-    const leaderCount = usersInCampus.filter(u => u.role === "Leader").length;
+    const teacherCount = users.filter(u => u.role === "Teacher").length;
+    const leaderCount = users.filter(u => u.role === "Leader").length;
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,12 +70,14 @@ export function UserManagementView() {
             toast.error("Please fill in all fields");
             return;
         }
+
         const user = {
-            id: users.length + 1,
+            id: (users.length + 1).toString(),
             ...newUser,
             status: "Active",
             lastActive: "Just now"
         };
+
         setUsers([user, ...users]);
         setIsAddDialogOpen(false);
         setNewUser({ name: "", email: "", role: "Teacher", campus: "" });
@@ -86,10 +85,7 @@ export function UserManagementView() {
     };
 
     const handleEditUser = () => {
-        if (!editingUser || !editingUser.name || !editingUser.email || !editingUser.campus) {
-            toast.error("Please fill in all fields");
-            return;
-        }
+        if (!editingUser) return;
         setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
         setIsEditDialogOpen(false);
         setEditingUser(null);
@@ -108,9 +104,8 @@ export function UserManagementView() {
         if (!selectedUser) return;
         const newStatus = selectedUser.status === "Active" ? "Inactive" : "Active";
         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: newStatus } : u));
+        toast.success(`User ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
         setIsDeactivateDialogOpen(false);
-        toast.success(`User ${newStatus === "Inactive" ? "deactivated" : "activated"} successfully`);
-        setSelectedUser(null);
     };
 
     const handleAction = (action: string, user: typeof initialUsers[0]) => {
@@ -130,15 +125,12 @@ export function UserManagementView() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* ... PageHeader ... */}
             <PageHeader
                 title="User Management"
                 subtitle="Manage user accounts, roles, and access permissions"
                 actions={
-                    // ... Dialogs ...
                     <>
                         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                            {/* ... */}
                             <DialogTrigger asChild>
                                 <Button>
                                     <Plus className="w-4 h-4 mr-2" />
@@ -146,7 +138,6 @@ export function UserManagementView() {
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
-                                {/* ... existing Add Content ... */}
                                 <DialogHeader>
                                     <DialogTitle>Add New User</DialogTitle>
                                     <DialogDescription>Create a new account for a staff member.</DialogDescription>
@@ -181,9 +172,9 @@ export function UserManagementView() {
                                                     <SelectValue placeholder="Select campus" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {uniqueCampuses.map(campus => (
-                                                        <SelectItem key={campus} value={campus}>{campus}</SelectItem>
-                                                    ))}
+                                                    <SelectItem value="Main Campus">Main Campus</SelectItem>
+                                                    <SelectItem value="North Campus">North Campus</SelectItem>
+                                                    <SelectItem value="South Campus">South Campus</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -196,7 +187,6 @@ export function UserManagementView() {
                             </DialogContent>
                         </Dialog>
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            {/* ... existing Edit Content ... */}
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Edit User</DialogTitle>
@@ -233,9 +223,9 @@ export function UserManagementView() {
                                                         <SelectValue placeholder="Select campus" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {uniqueCampuses.map(campus => (
-                                                            <SelectItem key={campus} value={campus}>{campus}</SelectItem>
-                                                        ))}
+                                                        <SelectItem value="Main Campus">Main Campus</SelectItem>
+                                                        <SelectItem value="North Campus">North Campus</SelectItem>
+                                                        <SelectItem value="South Campus">South Campus</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -310,8 +300,7 @@ export function UserManagementView() {
                                                     <Shield className="w-3 h-3 mr-1" />
                                                     {selectedUser.role}
                                                 </Badge>
-                                                <Badge variant={selectedUser.status === "Active" ? "default" : "secondary"} className={selectedUser.status === "Active" ? "bg-green-600" : ""}>
-                                                    {selectedUser.status === "Active" ? <UserCheck className="w-3 h-3 mr-1" /> : <UserX className="w-3 h-3 mr-1" />}
+                                                <Badge variant={selectedUser.status === "Active" ? "default" : "secondary"} className={selectedUser.status === "Active" ? "bg-green-600 font-normal" : "font-normal"}>
                                                     {selectedUser.status}
                                                 </Badge>
                                             </div>
@@ -333,29 +322,35 @@ export function UserManagementView() {
                 }
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Teachers</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{teacherCount}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {campusFilter === "all" ? "Across all campuses" : `In ${campusFilter}`}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Leaders</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{leaderCount}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {campusFilter === "all" ? "Across all campuses" : `In ${campusFilter}`}
-                        </p>
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <StatCard
+                    title="Total Teachers"
+                    value={teacherCount}
+                    subtitle="Active staff"
+                    icon={Users}
+                    onClick={() => { }}
+                />
+                <StatCard
+                    title="Total Leaders"
+                    value={leaderCount}
+                    subtitle="School leadership"
+                    icon={Shield}
+                    onClick={() => { }}
+                />
+                <StatCard
+                    title="Active Campuses"
+                    value={uniqueCampuses.length}
+                    subtitle="Current coverage"
+                    icon={Search}
+                    onClick={() => { }}
+                />
+                <StatCard
+                    title="System Health"
+                    value="Optimal"
+                    subtitle="Platform status"
+                    icon={Search}
+                    onClick={() => { }}
+                />
             </div>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -407,7 +402,7 @@ export function UserManagementView() {
                             </TableHeader>
                             <TableBody>
                                 {filteredUsers.map((user) => (
-                                    <TableRow key={user.id}>
+                                    <TableRow key={user.id} className="hover:bg-muted/30 transition-colors">
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-sm">{user.name}</span>
@@ -424,7 +419,7 @@ export function UserManagementView() {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{user.campus}</TableCell>
                                         <TableCell>
-                                            <Badge variant={user.status === "Active" ? "default" : "secondary"} className={user.status === "Active" ? "bg-green-600 hover:bg-green-700" : ""}>
+                                            <Badge variant={user.status === "Active" ? "default" : "secondary"} className={user.status === "Active" ? "bg-green-600 hover:bg-green-700 font-normal" : "font-normal"}>
                                                 {user.status === "Active" ? <UserCheck className="w-3 h-3 mr-1" /> : <UserX className="w-3 h-3 mr-1" />}
                                                 {user.status}
                                             </Badge>

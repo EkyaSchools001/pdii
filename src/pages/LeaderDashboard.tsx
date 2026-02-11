@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles } from "lucide-react";
+import { Users, Eye, TrendingUp, Calendar, FileText, Target, Plus, ChevronLeft, ChevronRight, Save, Star, Search, Filter, Mail, Phone, MapPin, Award, CheckCircle, Download, Printer, Share2, Rocket, Clock, CheckCircle2, Map, Users as Users2, History as HistoryIcon, MessageSquare, Book, Link as LinkIcon, Brain, Paperclip, Sparkles, Tag, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,7 +104,8 @@ export default function LeaderDashboard() {
   const [observations, setObservations] = useState<Observation[]>(() => {
     try {
       const saved = localStorage.getItem('observations_data');
-      return saved ? JSON.parse(saved) : recentObservations;
+      const parsed = saved ? JSON.parse(saved) : recentObservations;
+      return Array.isArray(parsed) ? parsed : recentObservations;
     } catch (e) {
       console.error("Failed to parse observations", e);
       return recentObservations;
@@ -113,7 +114,8 @@ export default function LeaderDashboard() {
   const [goals, setGoals] = useState(() => {
     try {
       const saved = localStorage.getItem('goals_data');
-      return saved ? JSON.parse(saved) : initialGoals;
+      const parsed = saved ? JSON.parse(saved) : initialGoals;
+      return Array.isArray(parsed) ? parsed : initialGoals;
     } catch (e) {
       console.error("Failed to parse goals", e);
       return initialGoals;
@@ -122,7 +124,8 @@ export default function LeaderDashboard() {
   const [training, setTraining] = useState(() => {
     try {
       const saved = localStorage.getItem('training_events_data');
-      return saved ? JSON.parse(saved) : initialTrainingEvents;
+      const parsed = saved ? JSON.parse(saved) : initialTrainingEvents;
+      return Array.isArray(parsed) ? parsed : initialTrainingEvents;
     } catch (e) {
       console.error("Failed to parse training events", e);
       return initialTrainingEvents;
@@ -815,7 +818,9 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
     return format(d, "MMM d, yyyy");
   };
 
-  const filteredEvents = training.filter((e) => {
+  const safeTraining = Array.isArray(training) ? training.filter(e => e && typeof e.title === 'string') : [];
+
+  const filteredEvents = safeTraining.filter((e) => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (e.topic || e.type || "").toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -828,7 +833,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
   });
 
   // Get dates that have events for highlighting
-  const eventDates = training.map(e => parseEventDate(e.date));
+  const eventDates = safeTraining.map(e => parseEventDate(e.date));
 
   const handleSaveEvent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1644,11 +1649,14 @@ function TeacherGoalsView({ goals }: { goals: typeof initialGoals }) {
   const [teacherFilter, setTeacherFilter] = useState("All");
   const [progressFilter, setProgressFilter] = useState("All");
 
+  // Ensure goals is an array and filter out invalid entries to prevent crashes
+  const safeGoals = Array.isArray(goals) ? goals.filter(g => g && typeof g.teacher === 'string' && typeof g.title === 'string') : [];
+
   // Get unique teachers for filter
-  const uniqueTeachers = Array.from(new Set(goals.map(g => g.teacher)));
+  const uniqueTeachers = Array.from(new Set(safeGoals.map(g => g.teacher)));
 
   // Apply all filters
-  const filteredGoals = goals.filter(g => {
+  const filteredGoals = safeGoals.filter(g => {
     const matchesSearch = g.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.title.toLowerCase().includes(searchQuery.toLowerCase());
 
