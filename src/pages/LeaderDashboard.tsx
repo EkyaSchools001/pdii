@@ -134,6 +134,7 @@ export default function LeaderDashboard() {
 
   useEffect(() => {
     localStorage.setItem('observations_data', JSON.stringify(observations));
+    window.dispatchEvent(new Event('observations-updated'));
   }, [observations]);
 
   useEffect(() => {

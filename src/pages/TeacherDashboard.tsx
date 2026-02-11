@@ -1848,13 +1848,34 @@ export default function TeacherDashboard() {
       }
     }
 
+    const handleObservationsUpdate = () => {
+      const saved = localStorage.getItem('observations_data');
+      if (saved) {
+        try {
+          const newData = JSON.parse(saved);
+          const currentObsCount = observations.length;
+          setObservations(newData);
+          if (newData.length > currentObsCount) {
+            toast.info("New observation record received! Check your observations for feedback.", {
+              duration: 5000,
+              icon: <Sparkles className="w-4 h-4 text-primary" />
+            });
+          }
+        } catch (err) {
+          console.error("Failed to sync observations via custom event", err);
+        }
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('local-goals-update', handleLocalGoalsUpdate);
     window.addEventListener('training-events-updated', handleCustomTrainingEvent);
+    window.addEventListener('observations-updated', handleObservationsUpdate);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('local-goals-update', handleLocalGoalsUpdate);
       window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
+      window.removeEventListener('observations-updated', handleObservationsUpdate);
     };
   }, []);
 
