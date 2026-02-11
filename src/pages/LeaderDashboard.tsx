@@ -2089,31 +2089,110 @@ function ObservationReportView({ observations, team }: { observations: Observati
               <div className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
                   <FileText className="w-5 h-5" />
-                  Observation Summary & Evidence
+                  General Feedback & Notes
                 </h3>
                 <div className="p-6 rounded-2xl bg-muted/20 border border-muted-foreground/10 text-foreground leading-relaxed italic">
-                  "{observation.notes || "The lesson demonstrated strong alignment with the curriculum standards. Student engagement remained high throughout the activity, particularly during the collaborative problem-solving phase. Feedback provided to students was timely and specific, helping them navigate complex concepts with confidence."}"
+                  "{observation.notes || "No additional feedback provided."}"
                 </div>
               </div>
 
-              {/* Reflection content moved to Dialog */}
+              {/* Domain Specific Evidence */}
+              {observation.domains && observation.domains.length > 0 && (
+                <div className="space-y-6 pt-4 border-t border-dashed">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
+                    <ClipboardCheck className="w-5 h-5" />
+                    Domain Evidence & Indicator Ratings
+                  </h3>
+                  <div className="grid gap-6">
+                    {observation.domains.map((dom) => (
+                      <Card key={dom.domainId} className="border-muted/30 shadow-sm overflow-hidden bg-background/50">
+                        <div className="bg-muted/10 p-4 border-b">
+                          <h4 className="font-bold flex items-center justify-between">
+                            {dom.title}
+                            <Badge variant="outline" className="text-[10px] font-black uppercase">Domain {dom.domainId}</Badge>
+                          </h4>
+                        </div>
+                        <CardContent className="p-5 space-y-4">
+                          <div className="grid gap-2">
+                            {dom.indicators.map((ind, idx) => (
+                              <div key={idx} className="flex items-center justify-between py-1.5 border-b border-dashed last:border-0">
+                                <span className="text-sm font-medium text-foreground/80">{ind.name}</span>
+                                <Badge variant={ind.rating === "Highly Effective" ? "default" : ind.rating === "Effective" ? "secondary" : "outline"} className={cn(
+                                  "text-[10px] font-bold",
+                                  ind.rating === "Not Observed" && "opacity-40"
+                                )}>
+                                  {ind.rating}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                          {dom.evidence && (
+                            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                              <p className="text-xs font-bold uppercase text-primary mb-2 tracking-widest">Evidence Observed</p>
+                              <p className="text-sm italic text-foreground/80 leading-relaxed">"{dom.evidence}"</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2 text-success">
-                  <CheckCircle className="w-5 h-5" />
-                  Key Strengths Observed
-                </h3>
-                <ul className="grid md:grid-cols-2 gap-4">
-                  <li className="flex items-start gap-3 p-4 rounded-xl bg-success/5 border border-success/10">
-                    <div className="w-2 h-2 rounded-full bg-success mt-1.5 flex-shrink-0" />
-                    <span className="text-sm font-medium">Effective use of open-ended questioning to stimulate higher-order thinking.</span>
-                  </li>
-                  <li className="flex items-start gap-3 p-4 rounded-xl bg-success/5 border border-success/10">
-                    <div className="w-2 h-2 rounded-full bg-success mt-1.5 flex-shrink-0" />
-                    <span className="text-sm font-medium">Clear transitions between lesson components maintained instructional momentum.</span>
-                  </li>
-                </ul>
+              {/* Action Steps & Conversation Reflection */}
+              <div className="grid md:grid-cols-2 gap-8 pt-4 border-t border-dashed">
+                {observation.actionStep && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-600">
+                      <Target className="w-5 h-5" />
+                      Action Step
+                    </h3>
+                    <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-900 font-medium leading-relaxed">
+                      {observation.actionStep}
+                    </div>
+                  </div>
+                )}
+                {observation.teacherReflection && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-amber-600">
+                      <MessageSquare className="w-5 h-5" />
+                      Teacher's Conversation Reflection
+                    </h3>
+                    <div className="p-6 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 leading-relaxed italic">
+                      "{observation.teacherReflection}"
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Meta Tags / Focus Areas */}
+              {observation.metaTags && observation.metaTags.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-dashed">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">
+                    <Tag className="w-5 h-5" />
+                    Focus Areas for Improvement
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {observation.metaTags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="px-3 py-1.5 rounded-xl border-primary/20 bg-primary/5 text-primary text-xs font-bold">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {observation.strengths && (
+                <div className="space-y-4 pt-4 border-t border-dashed">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-success">
+                    <CheckCircle className="w-5 h-5" />
+                    Key Strengths Observed
+                  </h3>
+                  <div className="p-6 rounded-2xl bg-success/5 border border-success/10 text-foreground leading-relaxed">
+                    {observation.strengths}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-4 flex justify-between items-center text-xs text-muted-foreground border-t">
                 <p>Digitally signed by Dr. Sarah Johnson</p>

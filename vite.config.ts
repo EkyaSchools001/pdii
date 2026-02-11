@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    open: process.platform === 'win32' ? 'chrome' : true, // Force Chrome on Windows
+    cors: true, // Enable CORS for development
     hmr: {
       overlay: false,
     },

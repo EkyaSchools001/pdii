@@ -30,6 +30,9 @@ export default function Auth() {
             if (email === "teacher@pms.com") {
                 toast.success("Welcome, Teacher!");
                 navigate("/teacher", { state: { role: "teacher", userName: "Emily Rodriguez" } });
+            } else if (email === "james.wilson@pms.com") {
+                toast.success("Welcome, Teacher!");
+                navigate("/teacher", { state: { role: "teacher", userName: "James Wilson" } });
             } else if (email === "schoolleader@pms.com") {
                 toast.success("Welcome, School Leader!");
                 navigate("/leader", { state: { role: "leader", userName: "Dr. Sarah Johnson" } });

@@ -52,7 +52,9 @@ import {
   Rocket,
   History as HistoryIcon,
   Link as LinkIcon,
-  Paperclip
+  Paperclip,
+  ClipboardCheck,
+  Tag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
@@ -1798,7 +1800,16 @@ export default function TeacherDashboard() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'observations_data' && e.newValue) {
         try {
-          setObservations(JSON.parse(e.newValue));
+          const newData = JSON.parse(e.newValue);
+          const currentObsCount = observations.length;
+          setObservations(newData);
+
+          if (newData.length > currentObsCount) {
+            toast.info("New observation record received! Check your observations for feedback.", {
+              duration: 5000,
+              icon: <Sparkles className="w-4 h-4 text-primary" />
+            });
+          }
         } catch (err) {
           console.error("Failed to sync observation data", err);
         }
@@ -1909,7 +1920,7 @@ export default function TeacherDashboard() {
           <DashboardOverview
             goals={goals}
             events={events}
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))}
+            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
             onRegister={handleRegister}
             onView={handleViewReport}
             onReflect={setSelectedReflectObs}
@@ -1917,7 +1928,7 @@ export default function TeacherDashboard() {
         } />
         <Route path="observations" element={
           <ObservationsView
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily"))}
+            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
             onReflect={setSelectedReflectObs}
             onView={handleViewReport}
           />
@@ -1934,9 +1945,11 @@ export default function TeacherDashboard() {
               id: "1",
               name: userName,
               role: "Math Teacher",
-              observations: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes("emily")).length,
-              lastObserved: "Jan 15",
-              avgScore: 4.2,
+              observations: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length,
+              lastObserved: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))[0]?.date || "N/A",
+              avgScore: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length > 0
+                ? Number((observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).reduce((acc, o) => acc + (o.score || 0), 0) / observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length).toFixed(1))
+                : 0,
               pdHours: pdHours.total,
               completionRate: 85
             }}
@@ -2198,15 +2211,103 @@ function ObservationDetailView({ observations }: { observations: Observation[] }
                 </div>
               )}
 
+
+              {/* Domain Specific Evidence */}
+              {observation.domains && observation.domains.length > 0 && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
+                    <ClipboardCheck className="w-5 h-5" />
+                    Domain Evidence & Indicator Ratings
+                  </h3>
+                  <div className="grid gap-6">
+                    {observation.domains.map((dom) => (
+                      <Card key={dom.domainId} className="border-muted/30 shadow-sm overflow-hidden">
+                        <div className="bg-muted/10 p-4 border-b">
+                          <h4 className="font-bold flex items-center justify-between">
+                            {dom.title}
+                            <Badge variant="outline" className="text-[10px] font-black uppercase">Domain {dom.domainId}</Badge>
+                          </h4>
+                        </div>
+                        <CardContent className="p-5 space-y-4">
+                          <div className="grid gap-2">
+                            {dom.indicators.map((ind, idx) => (
+                              <div key={idx} className="flex items-center justify-between py-1.5 border-b border-dashed last:border-0">
+                                <span className="text-sm font-medium text-foreground/80">{ind.name}</span>
+                                <Badge variant={ind.rating === "Highly Effective" ? "default" : ind.rating === "Effective" ? "secondary" : ind.rating === "Basic" ? "outline" : "outline"} className={cn(
+                                  "text-[10px] font-bold",
+                                  ind.rating === "Not Observed" && "opacity-40"
+                                )}>
+                                  {ind.rating}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                          {dom.evidence && (
+                            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                              <p className="text-xs font-bold uppercase text-primary mb-2 tracking-widest">Evidence Observed</p>
+                              <p className="text-sm italic text-foreground/80 leading-relaxed">"{dom.evidence}"</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Steps & Reflection */}
+              <div className="grid md:grid-cols-2 gap-8">
+                {observation.actionStep && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-600">
+                      <Target className="w-5 h-5" />
+                      Action Step
+                    </h3>
+                    <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-900 font-medium leading-relaxed">
+                      {observation.actionStep}
+                    </div>
+                  </div>
+                )}
+                {observation.teacherReflection && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-amber-600">
+                      <MessageSquare className="w-5 h-5" />
+                      Conversation Reflection
+                    </h3>
+                    <div className="p-6 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 leading-relaxed italic">
+                      "{observation.teacherReflection}"
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Notes */}
               <div className="space-y-4 pt-4 border-t border-dashed">
                 <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
                   <FileCheck className="w-5 h-5" />
-                  Additional Evidence & Notes
+                  General Feedback & Notes
                 </h3>
                 <div className="p-6 rounded-2xl bg-muted/20 border border-muted-foreground/10 text-foreground leading-relaxed italic">
-                  "{observation.notes || "No additional notes provided."}"
+                  "{observation.notes || "No additional feedback provided."}"
                 </div>
               </div>
+
+              {/* Meta Tags / Focus Areas */}
+              {observation.metaTags && observation.metaTags.length > 0 && (
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">
+                    <Tag className="w-5 h-5" />
+                    Focus Areas for Improvement
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {observation.metaTags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="px-3 py-1.5 rounded-xl border-primary/20 bg-primary/5 text-primary text-xs font-bold">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Teacher's Own Reflection Section */}
               {observation.detailedReflection ? (

@@ -608,17 +608,16 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all select-none",
                                                 formData.routines?.includes(item) ? "bg-primary/5 border-primary shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => setMultiSelect("routines", item, !formData.routines?.includes(item))}
                                         >
                                             <Checkbox
+                                                id={`routine-${item}`}
                                                 checked={formData.routines?.includes(item)}
                                                 onCheckedChange={(checked) => setMultiSelect("routines", item, !!checked)}
-                                                onClick={(e) => e.stopPropagation()}
                                             />
-                                            <span className="font-medium text-sm flex-1">{item}</span>
+                                            <Label htmlFor={`routine-${item}`} className="font-medium text-sm flex-1 cursor-pointer">{item}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -635,17 +634,16 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all select-none",
                                                 formData.cultureTools?.includes(item) ? "bg-indigo-500/5 border-indigo-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => setMultiSelect("cultureTools", item, !formData.cultureTools?.includes(item))}
                                         >
                                             <Checkbox
+                                                id={`culture-${item}`}
                                                 checked={formData.cultureTools?.includes(item)}
                                                 onCheckedChange={(checked) => setMultiSelect("cultureTools", item, !!checked)}
-                                                onClick={(e) => e.stopPropagation()}
                                             />
-                                            <span className="font-medium text-sm flex-1">{item}</span>
+                                            <Label htmlFor={`culture-${item}`} className="font-medium text-sm flex-1 cursor-pointer">{item}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -662,17 +660,16 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all select-none",
                                                 formData.instructionalTools?.includes(item) ? "bg-emerald-500/5 border-emerald-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => setMultiSelect("instructionalTools", item, !formData.instructionalTools?.includes(item))}
                                         >
                                             <Checkbox
+                                                id={`instructional-${item}`}
                                                 checked={formData.instructionalTools?.includes(item)}
                                                 onCheckedChange={(checked) => setMultiSelect("instructionalTools", item, !!checked)}
-                                                onClick={(e) => e.stopPropagation()}
                                             />
-                                            <span className="font-medium text-sm flex-1">{item}</span>
+                                            <Label htmlFor={`instructional-${item}`} className="font-medium text-sm flex-1 cursor-pointer">{item}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -689,17 +686,16 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {} }:
                                         <div
                                             key={item}
                                             className={cn(
-                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
+                                                "flex items-center space-x-3 p-3 rounded-xl border transition-all select-none",
                                                 formData.learningAreaTools?.includes(item) ? "bg-orange-500/5 border-orange-500 shadow-sm" : "hover:bg-muted/50 border-muted-foreground/10"
                                             )}
-                                            onClick={() => setMultiSelect("learningAreaTools", item, !formData.learningAreaTools?.includes(item))}
                                         >
                                             <Checkbox
+                                                id={`la-tool-${item}`}
                                                 checked={formData.learningAreaTools?.includes(item)}
                                                 onCheckedChange={(checked) => setMultiSelect("learningAreaTools", item, !!checked)}
-                                                onClick={(e) => e.stopPropagation()}
                                             />
-                                            <span className="font-medium text-sm flex-1">{item}</span>
+                                            <Label htmlFor={`la-tool-${item}`} className="font-medium text-sm flex-1 cursor-pointer">{item}</Label>
                                         </div>
                                     ))}
                                 </div>
