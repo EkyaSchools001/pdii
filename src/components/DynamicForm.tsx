@@ -92,7 +92,7 @@ export function DynamicForm({ fields, onSubmit, onCancel, submitLabel = "Submit"
                                         selected={formData[field.id] ? new Date(formData[field.id]) : undefined}
                                         onSelect={(date) => handleInputChange(field.id, date?.toISOString())}
                                         disabled={(date) =>
-                                            date > new Date() || date < new Date("1900-01-01")
+                                            date < new Date("1900-01-01")
                                         }
                                         initialFocus
                                     />

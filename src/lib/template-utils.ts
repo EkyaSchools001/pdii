@@ -30,6 +30,7 @@ export const initialTemplates: FormTemplate[] = [
             { id: "g2", label: "Name of the Coach", type: "text", required: true },
             { id: "g3", label: "Campus", type: "select", required: true, options: ["CMR NPS", "EJPN", "EITPL", "EBTM", "EBYR", "ENICE", "ENAVA", "PU BTM", "PU BYR", "PU HRBR", "PU ITPL"] },
             { id: "g4", label: "Date of Goal Setting Conversation", type: "date", required: true },
+            { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true },
             { id: "g5", label: "Was the teacher informed and aware of the goal setting process?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g6", label: "Was the teacher informed and aware about the Ekya Danielson Framework?", type: "radio", required: true, options: ["Yes", "No"] },
             { id: "g7", label: "Did the teacher complete her self-reflection on Ekya Danielson Form?", type: "radio", required: true, options: ["Yes", "No"] },
@@ -199,6 +200,24 @@ export const getTemplates = (): FormTemplate[] => {
                     if (goalDateField && goalDateField.type !== "date") {
                         goalDateField.type = "date";
                         needsUpdate = true;
+                    }
+
+                    const conversationDateIndex = t.fields.findIndex((f: any) => f.label === "Date of Goal Setting Conversation");
+                    if (conversationDateIndex !== -1) {
+                        const currentPos = t.fields.findIndex((f: any) => f.id === "g_end_date" || f.label === "Goal Target End Date");
+                        if (currentPos !== conversationDateIndex + 1) {
+                            let fields = [...t.fields];
+                            let fieldToMove;
+                            if (currentPos !== -1) {
+                                [fieldToMove] = fields.splice(currentPos, 1);
+                            } else {
+                                fieldToMove = { id: "g_end_date", label: "Goal Target End Date", type: "date", required: true };
+                            }
+                            const newConvIndex = fields.findIndex((f: any) => f.label === "Date of Goal Setting Conversation");
+                            fields.splice(newConvIndex + 1, 0, fieldToMove);
+                            t.fields = fields;
+                            needsUpdate = true;
+                        }
                     }
                 }
 
