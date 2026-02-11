@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import api from "@/lib/api";
+import { getSocket } from "@/lib/socket";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -57,6 +59,7 @@ import {
   Tag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AcknowledgementsView } from "@/components/documents/AcknowledgementsView";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1697,18 +1700,7 @@ export default function TeacherDashboard() {
       return initialEvents;
     }
   });
-  const [observations, setObservations] = useState<Observation[]>(() => {
-    try {
-      const saved = localStorage.getItem('observations_data');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-      return mockObservations;
-    } catch (e) {
-      console.error("Failed to load observations", e);
-      return mockObservations;
-    }
-  });
+  const [observations, setObservations] = useState<Observation[]>([]);
   const [pdHours, setPdHours] = useState(() => {
     try {
       const moocSubmissions = localStorage.getItem('mooc_submissions');
@@ -1739,6 +1731,76 @@ export default function TeacherDashboard() {
   const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch initial data via API
+  useEffect(() => {
+    const fetchObservations = async () => {
+      try {
+        const response = await api.get('/observations');
+        if (response.data.status === 'success') {
+          // Filter observations for the current teacher
+          const teacherObservations = response.data.data.observations.filter(
+            (obs: Observation) => obs.teacher === userName || obs.teacherEmail === "e.rod@school.edu"
+          );
+          setObservations(teacherObservations);
+        }
+      } catch (error) {
+        console.error("Failed to fetch observations:", error);
+        setObservations(mockObservations.filter(o => o.teacher.toLowerCase().includes(userName.toLowerCase()))); // Fallback to mock data
+      }
+    };
+
+    fetchObservations();
+
+    // Socket.io Real-time Sync
+    const socket = getSocket();
+
+    // Join room for this specific teacher
+    socket.emit('join_room', userName);
+
+    socket.on('observation:created', (newObs: Observation) => {
+      // Small security check: only add if it belongs to this teacher
+      if (newObs.teacher === userName || newObs.teacherEmail === "e.rod@school.edu") {
+        setObservations(prev => [newObs, ...prev]);
+        toast.success(`You have a new observation report from ${newObs.observerName}!`);
+        window.dispatchEvent(new Event('observations-updated'));
+      }
+    });
+
+    socket.on('observation:updated', (updatedObs: Observation) => {
+      if (updatedObs.teacher === userName || updatedObs.teacherEmail === "e.rod@school.edu") {
+        setObservations(prev => prev.map(obs => obs.id === updatedObs.id ? updatedObs : obs));
+        toast.info(`Observation report updated by ${updatedObs.observerName}`);
+        window.dispatchEvent(new Event('observations-updated'));
+      }
+    });
+
+    return () => {
+      socket.off('observation:created');
+      socket.off('observation:updated');
+      // Optionally, leave the room when component unmounts
+      socket.emit('leave_room', userName);
+    };
+  }, [userName]);
+
+  const handleReflect = async (id: string, reflection: DetailedReflection) => {
+    try {
+      const response = await api.patch(`/observations/${id}`, {
+        hasReflection: true,
+        detailedReflection: reflection,
+        status: "Reviewed"
+      });
+
+      if (response.data.status === 'success') {
+        const updated = response.data.data.observation;
+        setObservations(prev => prev.map(obs => obs.id === id ? updated : obs));
+        toast.success("Reflection submitted successfully!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to submit reflection");
+    }
+  };
+
   const handleReflectionSubmit = (reflection: DetailedReflection) => {
     if (selectedReflectObs) {
       handleReflect(selectedReflectObs.id, reflection);
@@ -1749,10 +1811,6 @@ export default function TeacherDashboard() {
   const handleViewReport = (id: string) => {
     navigate(`/teacher/observations/${id}`);
   };
-
-  useEffect(() => {
-    localStorage.setItem('observations_data', JSON.stringify(observations));
-  }, [observations]);
 
   useEffect(() => {
     localStorage.setItem('goals_data', JSON.stringify(goals));
@@ -1797,275 +1855,179 @@ export default function TeacherDashboard() {
     };
   }, []);
 
-  // Listen for updates from Leader Dashboard
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'observations_data' && e.newValue) {
-        try {
-          const newData = JSON.parse(e.newValue);
-          const currentObsCount = observations.length;
-          setObservations(newData);
+}, []);
 
-          if (newData.length > currentObsCount) {
-            toast.info("New observation record received! Check your observations for feedback.", {
-              duration: 5000,
-              icon: <Sparkles className="w-4 h-4 text-primary" />
-            });
-          }
-        } catch (err) {
-          console.error("Failed to sync observation data", err);
-        }
-      }
-      if (e.key === 'goals_data' && e.newValue) {
-        try {
-          setGoals(JSON.parse(e.newValue));
-        } catch (err) {
-          console.error("Failed to sync goals data", err);
-        }
-      }
-      if (e.key === 'training_events_data' && e.newValue) {
-        try {
-          setEvents(JSON.parse(e.newValue));
-        } catch (err) {
-          console.error("Failed to sync training data", err);
-        }
-      }
-    };
 
-    const handleCustomTrainingEvent = () => {
-      const saved = localStorage.getItem('training_events_data');
-      if (saved) {
-        try {
-          setEvents(JSON.parse(saved));
-        } catch (err) {
-          console.error("Failed to sync training data via custom event", err);
-        }
-      }
-    };
 
-    const handleLocalGoalsUpdate = () => {
-      const saved = localStorage.getItem('goals_data');
-      if (saved) {
-        setGoals(JSON.parse(saved));
-      }
+const handleAddGoal = (newGoal: NewGoal) => {
+  const dateObj = new Date(newGoal.dueDate);
+  const formattedDate = format(dateObj, "MMM d, yyyy");
+
+  setGoals(prev => [...prev, {
+    ...newGoal,
+    id: Date.now().toString(),
+    progress: 0,
+    dueDate: formattedDate
+  }]);
+};
+
+const handleRegister = (eventId: string) => {
+  setEvents(prev => prev.map(event => {
+    if (event.id === eventId) {
+      toast.success(`Successfully registered for ${event.title}`);
+
+      // Add current user to registrants list
+      const newRegistrant = {
+        id: `u-${Date.now()}`,
+        name: userName,
+        email: `${userName.toLowerCase().replace(' ', '.')}@school.edu`,
+        dateRegistered: format(new Date(), "MMM d, yyyy")
+      };
+
+      const updatedRegistrants = [...(event.registrants || []), newRegistrant];
+
+      return {
+        ...event,
+        isRegistered: true,
+        registered: event.registered + 1,
+        spotsLeft: event.spotsLeft - 1,
+        registrants: updatedRegistrants
+      };
     }
+    return event;
+  }));
+};
 
-    const handleObservationsUpdate = () => {
-      const saved = localStorage.getItem('observations_data');
-      if (saved) {
-        try {
-          const newData = JSON.parse(saved);
-          const currentObsCount = observations.length;
-          setObservations(newData);
-          if (newData.length > currentObsCount) {
-            toast.info("New observation record received! Check your observations for feedback.", {
-              duration: 5000,
-              icon: <Sparkles className="w-4 h-4 text-primary" />
-            });
-          }
-        } catch (err) {
-          console.error("Failed to sync observations via custom event", err);
-        }
-      }
-    };
+return (
+  <DashboardLayout role={role as any} userName={userName}>
+    <Routes>
+      <Route index element={
+        <DashboardOverview
+          goals={goals}
+          events={events}
+          observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
+          onRegister={handleRegister}
+          onView={handleViewReport}
+          onReflect={setSelectedReflectObs}
+          userName={userName}
+        />
+      } />
+      <Route path="observations" element={
+        <ObservationsView
+          observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
+          onReflect={setSelectedReflectObs}
+          onView={handleViewReport}
+        />
+      } />
+      <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
+      <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} userName={userName} />} />
+      <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
+      <Route path="courses" element={<CoursesView />} />
+      <Route path="hours" element={<PDHoursView pdHours={pdHours} onOpenCreditDialog={() => setIsCreditDialogOpen(true)} />} />
+      <Route path="documents" element={<AcknowledgementsView teacherId="1" />} />
+      <Route path="insights" element={<InsightsView />} />
+      <Route path="profile" element={
+        <TeacherProfileView
+          teacher={{
+            id: "1",
+            name: userName,
+            role: "Math Teacher",
+            observations: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length,
+            lastObserved: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))[0]?.date || "N/A",
+            avgScore: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length > 0
+              ? Number((observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).reduce((acc, o) => acc + (o.score || 0), 0) / observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length).toFixed(1))
+              : 0,
+            pdHours: pdHours.total,
+            completionRate: 85
+          }}
+          observations={observations}
+          goals={goals}
+          userRole="teacher"
+        />
+      } />
+    </Routes>
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('local-goals-update', handleLocalGoalsUpdate);
-    window.addEventListener('training-events-updated', handleCustomTrainingEvent);
-    window.addEventListener('observations-updated', handleObservationsUpdate);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('local-goals-update', handleLocalGoalsUpdate);
-      window.removeEventListener('training-events-updated', handleCustomTrainingEvent);
-      window.removeEventListener('observations-updated', handleObservationsUpdate);
-    };
-  }, []);
-
-  const handleReflect = (id: string, reflection: DetailedReflection) => {
-    setObservations(prev => prev.map(obs => {
-      if (obs.id === id) {
-        toast.success("Reflection submitted successfully!");
-        return {
-          ...obs,
-          hasReflection: true,
-          // Keep legacy string for backward compatibility with existing simple cards if needed
-          reflection: reflection.comments || "Detailed reflection submitted.",
-          detailedReflection: reflection
-        };
-      }
-      return obs;
-    }));
-  };
-
-  const handleAddGoal = (newGoal: NewGoal) => {
-    const dateObj = new Date(newGoal.dueDate);
-    const formattedDate = format(dateObj, "MMM d, yyyy");
-
-    setGoals(prev => [...prev, {
-      ...newGoal,
-      id: Date.now().toString(),
-      progress: 0,
-      dueDate: formattedDate
-    }]);
-  };
-
-  const handleRegister = (eventId: string) => {
-    setEvents(prev => prev.map(event => {
-      if (event.id === eventId) {
-        toast.success(`Successfully registered for ${event.title}`);
-
-        // Add current user to registrants list
-        const newRegistrant = {
-          id: `u-${Date.now()}`,
-          name: userName,
-          email: `${userName.toLowerCase().replace(' ', '.')}@school.edu`,
-          dateRegistered: format(new Date(), "MMM d, yyyy")
-        };
-
-        const updatedRegistrants = [...(event.registrants || []), newRegistrant];
-
-        return {
-          ...event,
-          isRegistered: true,
-          registered: event.registered + 1,
-          spotsLeft: event.spotsLeft - 1,
-          registrants: updatedRegistrants
-        };
-      }
-      return event;
-    }));
-  };
-
-  return (
-    <DashboardLayout role={role as any} userName={userName}>
-      <Routes>
-        <Route index element={
-          <DashboardOverview
-            goals={goals}
-            events={events}
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
-            onRegister={handleRegister}
-            onView={handleViewReport}
-            onReflect={setSelectedReflectObs}
-            userName={userName}
-          />
-        } />
-        <Route path="observations" element={
-          <ObservationsView
-            observations={observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))}
-            onReflect={setSelectedReflectObs}
-            onView={handleViewReport}
-          />
-        } />
-        <Route path="observations/:id" element={<ObservationDetailView observations={observations} />} />
-        <Route path="goals" element={<GoalsView goals={goals} onAddGoal={handleAddGoal} userName={userName} />} />
-        <Route path="calendar" element={<CalendarView events={events} onRegister={handleRegister} />} />
-        <Route path="courses" element={<CoursesView />} />
-        <Route path="hours" element={<PDHoursView pdHours={pdHours} onOpenCreditDialog={() => setIsCreditDialogOpen(true)} />} />
-        <Route path="documents" element={<AcknowledgementsView teacherId="1" />} />
-        <Route path="insights" element={<InsightsView />} />
-        <Route path="profile" element={
-          <TeacherProfileView
-            teacher={{
-              id: "1",
-              name: userName,
-              role: "Math Teacher",
-              observations: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length,
-              lastObserved: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase()))[0]?.date || "N/A",
-              avgScore: observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length > 0
-                ? Number((observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).reduce((acc, o) => acc + (o.score || 0), 0) / observations.filter(o => !o.teacher || o.teacher.toLowerCase().includes(userName.toLowerCase())).length).toFixed(1))
-                : 0,
-              pdHours: pdHours.total,
-              completionRate: 85
-            }}
-            observations={observations}
-            goals={goals}
-            userRole="teacher"
-          />
-        } />
-      </Routes>
-
-      {/* Reflection Dialog */}
-      {selectedReflectObs && (
-        <>
-          {getActiveTemplateByType("Reflection") ? (
-            <Dialog open={!!selectedReflectObs} onOpenChange={() => setSelectedReflectObs(null)}>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Teacher Self-Reflection (Master)</DialogTitle>
-                  <DialogDescription>Based on the Ekya Danielson Framework</DialogDescription>
-                </DialogHeader>
-                <DynamicForm
-                  fields={getActiveTemplateByType("Reflection")!.fields}
-                  submitLabel="Submit Reflection"
-                  onCancel={() => setSelectedReflectObs(null)}
-                  onSubmit={(data) => {
-                    const reflection: DetailedReflection = {
-                      teacherName: selectedReflectObs?.teacher || "Emily Rodriguez",
-                      teacherEmail: "emily.r@ekyaschools.com",
-                      submissionDate: new Date().toISOString(),
-                      sections: {
-                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
-                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
-                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
-                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
-                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
-                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
-                      },
-                      strengths: data.r23 || "See details",
-                      improvements: data.r24 || "See details",
-                      goal: data.r25 || "Assigned by teacher",
-                      comments: data.r26 || "Master form reflection submitted.",
-                    };
-                    handleReflectionSubmit(reflection);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <ReflectionForm
-              isOpen={!!selectedReflectObs}
-              onClose={() => setSelectedReflectObs(null)}
-              onSubmit={handleReflectionSubmit}
-              observation={selectedReflectObs}
-              teacherName={selectedReflectObs.teacher || "Emily Rodriguez"}
-              teacherEmail="emily.r@ekyaschools.com"
-            />
-          )}
-        </>
-      )}
-
-      {/* Credit Request Dialog */}
-      <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background/95 backdrop-blur-xl border-none">
-          {getActiveTemplateByType("Other", "MOOC") ? (
-            <div className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-2xl font-bold">Request PD Credit (Master)</h2>
-                <p className="text-muted-foreground italic">Submit your professional development evidence using the latest official form</p>
-              </div>
+    {/* Reflection Dialog */}
+    {selectedReflectObs && (
+      <>
+        {getActiveTemplateByType("Reflection") ? (
+          <Dialog open={!!selectedReflectObs} onOpenChange={() => setSelectedReflectObs(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Teacher Self-Reflection (Master)</DialogTitle>
+                <DialogDescription>Based on the Ekya Danielson Framework</DialogDescription>
+              </DialogHeader>
               <DynamicForm
-                fields={getActiveTemplateByType("Other", "MOOC")!.fields}
-                submitLabel="Submit Credit Request"
-                onCancel={() => setIsCreditDialogOpen(false)}
+                fields={getActiveTemplateByType("Reflection")!.fields}
+                submitLabel="Submit Reflection"
+                onCancel={() => setSelectedReflectObs(null)}
                 onSubmit={(data) => {
-                  toast.success("PD Credit request submitted successfully using Master Template!");
-                  setIsCreditDialogOpen(false);
+                  const reflection: DetailedReflection = {
+                    teacherName: selectedReflectObs?.teacher || "Emily Rodriguez",
+                    teacherEmail: "emily.r@ekyaschools.com",
+                    submissionDate: new Date().toISOString(),
+                    sections: {
+                      planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
+                      classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
+                      instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
+                      assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
+                      environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
+                      professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
+                    },
+                    strengths: data.r23 || "See details",
+                    improvements: data.r24 || "See details",
+                    goal: data.r25 || "Assigned by teacher",
+                    comments: data.r26 || "Master form reflection submitted.",
+                  };
+                  handleReflectionSubmit(reflection);
                 }}
               />
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <ReflectionForm
+            isOpen={!!selectedReflectObs}
+            onClose={() => setSelectedReflectObs(null)}
+            onSubmit={handleReflectionSubmit}
+            observation={selectedReflectObs}
+            teacherName={selectedReflectObs.teacher || "Emily Rodriguez"}
+            teacherEmail="emily.r@ekyaschools.com"
+          />
+        )}
+      </>
+    )}
+
+    {/* Credit Request Dialog */}
+    <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background/95 backdrop-blur-xl border-none">
+        {getActiveTemplateByType("Other", "MOOC") ? (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold">Request PD Credit (Master)</h2>
+              <p className="text-muted-foreground italic">Submit your professional development evidence using the latest official form</p>
             </div>
-          ) : (
-            <MoocEvidenceForm
+            <DynamicForm
+              fields={getActiveTemplateByType("Other", "MOOC")!.fields}
+              submitLabel="Submit Credit Request"
               onCancel={() => setIsCreditDialogOpen(false)}
-              onSubmitSuccess={() => setIsCreditDialogOpen(false)}
-              userEmail="emily.r@ekyaschools.com"
-              userName="Emily Rodriguez"
+              onSubmit={(data) => {
+                toast.success("PD Credit request submitted successfully using Master Template!");
+                setIsCreditDialogOpen(false);
+              }}
             />
-          )}
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
-  );
+          </div>
+        ) : (
+          <MoocEvidenceForm
+            onCancel={() => setIsCreditDialogOpen(false)}
+            onSubmitSuccess={() => setIsCreditDialogOpen(false)}
+            userEmail="emily.r@ekyaschools.com"
+            userName="Emily Rodriguez"
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  </DashboardLayout>
+);
 }
 
 function ObservationDetailView({ observations }: { observations: Observation[] }) {
