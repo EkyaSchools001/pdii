@@ -101,18 +101,18 @@ const mockDocuments = [
 
 // Mock teachers data organized by school
 const mockTeachers = [
-    { id: "1", name: "Emily Rodriguez", email: "emily.r@school.com", department: "Mathematics", school: "Ekya ITPL" },
-    { id: "2", name: "James Wilson", email: "james.w@school.com", department: "Science", school: "Ekya ITPL" },
-    { id: "3", name: "Sarah Johnson", email: "sarah.j@school.com", department: "English", school: "Ekya ITPL" },
-    { id: "4", name: "Michael Chen", email: "michael.c@school.com", department: "History", school: "Ekya JP Nagar" },
-    { id: "5", name: "Lisa Wong", email: "lisa.w@school.com", department: "Arts", school: "Ekya JP Nagar" },
-    { id: "6", name: "David Kumar", email: "david.k@school.com", department: "Mathematics", school: "Ekya JP Nagar" },
-    { id: "7", name: "Priya Sharma", email: "priya.s@school.com", department: "Science", school: "Ekya Byrathi" },
-    { id: "8", name: "Raj Patel", email: "raj.p@school.com", department: "English", school: "Ekya Byrathi" },
-    { id: "9", name: "Anita Desai", email: "anita.d@school.com", department: "History", school: "Ekya Byrathi" },
-    { id: "10", name: "Vikram Singh", email: "vikram.s@school.com", department: "Physical Education", school: "Ekya Neeladri" },
-    { id: "11", name: "Meera Reddy", email: "meera.r@school.com", department: "Arts", school: "Ekya Neeladri" },
-    { id: "12", name: "Arjun Nair", email: "arjun.n@school.com", department: "Mathematics", school: "Ekya Neeladri" },
+    { id: "1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", department: "Mathematics", school: "Ekya ITPL" },
+    { id: "2", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", department: "Science", school: "Ekya ITPL" },
+    { id: "3", name: "Teacher Three", email: "teacher3.itpl@pdi.com", department: "English", school: "Ekya ITPL" },
+    { id: "4", name: "Bharath", email: "bharath.superadmin@pdi.com", department: "History", school: "Ekya JP Nagar" },
+    { id: "5", name: "Staff Member 1", email: "staff1@pdi.com", department: "Arts", school: "Ekya JP Nagar" },
+    { id: "6", name: "Staff Member 2", email: "staff2@pdi.com", department: "Mathematics", school: "Ekya JP Nagar" },
+    { id: "7", name: "Staff Member 3", email: "staff3@pdi.com", department: "Science", school: "Ekya Byrathi" },
+    { id: "8", name: "Staff Member 4", email: "staff4@pdi.com", department: "English", school: "Ekya Byrathi" },
+    { id: "9", name: "Staff Member 5", email: "staff5@pdi.com", department: "History", school: "Ekya Byrathi" },
+    { id: "10", name: "Staff Member 6", email: "staff6@pdi.com", department: "Physical Education", school: "Ekya Neeladri" },
+    { id: "11", name: "Staff Member 7", email: "staff7@pdi.com", department: "Arts", school: "Ekya Neeladri" },
+    { id: "12", name: "Staff Member 8", email: "staff8@pdi.com", department: "Mathematics", school: "Ekya Neeladri" },
 ];
 
 // Group teachers by school
@@ -131,7 +131,7 @@ const mockAcknowledgements = [
     {
         id: "1",
         documentTitle: "Code of Conduct 2025",
-        teacherName: "Emily Rodriguez",
+        teacherName: "Teacher One",
         status: "ACKNOWLEDGED",
         viewedAt: "2025-01-16T10:30:00",
         acknowledgedAt: "2025-01-16T10:35:00",
@@ -140,7 +140,7 @@ const mockAcknowledgements = [
     {
         id: "2",
         documentTitle: "Code of Conduct 2025",
-        teacherName: "James Wilson",
+        teacherName: "Teacher Two",
         status: "PENDING",
         viewedAt: null,
         acknowledgedAt: null,
@@ -149,7 +149,7 @@ const mockAcknowledgements = [
     {
         id: "3",
         documentTitle: "Safety Guidelines",
-        teacherName: "Sarah Johnson",
+        teacherName: "Teacher Three",
         status: "SIGNED",
         viewedAt: "2025-01-11T09:15:00",
         acknowledgedAt: "2025-01-11T09:20:00",

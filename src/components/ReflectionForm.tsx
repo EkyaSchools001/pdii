@@ -91,12 +91,12 @@ export function ReflectionForm({ observation, isOpen, onClose, onSubmit, teacher
         teacherEmail,
         submissionDate: new Date().toISOString(),
         sections: {
-            planning: { id: "planning", title: "", ratings: [], evidence: "" },
-            classroomEnvironment: { id: "classroomEnvironment", title: "", ratings: [], evidence: "" },
-            instruction: { id: "instruction", title: "", ratings: [], evidence: "" },
-            assessment: { id: "assessment", title: "", ratings: [], evidence: "" },
-            environment: { id: "environment", title: "", ratings: [], evidence: "" },
-            professionalism: { id: "professionalism", title: "", ratings: [], evidence: "" }
+            planning: { id: "planning", title: "Section A: Planning & Preparation", ratings: [], evidence: "" },
+            classroomEnvironment: { id: "classroomEnvironment", title: "Section B1: Care about Culture", ratings: [], evidence: "" },
+            instruction: { id: "instruction", title: "Section B2: Instruct to Inspire", ratings: [], evidence: "" },
+            assessment: { id: "assessment", title: "Section B3: Authentic Assessments", ratings: [], evidence: "" },
+            environment: { id: "environment", title: "Section B4: Engaging Environment", ratings: [], evidence: "" },
+            professionalism: { id: "professionalism", title: "Section C: Professional Practice", ratings: [], evidence: "" }
         },
         strengths: "",
         improvements: "",

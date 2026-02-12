@@ -35,10 +35,37 @@ export const createGoal = async (req: Request, res: Response, next: NextFunction
             return next(new AppError('Validation failed', 400));
         }
 
+        const data = result.data;
+        let teacherId = data.teacherId;
+
+        // If leader/admin is assigning and teacherEmail is provided
+        if (authReq.user?.role !== 'TEACHER' && !teacherId && data.teacherEmail) {
+            const targetTeacher = await prisma.user.findUnique({ where: { email: data.teacherEmail } });
+            if (targetTeacher) {
+                teacherId = targetTeacher.id;
+            } else {
+                // Return error if teacher not found - or auto-create? 
+                // Let's return error for now as goals are more sensitive
+                return next(new AppError('Target teacher not found', 404));
+            }
+        }
+
+        // If still no teacherId, fallback to current user if teacher
+        if (!teacherId) {
+            if (authReq.user?.role === 'TEACHER') {
+                teacherId = authReq.user.id;
+            } else {
+                return next(new AppError('A valid teacherId or teacherEmail is required for leader assignments', 400));
+            }
+        }
+
+        // Remove teacherEmail from data before creating in DB (if not in schema)
+        const { teacherEmail, ...dbData } = data;
+
         const newGoal = await prisma.goal.create({
             data: {
-                ...result.data,
-                teacherId: authReq.user!.id
+                ...dbData,
+                teacherId: teacherId
             }
         });
 

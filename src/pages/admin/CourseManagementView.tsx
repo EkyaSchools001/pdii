@@ -30,7 +30,7 @@ const initialCourses = [
 // Mock enrolled members data
 const mockEnrolledMembers = {
     1: [
-        { id: 1, name: "Emily Rodriguez", email: "emily.r@ekyaschools.com", department: "Science", enrolledDate: "Jan 10, 2024", progress: 75 },
+        { id: 1, name: "Teacher One", email: "teacher1.btmlayout@pdi.com", department: "Science", enrolledDate: "Jan 10, 2024", progress: 75 },
         { id: 2, name: "Michael Chen", email: "michael.c@ekyaschools.com", department: "Mathematics", enrolledDate: "Jan 12, 2024", progress: 60 },
         { id: 3, name: "Sarah Johnson", email: "sarah.j@ekyaschools.com", department: "English", enrolledDate: "Jan 15, 2024", progress: 90 },
         { id: 4, name: "David Miller", email: "david.m@ekyaschools.com", department: "History", enrolledDate: "Jan 18, 2024", progress: 45 },
@@ -41,7 +41,7 @@ const mockEnrolledMembers = {
         { id: 2, name: "Maria Garcia", email: "maria.g@ekyaschools.com", department: "Arts", enrolledDate: "Jan 10, 2024", progress: 55 },
     ],
     4: [
-        { id: 1, name: "Emily Rodriguez", email: "emily.r@ekyaschools.com", department: "Science", enrolledDate: "Jan 5, 2024", progress: 85 },
+        { id: 1, name: "Teacher One", email: "teacher1.btmlayout@pdi.com", department: "Science", enrolledDate: "Jan 5, 2024", progress: 85 },
         { id: 2, name: "Michael Chen", email: "michael.c@ekyaschools.com", department: "Mathematics", enrolledDate: "Jan 7, 2024", progress: 70 },
     ],
     5: [

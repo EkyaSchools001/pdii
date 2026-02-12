@@ -34,9 +34,9 @@ const initialTrainingEvents = [
         spotsLeft: 8,
         isAdminCreated: true,
         registrants: [
-            { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
-            { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
-            { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+            { id: "u1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", dateRegistered: "Jan 12, 2026" },
+            { id: "u2", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 14, 2026" },
+            { id: "u3", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 15, 2026" },
         ]
     },
     {
@@ -53,8 +53,8 @@ const initialTrainingEvents = [
         spotsLeft: 7,
         isAdminCreated: true,
         registrants: [
-            { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
-            { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+            { id: "u4", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 20, 2026" },
+            { id: "u5", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 21, 2026" },
         ]
     },
     { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isAdminCreated: true, registrants: [] },

@@ -40,16 +40,16 @@ import { UnifiedObservationForm } from "@/components/UnifiedObservationForm";
 import { TeacherProfileView } from "@/components/TeacherProfileView";
 
 const teamMembers = [
-  { id: "1", name: "Emily Rodriguez", email: "teacher@pms.com", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
-  { id: "2", name: "James Wilson", email: "james.wilson@pms.com", role: "Science Teacher", observations: 6, lastObserved: "Jan 12", avgScore: 3.8, pdHours: 24, completionRate: 60 },
-  { id: "3", name: "Maria Santos", email: "maria.santos@pms.com", role: "English Teacher", observations: 7, lastObserved: "Jan 10", avgScore: 4.0, pdHours: 40, completionRate: 100 },
-  { id: "4", name: "David Kim", email: "david.kim@pms.com", role: "History Teacher", observations: 5, lastObserved: "Dec 20", avgScore: 3.5, pdHours: 18, completionRate: 45 },
+  { id: "1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
+  { id: "2", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", role: "Science Teacher", observations: 6, lastObserved: "Jan 12", avgScore: 3.8, pdHours: 24, completionRate: 60 },
+  { id: "3", name: "Teacher Three", email: "teacher3.itpl@pdi.com", role: "English Teacher", observations: 7, lastObserved: "Jan 10", avgScore: 4.0, pdHours: 40, completionRate: 100 },
+  { id: "4", name: "Bharath", email: "bharath.superadmin@pdi.com", role: "Super Admin", observations: 5, lastObserved: "Dec 20", avgScore: 3.5, pdHours: 18, completionRate: 45 },
 ];
 
 const recentObservations = [
-  { id: "1", teacher: "Emily Rodriguez", domain: "Instruction", date: "Jan 15", score: 4, notes: "Excellent engagement strategies used.", hasReflection: true, reflection: "I will focus on pacing next time." },
-  { id: "2", teacher: "James Wilson", domain: "Assessment", date: "Jan 12", score: 3, notes: "Good formative assessment, but check for understanding more frequently.", hasReflection: false, reflection: "" },
-  { id: "3", teacher: "Maria Santos", domain: "Classroom Management", date: "Jan 10", score: 4, notes: "Classroom transitions were smooth.", hasReflection: true, reflection: "Thank you for the feedback." },
+  { id: "1", teacher: "Teacher One", domain: "Instruction", date: "Jan 15", score: 4, notes: "Excellent engagement strategies used.", hasReflection: true, reflection: "I will focus on pacing next time.", teacherReflection: "I will focus on pacing next time." },
+  { id: "2", teacher: "Teacher Two", domain: "Assessment", date: "Jan 12", score: 3, notes: "Good formative assessment, but check for understanding more frequently.", hasReflection: false, reflection: "", teacherReflection: "" },
+  { id: "3", teacher: "Teacher Three", domain: "Classroom Management", date: "Jan 10", score: 4, notes: "Classroom transitions were smooth.", hasReflection: true, reflection: "Thank you for the feedback.", teacherReflection: "Thank you for the feedback." },
 ];
 
 const domainAverages = [
@@ -60,10 +60,10 @@ const domainAverages = [
 ];
 
 const initialGoals = [
-  { id: "1", teacher: "Emily Rodriguez", title: "Instructional Clarity", category: "Instruction", progress: 75, status: "In Progress", dueDate: "Mar 30" },
-  { id: "2", teacher: "James Wilson", title: "Student Engagement", category: "Management", progress: 40, status: "In Progress", dueDate: "Apr 15" },
-  { id: "3", teacher: "Maria Santos", title: "Assessment Diversity", category: "Assessment", progress: 90, status: "Near Completion", dueDate: "Mar 10" },
-  { id: "4", teacher: "Emily Rodriguez", title: "Data-Driven Feedback", category: "Assessment", progress: 55, status: "In Progress", dueDate: "May 20" },
+  { id: "1", teacher: "Teacher One", title: "Instructional Clarity", category: "Instruction", progress: 75, status: "In Progress", dueDate: "Mar 30" },
+  { id: "2", teacher: "Teacher Two", title: "Student Engagement", category: "Management", progress: 40, status: "In Progress", dueDate: "Apr 15" },
+  { id: "3", teacher: "Teacher Three", title: "Assessment Diversity", category: "Assessment", progress: 90, status: "Near Completion", dueDate: "Mar 10" },
+  { id: "4", teacher: "Teacher One", title: "Data-Driven Feedback", category: "Assessment", progress: 55, status: "In Progress", dueDate: "May 20" },
 ];
 
 const initialTrainingEvents = [
@@ -81,9 +81,9 @@ const initialTrainingEvents = [
     spotsLeft: 8,
     isAdminCreated: true,
     registrants: [
-      { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
-      { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
-      { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+      { id: "u1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", dateRegistered: "Jan 12, 2026" },
+      { id: "u2", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 14, 2026" },
+      { id: "u3", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 15, 2026" },
     ]
   },
   {
@@ -100,8 +100,8 @@ const initialTrainingEvents = [
     spotsLeft: 7,
     isAdminCreated: true,
     registrants: [
-      { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
-      { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+      { id: "u4", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 20, 2026" },
+      { id: "u5", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 21, 2026" },
     ]
   },
   { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isAdminCreated: true, registrants: [] },
@@ -143,7 +143,11 @@ export default function LeaderDashboard() {
       try {
         const response = await api.get('/observations');
         if (response.data?.status === 'success') {
-          const apiObservations = response.data?.data?.observations || [];
+          const apiObservations = (response.data?.data?.observations || []).map((obs: any) => ({
+            ...obs,
+            teacher: obs.teacher?.fullName || obs.teacherEmail || 'Unknown Teacher'
+          }));
+
           if (apiObservations.length > 0) {
             setObservations(apiObservations);
           } else {
@@ -152,12 +156,26 @@ export default function LeaderDashboard() {
         }
       } catch (error) {
         console.error("Failed to fetch observations:", error);
-        // Fallback to recentObservations if API fails or backend not running yet
         setObservations(recentObservations);
       }
     };
 
+    const fetchGoals = async () => {
+      try {
+        const response = await api.get('/goals');
+        if (response.data?.status === 'success') {
+          const apiGoals = response.data?.data?.goals || [];
+          if (apiGoals.length > 0) {
+            setGoals(apiGoals);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch goals:", error);
+      }
+    };
+
     fetchObservations();
+    fetchGoals();
 
     // Socket.io Real-time Sync
     const socket = getSocket();
@@ -633,7 +651,10 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredTeam = team.filter(m => {
+  // Exclude Super Admin from PD Participation tracking
+  const pdTeam = team.filter(m => m.role !== "Super Admin");
+
+  const filteredTeam = pdTeam.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.role.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === "all" || m.role === roleFilter;
@@ -644,10 +665,12 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const uniqueRoles = Array.from(new Set(team.map(m => m.role)));
+  const uniqueRoles = Array.from(new Set(pdTeam.map(m => m.role)));
 
-  const totalHours = team.reduce((acc, m) => acc + m.pdHours, 0);
-  const avgCompletion = Math.round(team.reduce((acc, m) => acc + m.completionRate, 0) / team.length);
+  const totalHours = pdTeam.reduce((acc, m) => acc + m.pdHours, 0);
+  const avgCompletion = pdTeam.length > 0
+    ? Math.round(pdTeam.reduce((acc, m) => acc + m.completionRate, 0) / pdTeam.length)
+    : 0;
 
   const activeFiltersCount = (roleFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
 
@@ -679,7 +702,7 @@ function PDParticipationView({ team }: { team: typeof teamMembers }) {
         />
         <StatCard
           title="Active Learners"
-          value={team.filter(m => m.pdHours > 20).length}
+          value={pdTeam.filter(m => m.pdHours > 20).length}
           subtitle="Staff > 20 hours"
           icon={Award}
         />
@@ -2006,7 +2029,7 @@ function ObservationReportView({ observations, team }: { observations: Observati
   const { obsId } = useParams();
   const navigate = useNavigate();
   const observation = observations.find(o => o.id === obsId);
-  const teacher = team.find(t => t.name === observation?.teacher);
+  const teacher = team.find(t => t.name === (observation?.teacher || observation?.teacherEmail));
 
   const [showReflection, setShowReflection] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
@@ -2274,7 +2297,7 @@ function ObservationReportView({ observations, team }: { observations: Observati
                       <div>
                         <CardTitle className="text-2xl font-bold text-foreground">Teacher Reflection</CardTitle>
                         <CardDescription>
-                          Submitted on {observation.detailedReflection ? new Date(observation.detailedReflection.submissionDate).toLocaleDateString() : observation.date} • Self-Assessment
+                          Submitted on {observation.detailedReflection?.submissionDate ? new Date(observation.detailedReflection.submissionDate).toLocaleDateString() : (observation.updatedAt ? new Date(observation.updatedAt).toLocaleDateString() : observation.date)} • Self-Assessment
                         </CardDescription>
                       </div>
                     </div>
@@ -2350,7 +2373,7 @@ function ObservationReportView({ observations, team }: { observations: Observati
                     </div>
                   ) : (
                     <div className="p-8 rounded-2xl bg-muted/20 border-2 border-dashed border-muted-foreground/10 text-lg leading-relaxed text-foreground/80 italic text-center">
-                      "{observation.reflection}"
+                      "{observation.teacherReflection || observation.reflection || "No reflection text provided."}"
                     </div>
                   )}
                 </CardContent>
@@ -2420,10 +2443,12 @@ function ObservationsManagementView({ observations }: { observations: Observatio
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredObservations = observations.filter(obs =>
-    obs.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    obs.domain.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredObservations = observations.filter(obs => {
+    const teacherName = obs.teacher || obs.teacherEmail || 'Unknown Teacher';
+    const domainName = obs.domain || 'General';
+    return teacherName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      domainName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -2661,8 +2686,11 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
               submitLabel="Assign Goal"
               onCancel={() => navigate("/leader/goals")}
               onSubmit={async (data) => {
+                const targetTeacher = team.find(t => t.name === (data.g1 || "Unknown Teacher"));
+
                 const newGoal = {
                   teacher: data.g1 || "Unknown Teacher",
+                  teacherEmail: targetTeacher?.email,
                   title: data.g9 || "New School Goal",
                   category: data.g12 || "General",
                   progress: 0,
@@ -2697,8 +2725,11 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
           defaultCoachName="Dr. Sarah Johnson"
           onCancel={() => navigate("/leader/goals")}
           onSubmit={async (data) => {
+            const targetTeacher = team.find(t => t.name === data.educatorName);
+
             const newGoal = {
               teacher: data.educatorName,
+              teacherEmail: targetTeacher?.email,
               title: data.goalForYear,
               category: data.pillarTag,
               progress: 0,

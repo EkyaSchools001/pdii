@@ -47,6 +47,8 @@ model User {
   role          Role      @default(TEACHER)
   campusId      String?
   department    String?
+  status        String    @default("Active")
+  lastActive    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -71,6 +73,7 @@ model Observation {
   status            ObservationStatus @default(SUBMITTED)
   actionStep        String?           @db.Text
   teacherReflection String?           @db.Text
+  detailedReflection Json?             @db.JsonB
   discussionMet     Boolean           @default(false)
   hasReflection     Boolean           @default(false)
   createdAt         DateTime          @default(now())

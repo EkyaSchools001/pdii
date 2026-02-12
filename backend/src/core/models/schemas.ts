@@ -20,6 +20,8 @@ export const createObservationSchema = z.object({
 });
 
 export const createGoalSchema = z.object({
+    teacherId: z.string().uuid().optional(),
+    teacherEmail: z.string().email().optional(),
     title: z.string().min(3),
     description: z.string().optional(),
     dueDate: z.string(),

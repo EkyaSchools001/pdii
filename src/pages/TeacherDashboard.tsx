@@ -124,7 +124,7 @@ import { TeacherProfileView } from "@/components/TeacherProfileView";
 const mockObservations: Observation[] = [
   {
     id: "1",
-    teacher: "Emily Rodriguez",
+    teacher: "Teacher One",
     date: "Jan 15, 2024",
     observerName: "Dr. Sarah Johnson",
     observerRole: "Head of School",
@@ -136,7 +136,7 @@ const mockObservations: Observation[] = [
   },
   {
     id: "new-demo-1",
-    teacher: "Emily Rodriguez",
+    teacher: "Teacher One",
     date: "Feb 5, 2024",
     observerName: "Dr. Sarah Johnson",
     observerRole: "Head of School",
@@ -156,7 +156,7 @@ const initialGoals = [
     dueDate: "Mar 30, 2024",
     assignedBy: "Dr. Sarah Johnson",
     isSchoolAligned: true,
-    teacher: "Emily Rodriguez"
+    teacher: "Teacher One"
   },
   {
     id: "2",
@@ -164,7 +164,7 @@ const initialGoals = [
     description: "Develop and implement tiered assignments for diverse learner needs",
     progress: 40,
     dueDate: "Apr 15, 2024",
-    teacher: "Emily Rodriguez"
+    teacher: "Teacher One"
   },
 ];
 
@@ -184,9 +184,9 @@ const initialEvents = [
     isRegistered: false,
     isAdminCreated: true,
     registrants: [
-      { id: "u1", name: "Emily Rodriguez", email: "e.rod@school.edu", dateRegistered: "Jan 12, 2026" },
-      { id: "u2", name: "James Wilson", email: "j.wilson@school.edu", dateRegistered: "Jan 14, 2026" },
-      { id: "u3", name: "David Kim", email: "d.kim@school.edu", dateRegistered: "Jan 15, 2026" },
+      { id: "u1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", dateRegistered: "Jan 12, 2026" },
+      { id: "u2", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 14, 2026" },
+      { id: "u3", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 15, 2026" },
     ]
   },
   {
@@ -204,8 +204,8 @@ const initialEvents = [
     isRegistered: true,
     isAdminCreated: true,
     registrants: [
-      { id: "u4", name: "Maria Santos", email: "m.santos@school.edu", dateRegistered: "Jan 20, 2026" },
-      { id: "u5", name: "Sarah Johnson", email: "s.johnson@school.edu", dateRegistered: "Jan 21, 2026" },
+      { id: "u4", name: "Teacher Three", email: "teacher3.itpl@pdi.com", dateRegistered: "Jan 20, 2026" },
+      { id: "u5", name: "Teacher Two", email: "teacher2.jpnagar@pdi.com", dateRegistered: "Jan 21, 2026" },
     ]
   },
   { id: "3", title: "Social-Emotional Learning Hub", topic: "Culture", type: "Culture", date: "Feb 22, 2026", time: "11:00 AM", location: "Conference Room B", registered: 8, capacity: 15, status: "Approved", spotsLeft: 7, isRegistered: false, isAdminCreated: true, registrants: [] },
@@ -1863,7 +1863,7 @@ export default function TeacherDashboard() {
 
       setObservations(prev => prev.map(obs =>
         obs.id === selectedReflectObs.id
-          ? { ...obs, hasReflection: true, reflection: reflection.comments, detailedReflection: reflection, status: "Submitted" }
+          ? { ...obs, hasReflection: true, teacherReflection: reflection.comments, detailedReflection: reflection, status: "Submitted" }
           : obs
       ));
       setSelectedReflectObs(null);
@@ -2058,16 +2058,59 @@ export default function TeacherDashboard() {
                   onCancel={() => setSelectedReflectObs(null)}
                   onSubmit={(data) => {
                     const reflection: DetailedReflection = {
-                      teacherName: selectedReflectObs?.teacher || "Emily Rodriguez",
-                      teacherEmail: "emily.r@ekyaschools.com",
+                      teacherName: userName,
+                      teacherEmail: userEmail,
                       submissionDate: new Date().toISOString(),
                       sections: {
-                        planning: { id: "planning", title: "Planning", ratings: [], evidence: "" },
-                        classroomEnvironment: { id: "classroomEnvironment", title: "Classroom Environment", ratings: [], evidence: "" },
-                        instruction: { id: "instruction", title: "Instruction", ratings: [], evidence: "" },
-                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "" },
-                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "" },
-                        professionalism: { id: "professionalism", title: "Professionalism", ratings: [], evidence: "" }
+                        planning: {
+                          id: "planning",
+                          title: "Planning",
+                          ratings: [
+                            { indicator: "A1: Content and Pedagogy", rating: data.r1 as any },
+                            { indicator: "A2: Knowledge of Students", rating: data.r2 as any },
+                            { indicator: "A3: Knowledge of Resources", rating: data.r3 as any },
+                            { indicator: "A4: Designing a Microplan", rating: data.r4 as any },
+                            { indicator: "A5: Using Student Assessments", rating: data.r5 as any },
+                          ],
+                          evidence: data.r6 || "No evidence provided."
+                        },
+                        classroomEnvironment: {
+                          id: "classroomEnvironment",
+                          title: "Classroom Environment",
+                          ratings: [
+                            { indicator: "B1: Respect and Rapport", rating: data.r7 as any },
+                            { indicator: "B2: Culture for Learning", rating: data.r8 as any },
+                            { indicator: "B3: Classroom Procedures", rating: data.r9 as any },
+                            { indicator: "B4: Student Behaviour", rating: data.r10 as any },
+                          ],
+                          evidence: data.r11 || "No evidence provided."
+                        },
+                        instruction: {
+                          id: "instruction",
+                          title: "Instruction",
+                          ratings: [
+                            { indicator: "B5: Communicating with Students", rating: data.r12 as any },
+                            { indicator: "B6: Questioning and Discussion", rating: data.r13 as any },
+                            { indicator: "B7: Engages in Student Learning", rating: data.r14 as any },
+                            { indicator: "B8: Flexibility and Responsiveness", rating: data.r15 as any },
+                          ],
+                          evidence: data.r16 || "No evidence provided."
+                        },
+                        professionalism: {
+                          id: "professionalism",
+                          title: "Professionalism",
+                          ratings: [
+                            { indicator: "C1: Reflecting on Teaching", rating: data.r17 as any },
+                            { indicator: "C2: Maintaining Accurate Records", rating: data.r18 as any },
+                            { indicator: "C3: Communicating with Families", rating: data.r19 as any },
+                            { indicator: "C4: Professional Community", rating: data.r20 as any },
+                            { indicator: "C5: Growing Professionally", rating: data.r21 as any },
+                          ],
+                          evidence: data.r22 || "No evidence provided."
+                        },
+                        // Missing from Master Template, set empty
+                        assessment: { id: "assessment", title: "Assessment", ratings: [], evidence: "Part of Section B1/B2 in Master Form" },
+                        environment: { id: "environment", title: "Environment", ratings: [], evidence: "Part of Section B4/B1 in Master Form" },
                       },
                       strengths: data.r23 || "See details",
                       improvements: data.r24 || "See details",
@@ -2238,7 +2281,7 @@ function ObservationDetailView({ observations }: { observations: Observation[] }
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Teacher</p>
-                  <p className="text-lg font-bold">{observation.teacher || "Emily Rodriguez"}</p>
+                  <p className="text-lg font-bold">{observation.teacher || "Teacher One"}</p>
                 </div>
               </div>
 

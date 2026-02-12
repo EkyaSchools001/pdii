@@ -372,28 +372,12 @@ export function UnifiedObservationForm({ onSubmit, onCancel, initialData = {}, t
                                 <div className="grid md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Name of the Teacher *</Label>
-                                        {teachers && teachers.length > 0 ? (
-                                            <Select
-                                                value={teachers.find(t => t.name === formData.teacher)?.id || ""}
-                                                onValueChange={handleTeacherSelect}
-                                            >
-                                                <SelectTrigger className="h-12 text-base rounded-xl border-muted-foreground/20">
-                                                    <SelectValue placeholder="Select Teacher" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {teachers.map(t => (
-                                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : (
-                                            <Input
-                                                placeholder="Full Name"
-                                                value={formData.teacher || ""}
-                                                onChange={(e) => updateField("teacher", e.target.value)}
-                                                className="h-12 text-base rounded-xl border-muted-foreground/20"
-                                            />
-                                        )}
+                                        <Input
+                                            placeholder="Full Name"
+                                            value={formData.teacher || ""}
+                                            onChange={(e) => updateField("teacher", e.target.value)}
+                                            className="h-12 text-base rounded-xl border-muted-foreground/20"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Teacher Email ID *</Label>

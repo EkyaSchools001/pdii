@@ -40,11 +40,12 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
-    // Extract unique roles
-    const roles = Array.from(new Set(team.map(t => t.role)));
+    // Extract unique roles, excluding Super Admin
+    const analyticsTeam = team.filter(t => t.role !== "Super Admin");
+    const roles = Array.from(new Set(analyticsTeam.map(t => t.role)));
 
     // Filter Logic
-    const filteredTeam = team.filter(t => {
+    const filteredTeam = analyticsTeam.filter(t => {
         const matchesRole = selectedRole === "all" || t.role === selectedRole;
         const matchesStatus = selectedStatus === "all" ||
             (selectedStatus === "high" && t.avgScore >= 4.0) ||
@@ -261,7 +262,7 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
                                 <Eye className="w-5 h-5 text-muted-foreground" />
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-4">Across {team.length} teachers</p>
+                        <p className="text-xs text-muted-foreground mt-4">Across {analyticsTeam.length} teachers</p>
                     </CardContent>
                 </Card>
 
@@ -271,7 +272,7 @@ export function LeaderPerformanceAnalytics({ team, observations }: LeaderPerform
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Proficiency Rate</p>
                                 <div className="flex items-baseline gap-2 mt-2">
-                                    <h3 className="text-3xl font-bold">{Math.round((topTeachers.length / team.length) * 100)}%</h3>
+                                    <h3 className="text-3xl font-bold">{analyticsTeam.length > 0 ? Math.round((topTeachers.length / analyticsTeam.length) * 100) : 0}%</h3>
                                     <span className="text-sm font-medium text-muted-foreground flex items-center">
                                         <ArrowUpRight className="w-3 h-3 mr-1" />
                                         0%

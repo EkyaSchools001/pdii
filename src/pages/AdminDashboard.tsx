@@ -70,7 +70,7 @@ export default function AdminDashboard() {
 
 
 const recentActivity = [
-  { id: "1", action: "User role updated", user: "admin@school.edu", target: "Maria Santos → Department Head", time: "2 hours ago" },
+  { id: "1", action: "User role updated", user: "admin@school.edu", target: "Teacher Two → Department Head", time: "2 hours ago" },
   { id: "2", action: "Form template created", user: "admin@school.edu", target: "Classroom Observation v2", time: "5 hours ago" },
   { id: "3", action: "Course added", user: "admin@school.edu", target: "Differentiated Instruction Workshop", time: "1 day ago" },
   { id: "4", action: "Training event scheduled", user: "admin@school.edu", target: "Technology Integration Seminar", time: "2 days ago" },
@@ -226,9 +226,9 @@ function DashboardOverview() {
             </div>
             <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
               {[
-                { user: "Emily R.", course: "Diff. Instruction", date: "Today" },
-                { user: "Michael B.", course: "Tech Integration", date: "Yesterday" },
-                { user: "Sarah L.", course: "Diff. Instruction", date: "Yesterday" },
+                { user: "Teacher One", course: "Diff. Instruction", date: "Today" },
+                { user: "Teacher Two", course: "Tech Integration", date: "Yesterday" },
+                { user: "Teacher Three", course: "Diff. Instruction", date: "Yesterday" },
               ].map((e, i) => (
                 <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 transition-colors">
                   <div className="flex flex-col truncate max-w-[140px]">
@@ -384,7 +384,7 @@ function AdminTeacherProfileView({ observations }: { observations: Observation[]
   // Here we'll mock it based on common names used in the app
   const teacher = {
     id: userId || "1",
-    name: userId === "3" ? "Emily Rodriguez" : userId === "2" ? "David Kim" : "James Wilson",
+    name: userId === "3" ? "Teacher Three" : userId === "2" ? "Teacher Two" : "Teacher One",
     role: "Teacher",
     observations: 8,
     lastObserved: "Jan 15",
