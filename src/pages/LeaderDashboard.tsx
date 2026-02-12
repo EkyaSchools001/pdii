@@ -2791,15 +2791,31 @@ function MoocResponsesView() {
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
 
   useEffect(() => {
-    const loadSubmissions = () => {
-      const data = localStorage.getItem("mooc_submissions");
-      if (data) {
-        setSubmissions(JSON.parse(data));
+    const fetchSubmissions = async () => {
+      try {
+        const response = await api.get("/course-evidence");
+        if (response.data?.status === "success") {
+          setSubmissions(response.data.data.evidence);
+        }
+      } catch (error) {
+        console.error("Failed to fetch course evidence:", error);
+        // Fallback to local storage if API fails (for backward compatibility during transition)
+        const data = localStorage.getItem("mooc_submissions");
+        if (data) setSubmissions(JSON.parse(data));
       }
     };
-    loadSubmissions();
-    window.addEventListener("mooc-submission-updated", loadSubmissions);
-    return () => window.removeEventListener("mooc-submission-updated", loadSubmissions);
+
+    fetchSubmissions();
+
+    const socket = getSocket();
+    socket.on("course-evidence:created", (newSubmission: any) => {
+      setSubmissions(prev => [newSubmission, ...prev]);
+      toast.success(`New course evidence submitted by ${newSubmission.name || 'a teacher'}`);
+    });
+
+    return () => {
+      socket.off("course-evidence:created");
+    };
   }, []);
 
   const filteredSubmissions = submissions.filter(s =>

@@ -1709,11 +1709,15 @@ export default function TeacherDashboard() {
     }
   });
   const [observations, setObservations] = useState<Observation[]>([]);
-  const [pdHours, setPdHours] = useState(() => {
+  const [pdHours, setPdHours] = useState(mockPDHours);
+  const [selectedReflectObs, setSelectedReflectObs] = useState<Observation | null>(null);
+  const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
+
+  const fetchMoocEvidence = async () => {
     try {
-      const moocSubmissions = localStorage.getItem('mooc_submissions');
-      if (moocSubmissions) {
-        const submissions = JSON.parse(moocSubmissions);
+      const response = await api.get('/course-evidence');
+      if (response.data?.status === 'success') {
+        const submissions = response.data.data.evidence;
         const totalHours = submissions.reduce((acc: number, sub: any) => acc + Number(sub.hours || 0), 0);
         const historyFromSubmissions = submissions.map((sub: any, idx: number) => ({
           id: sub.id || idx + 100,
@@ -1723,20 +1727,16 @@ export default function TeacherDashboard() {
           hours: Number(sub.hours || 0),
           status: "Pending"
         }));
-        return {
+        setPdHours({
           ...mockPDHours,
           total: mockPDHours.total + totalHours,
           history: [...mockPDHours.history, ...historyFromSubmissions]
-        };
+        });
       }
-      return mockPDHours;
-    } catch (e) {
-      console.error("Failed to load PD hours", e);
-      return mockPDHours;
+    } catch (err) {
+      console.error("Failed to fetch MOOC evidence", err);
     }
-  });
-  const [selectedReflectObs, setSelectedReflectObs] = useState<Observation | null>(null);
-  const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
+  };
 
   // Fetch initial data via API
   useEffect(() => {
@@ -1814,6 +1814,16 @@ export default function TeacherDashboard() {
       }
     });
 
+    socket.on('course-evidence:created', (newSubmission: any) => {
+      // Refresh mooc evidence for real-time updates
+      fetchMoocEvidence();
+
+      // Notify only if it's someone else's submission
+      if (newSubmission.userId !== user?.id) {
+        toast.info(`New PD evidence submitted by ${newSubmission.name || 'a colleague'}`);
+      }
+    });
+
     socket.on('observation:updated', (updatedObs: Observation) => {
       if (updatedObs.teacherId === user?.id || updatedObs.teacherEmail === userEmail || (updatedObs.teacher as any)?.fullName === userName || updatedObs.teacher === userName) {
         // Map teacher if it's an object
@@ -1841,6 +1851,7 @@ export default function TeacherDashboard() {
       socket.off('observation:updated');
       socket.off('goal:created');
       socket.off('goal:updated');
+      socket.off('course-evidence:created');
       socket.emit('leave_room', user?.id || userName);
     };
   }, [userName, userEmail, user?.id]);
@@ -1892,39 +1903,6 @@ export default function TeacherDashboard() {
     localStorage.setItem('training_events_data', JSON.stringify(events));
     window.dispatchEvent(new Event('training-events-updated'));
   }, [events]);
-
-  // Sync PD hours when MOOC submissions update
-  useEffect(() => {
-    const handleMoocUpdate = () => {
-      try {
-        const moocSubmissions = localStorage.getItem('mooc_submissions');
-        if (moocSubmissions) {
-          const submissions = JSON.parse(moocSubmissions);
-          const totalHours = submissions.reduce((acc: number, sub: any) => acc + Number(sub.hours || 0), 0);
-          const historyFromSubmissions = submissions.map((sub: any, idx: number) => ({
-            id: sub.id || idx + 100,
-            activity: sub.courseName || "MOOC Evidence Submission",
-            category: "Online Course",
-            date: sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A",
-            hours: Number(sub.hours || 0),
-            status: "Pending"
-          }));
-          setPdHours({
-            ...mockPDHours,
-            total: mockPDHours.total + totalHours,
-            history: [...mockPDHours.history, ...historyFromSubmissions]
-          });
-        }
-      } catch (err) {
-        console.error("Failed to sync PD hours", err);
-      }
-    };
-
-    window.addEventListener('mooc-submission-updated', handleMoocUpdate);
-    return () => {
-      window.removeEventListener('mooc-submission-updated', handleMoocUpdate);
-    };
-  }, []);
 
 
 

@@ -64,6 +64,7 @@ model User {
   sentObservations     Observation[] @relation("Observer")
   receivedObservations Observation[] @relation("Teacher")
   goals                Goal[]
+  courseEvidences      CourseEvidence[]
   registrations        Registration[]
   pdHours              PDHour[]
   createdDocuments     Document[]
@@ -157,6 +158,49 @@ model PDHour {
   date        DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model CourseEvidence {
+  id                  String   @id @default(uuid())
+  userId              String
+  submittedAt         DateTime @default(now())
+  
+  // User Details (redundant but matches form)
+  email               String
+  name                String
+  campus              String
+  
+  // Course Details
+  courseName          String
+  hours               Float
+  platform            String
+  otherPlatform       String?
+  startDate           DateTime
+  endDate             DateTime
+  
+  // Certificate / Proof
+  hasCertificate      String   // "yes" | "no"
+  proofLink           String?  @db.Text
+  certificateType     String?  // "link" | "file"
+  certificateFile     String?  @db.Text // Base64
+  certificateFileName String?
+  
+  // Reflection
+  keyTakeaways        String?  @db.Text
+  unansweredQuestions String?  @db.Text
+  enjoyedMost         String?  @db.Text
+  
+  // Feedback
+  effectivenessRating Int
+  additionalFeedback  String?  @db.Text
+  
+  // Supporting Documents
+  supportingDocType   String?  // "link" | "file"
+  supportingDocLink   String?  @db.Text
+  supportingDocFile   String?  @db.Text // Base64
+  supportingDocFileName String?
+
+  user                User     @relation(fields: [userId], references: [id])
 }
 
 enum AcknowledgementStatus {
