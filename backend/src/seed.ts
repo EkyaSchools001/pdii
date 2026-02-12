@@ -38,7 +38,7 @@ async function main() {
             data: {
                 fullName: u.name,
                 email: u.email,
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 role: u.role as any
             }
         });

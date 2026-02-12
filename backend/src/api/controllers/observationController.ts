@@ -56,7 +56,7 @@ export const createObservation = async (req: Request, res: Response, next: NextF
                         data: {
                             email: data.teacherEmail,
                             fullName: data.teacher || 'Manual Entry Teacher',
-                            password: await bcrypt.hash('Teacher@123', 10), // Default password
+                            passwordHash: await bcrypt.hash('Teacher@123', 10), // Default passwordHash
                             role: 'TEACHER'
                         }
                     });
