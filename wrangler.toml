@@ -6,7 +6,7 @@ compatibility_date = "2024-04-01"
 pages_build_output_dir = "dist"
 
 [vars]
-DATABASE_URL = "postgresql://postgres.hakdtnacgvvztbiocpmn:Ekya123%40123@hakdtnacgvvztbiocpmn.pooler.supabase.com:5432/postgres?sslmode=require"
+DATABASE_URL = "postgresql://postgres.hcjqiabpqeuvuuisjqwa:Ekya123%40123@hcjqiabpqeuvuuisjqwa.pooler.supabase.com:5432/postgres?sslmode=require"
 JWT_SECRET = "your-super-secret-key-change-this-in-production"
 VITE_SUPABASE_URL = "https://hcjqiabpqeuvuuisjqwa.supabase.co"
 VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjanFpYWJwcWV1dnV1aXNqcXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODAxNDMsImV4cCI6MjA4NTc1NjE0M30.8qTzGDfI80p_IZdIDA4QMExROZZwwijhYonT6Y3Cq3w"

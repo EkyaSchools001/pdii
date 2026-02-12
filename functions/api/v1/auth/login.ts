@@ -43,10 +43,26 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             .eq('email', email)
             .single();
 
-        if (error || !user) {
+        if (error) {
             return new Response(JSON.stringify({
                 status: 'fail',
-                message: "Incorrect email or password"
+                message: "Login query error",
+                debug: {
+                    error: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                }
+            }), {
+                status: 401,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        if (!user) {
+            return new Response(JSON.stringify({
+                status: 'fail',
+                message: "User not found"
             }), {
                 status: 401,
                 headers: { "Content-Type": "application/json" },
