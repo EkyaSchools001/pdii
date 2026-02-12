@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run db:migrate && vite build",
     "build:dev": "vite build --mode development",
+    "db:migrate": "npx prisma migrate deploy --schema=./backend/prisma/schema.prisma",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -85,6 +86,7 @@
     "jsdom": "^20.0.3",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
+    "prisma": "^5.22.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",

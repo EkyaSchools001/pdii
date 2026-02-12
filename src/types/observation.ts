@@ -49,6 +49,7 @@ export interface Observation {
     observerId?: string;
     teacherEmail?: string;
     date: string;
+    updatedAt?: string;
     endDate?: string;
     time?: string;
     observerName?: string;
