@@ -6,4 +6,4 @@ compatibility_date = "2024-04-01"
 pages_build_output_dir = "dist"
 
 [vars]
-DATABASE_URL = "postgresql://postgres:Ekya123%40123@db.hakdtnacgvvztbiocpmn.supabase.co:6543/postgres"
+DATABASE_URL = "postgresql://postgres:Ekya123%40123@hakdtnacgvvztbiocpmn.pooler.supabase.com:6543/postgres?pgbouncer=true"
