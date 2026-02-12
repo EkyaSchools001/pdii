@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm install && vite build && cd backend && npm install && npm run build",
+    "build": "npm install && npm update prisma @prisma/client && npx vite build && cd backend && npm install && npm update prisma @prisma/client && npm run build",
     "start": "cd backend && npm start",
     "build:dev": "vite build --mode development",
     "db:migrate": "npx prisma generate --schema=./backend/prisma/schema.prisma && npx prisma migrate deploy --schema=./backend/prisma/schema.prisma",
