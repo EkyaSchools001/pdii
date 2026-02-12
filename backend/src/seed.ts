@@ -25,8 +25,6 @@ async function main() {
     const defaultPassword = 'password123'; // Fallback if needed, but we have specific ones
 
     const users = [
-        { name: 'Bharath', email: 'bharath.superadmin@pdi.com', pass: 'Bharath@123', role: 'SUPERADMIN' },
-        { name: 'Indu', email: 'indu.management@pdi.com', pass: 'Indu@123', role: 'MANAGEMENT' },
         { name: 'Rohit', email: 'rohit.schoolleader@pdi.com', pass: 'Rohit@123', role: 'LEADER' },
         { name: 'Avani', email: 'avani.admin@pdi.com', pass: 'Avani@123', role: 'ADMIN' },
         { name: 'Teacher One', email: 'teacher1.btmlayout@pdi.com', pass: 'Teacher1@123', role: 'TEACHER' },
