@@ -66,11 +66,12 @@ app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Catch-all route for SPA
-app.get('(.*)', (req: Request, res: Response) => {
+// Catch-all middleware for SPA (replaces the broken wildcard route)
+app.use((req: Request, res: Response) => {
     // If it's an API route that wasn't caught, send 404
     if (req.originalUrl.startsWith('/api')) {
-        return res.status(404).json({ status: 'fail', message: 'API route not found' });
+        res.status(404).json({ status: 'fail', message: 'API route not found' });
+        return;
     }
     // Otherwise, serve the frontend index.html
     res.sendFile(path.join(distPath, 'index.html'));
