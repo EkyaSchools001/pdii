@@ -26,7 +26,8 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { id: string, role: string };
         req.user = decoded;
         next();
-    } catch (err) {
+    } catch (err: any) {
+        console.error('JWT Verification Failed:', err.message);
         return next(new AppError('Invalid token. Please log in again.', 401));
     }
 };

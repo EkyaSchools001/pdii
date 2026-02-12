@@ -7,18 +7,23 @@ import { toast } from 'sonner';
 const getApiUrl = () => {
     const hostname = window.location.hostname;
 
-    // If accessed via localtunnel, use the tunnel backend
+    // 1. If VITE_API_URL is set (Render/External Backend), use it
+    if (import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+
+    // 2. If accessed via localtunnel
     if (hostname.includes('loca.lt')) {
         return 'https://tough-hands-refuse.loca.lt/api/v1';
     }
 
-    // In production (Cloudflare Pages), use relative path to reach Functions
+    // 3. Cloudflare Pages default (same domain functions)
     if (import.meta.env.PROD) {
         return '/api/v1';
     }
 
-    // Otherwise use localhost or env variable
-    return import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+    // 4. Localhost fallback
+    return 'http://localhost:4000/api/v1';
 };
 
 const API_URL = getApiUrl();

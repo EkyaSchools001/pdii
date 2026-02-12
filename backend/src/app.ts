@@ -20,10 +20,12 @@ app.use(cors({
         'http://127.0.0.1:8080',
         'http://localhost:5173',
         'http://localhost:3000',
+        process.env.FRONTEND_URL || '',
         'https://brave-aliens-sleep.loca.lt',
         'https://sad-days-knock.loca.lt',
         'https://tough-hands-refuse.loca.lt',
-        /\.loca\.lt$/  // Allow all localtunnel subdomains
+        /\.loca\.lt$/,  // Allow all localtunnel subdomains
+        /\.onrender\.com$/ // Allow all Render subdomains
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
