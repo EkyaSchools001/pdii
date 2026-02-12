@@ -1,7 +1,8 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { Users, FileText, Book, Calendar, Settings, Shield, Activity, Plus } from "lucide-react";
+import { Users, FileText, Book, Calendar, Settings, Activity } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Link, Routes, Route, useNavigate, useLocation, useParams } from "react-router-dom";
 import { UserManagementView } from "./admin/UserManagementView";
@@ -18,23 +19,44 @@ import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 
+interface DashboardUser {
+  id: string;
+  fullName: string;
+  role: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const userName = user?.fullName || "Admin User";
   const role = user?.role || "ADMIN";
+
+
+
   const [observations, setObservations] = useState<Observation[]>([]);
+  const [recentUsers, setRecentUsers] = useState<DashboardUser[]>([]);
 
   useEffect(() => {
-    const fetchObservations = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/observations');
-        setObservations(response.data?.data?.observations || []);
+        const [obsResponse, usersResponse] = await Promise.all([
+          api.get('/observations'),
+          api.get('/users')
+        ]);
+
+        setObservations(obsResponse.data?.data?.observations || []);
+
+        // Users are already sorted by createdAt desc (newest first) from backend
+        // Take top 5 for the dashboard
+        const allUsers = usersResponse.data?.data?.users || [];
+        setRecentUsers(allUsers.slice(0, 5));
       } catch (error) {
-        console.error("Failed to fetch observations:", error);
+        console.error("Failed to fetch dashboard data:", error);
       }
     };
 
-    fetchObservations();
+    fetchData();
+
 
     const socket = getSocket();
     socket.on('new_observation', (newObs: Observation) => {
@@ -54,7 +76,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout role={role.toLowerCase() as any} userName={userName}>
       <Routes>
-        <Route index element={<DashboardOverview />} />
+        <Route index element={<DashboardOverview recentUsers={recentUsers} />} />
         <Route path="users" element={<UserManagementView />} />
         <Route path="profile/:userId" element={<AdminTeacherProfileView observations={observations} />} />
         <Route path="forms" element={<FormTemplatesView />} />
@@ -123,7 +145,7 @@ const adminModules = [
 
 
 
-function DashboardOverview() {
+function DashboardOverview({ recentUsers }: { recentUsers: DashboardUser[] }) {
   return (
     <>
       <PageHeader
@@ -172,20 +194,21 @@ function DashboardOverview() {
               <Users className="w-4 h-4 text-primary" />
             </div>
             <div className="space-y-3 flex-1 overflow-auto max-h-[200px] pr-1">
-              {[
-                { name: "Alice M.", role: "Teacher", time: "10m ago" },
-                { name: "Robert F.", role: "Staff", time: "1h ago" },
-                { name: "Sarah L.", role: "Teacher", time: "3h ago" },
-                { name: "James K.", role: "Teacher", time: "1d ago" },
-              ].map((u, i) => (
-                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{u.name}</span>
-                    <span className="text-xs text-muted-foreground">{u.role}</span>
+              {recentUsers.length > 0 ? (
+                recentUsers.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between text-sm p-2 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{u.fullName}</span>
+                      <span className="text-xs text-muted-foreground">{u.role}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(u.createdAt), { addSuffix: true })}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{u.time}</span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">No recent registrations</div>
+              )}
             </div>
             <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" asChild>
               <Link to="/admin/users">Review All</Link>
@@ -271,10 +294,10 @@ function DashboardOverview() {
           </div>
 
         </div>
-      </div>
+      </div >
 
       {/* Admin Modules Grid */}
-      <div className="mb-8">
+      < div className="mb-8" >
         <h2 className="text-xl font-semibold text-foreground mb-4">Platform Management</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {adminModules.map((module) => (
@@ -294,12 +317,12 @@ function DashboardOverview() {
             </Link>
           ))}
         </div>
-      </div>
+      </div >
 
       {/* Recent Activity & Audit Log Preview */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      < div className="grid lg:grid-cols-2 gap-8" >
         {/* Recent Activity */}
-        <div>
+        < div >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
@@ -323,10 +346,10 @@ function DashboardOverview() {
               </div>
             ))}
           </div>
-        </div>
+        </div >
 
         {/* System Status */}
-        <div>
+        < div >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">System Status</h2>
@@ -370,8 +393,8 @@ function DashboardOverview() {
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
     </>
   );
 }
