@@ -41,7 +41,7 @@ enum TrainingStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  password      String    // Hashed password
+  password      String    @default("") // Temporarily added default to allow migration with existing data
   fullName      String
   avatarUrl     String?
   role          Role      @default(TEACHER)
