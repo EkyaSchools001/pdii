@@ -67,7 +67,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // Catch-all route for SPA
-app.get('*', (req: Request, res: Response) => {
+app.get('(.*)', (req: Request, res: Response) => {
     // If it's an API route that wasn't caught, send 404
     if (req.originalUrl.startsWith('/api')) {
         return res.status(404).json({ status: 'fail', message: 'API route not found' });
