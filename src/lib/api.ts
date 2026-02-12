@@ -12,6 +12,11 @@ const getApiUrl = () => {
         return 'https://tough-hands-refuse.loca.lt/api/v1';
     }
 
+    // In production (Cloudflare Pages), use relative path to reach Functions
+    if (import.meta.env.PROD) {
+        return '/api/v1';
+    }
+
     // Otherwise use localhost or env variable
     return import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
 };
