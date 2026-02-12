@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
 import routes from './api/routes';
 import { globalAppErrorHandler } from './api/middlewares/errorHandler';
 import swaggerUi from 'swagger-ui-express';
@@ -12,7 +13,9 @@ dotenv.config();
 const app: Application = express();
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP to avoid potential issues with frontend assets
+}));
 app.use(cors({
     origin: [
         'http://localhost:8081',
@@ -35,6 +38,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from the frontend dist directory
+const distPath = path.join(__dirname, '../../dist');
+app.use(express.static(distPath));
+
 // Swagger Documentation
 const swaggerOptions = {
     definition: {
@@ -54,17 +61,22 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // API Routes
 app.use('/api/v1', routes);
 
-// Global Error Handler
-app.use(globalAppErrorHandler);
-
 // Health Check
-app.get('/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Root route
-app.get('/', (req: Request, res: Response) => {
-    res.status(200).send('School Growth Hub API is running!');
+// Catch-all route for SPA
+app.get('*', (req: Request, res: Response) => {
+    // If it's an API route that wasn't caught, send 404
+    if (req.originalUrl.startsWith('/api')) {
+        return res.status(404).json({ status: 'fail', message: 'API route not found' });
+    }
+    // Otherwise, serve the frontend index.html
+    res.sendFile(path.join(distPath, 'index.html'));
 });
+
+// Global Error Handler
+app.use(globalAppErrorHandler);
 
 export default app;
