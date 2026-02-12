@@ -24,14 +24,24 @@ export const getAllObservations = async (req: Request, res: Response, next: Next
                         fullName: true,
                         email: true
                     }
-                }
+                },
+                domainRatings: true
             }
+        });
+
+        // Map domainRatings to domains for frontend consistency
+        const mappedObservations = observations.map(obs => {
+            const { domainRatings, ...rest } = obs;
+            return {
+                ...rest,
+                domains: domainRatings
+            };
         });
 
         res.status(200).json({
             status: 'success',
-            results: observations.length,
-            data: { observations }
+            results: mappedObservations.length,
+            data: { observations: mappedObservations }
         });
     } catch (err) {
         next(err);
@@ -88,16 +98,33 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             return next(new AppError('A valid teacher and authenticated observer are required', 400));
         }
 
-        const newObservation = await prisma.observation.create({
-            data: newObservationData
+        const createdObservation = await prisma.observation.create({
+            data: newObservationData,
+            include: {
+                teacher: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true
+                    }
+                },
+                domainRatings: true
+            }
         });
 
+        // Map for frontend
+        const { domainRatings, ...rest } = createdObservation;
+        const mappedObservation = {
+            ...rest,
+            domains: domainRatings
+        };
+
         // Real-time update
-        getIO().emit('observation:created', newObservation);
+        getIO().emit('observation:created', mappedObservation);
 
         res.status(201).json({
             status: 'success',
-            data: { observation: newObservation }
+            data: { observation: mappedObservation }
         });
     } catch (err) {
         next(err);
@@ -109,44 +136,95 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
         const { id } = req.params;
         const data = req.body;
 
+        const authReq = req as AuthRequest;
+        const currentUserId = authReq.user?.id;
+        const userRole = authReq.user?.role;
+
+        // Fetch existing observation to check ownership
+        const existingObservation = await prisma.observation.findUnique({
+            where: { id: String(id) }
+        });
+
+        if (!existingObservation) {
+            return next(new AppError('Observation not found', 404));
+        }
+
+        // If user is a teacher, they can only update THEIR OWN observation
+        // and only reflection-related fields
+        if (userRole === 'TEACHER') {
+            if (existingObservation.teacherId !== currentUserId) {
+                return next(new AppError('You are not authorized to update this reflection', 403));
+            }
+
+            // Strictly limit what a teacher can update
+            const allowedForTeacher = ['teacherReflection', 'detailedReflection', 'hasReflection', 'status'];
+            const forbiddenKeys = Object.keys(data).filter(key => !allowedForTeacher.includes(key));
+
+            if (forbiddenKeys.length > 0) {
+                // If they try to update forbidden fields, we still allow the update but only of the allowed fields
+                // OR we can throw error. Let's just filter them.
+            }
+        }
+
         // Pick only fields supported by the Prisma schema
         // and normalize status case
         const updateData: any = {
             updatedAt: new Date()
         };
 
-        if (data.teacherReflection !== undefined) updateData.teacherReflection = String(data.teacherReflection);
-        if (data.detailedReflection !== undefined) updateData.detailedReflection = data.detailedReflection;
-        if (data.hasReflection !== undefined) updateData.hasReflection = !!data.hasReflection;
-        if (data.notes !== undefined) updateData.notes = String(data.notes);
-        if (data.actionStep !== undefined) updateData.actionStep = String(data.actionStep);
-        if (data.discussionMet !== undefined) updateData.discussionMet = !!data.discussionMet;
-        if (data.score !== undefined) updateData.score = Number(data.score);
-        if (data.domain !== undefined) updateData.domain = String(data.domain);
+        const allowedFields = userRole === 'TEACHER'
+            ? ['teacherReflection', 'detailedReflection', 'hasReflection', 'status']
+            : ['teacherReflection', 'detailedReflection', 'hasReflection', 'notes', 'actionStep', 'discussionMet', 'score', 'domain', 'status'];
 
-        if (data.status) {
-            // Map common frontend statuses to DB enum
-            const statusMap: Record<string, string> = {
-                'Submitted': 'SUBMITTED',
-                'submitted': 'SUBMITTED',
-                'Draft': 'DRAFT',
-                'draft': 'DRAFT',
-                'Reviewed': 'REVIEWED',
-                'reviewed': 'REVIEWED'
-            };
-            updateData.status = (statusMap[data.status] || data.status.toUpperCase()) as any;
-        }
+        allowedFields.forEach(field => {
+            if (data[field] !== undefined) {
+                if (field === 'status') {
+                    const statusMap: Record<string, string> = {
+                        'Submitted': 'SUBMITTED',
+                        'submitted': 'SUBMITTED',
+                        'Draft': 'DRAFT',
+                        'draft': 'DRAFT',
+                        'Reviewed': 'REVIEWED',
+                        'reviewed': 'REVIEWED'
+                    };
+                    updateData.status = (statusMap[data.status] || data.status.toUpperCase()) as any;
+                } else if (field === 'score') {
+                    updateData.score = Number(data[field]);
+                } else if (['hasReflection', 'discussionMet'].includes(field)) {
+                    updateData[field] = !!data[field];
+                } else {
+                    updateData[field] = field === 'detailedReflection' ? data[field] : String(data[field]);
+                }
+            }
+        });
 
         const updatedObservation = await prisma.observation.update({
             where: { id: String(id) },
-            data: updateData
+            data: updateData,
+            include: {
+                teacher: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true
+                    }
+                },
+                domainRatings: true
+            }
         });
 
-        getIO().emit('observation:updated', updatedObservation);
+        // Map for frontend
+        const { domainRatings, ...rest } = updatedObservation;
+        const mappedObservation = {
+            ...rest,
+            domains: domainRatings
+        };
+
+        getIO().emit('observation:updated', mappedObservation);
 
         res.status(200).json({
             status: 'success',
-            data: { observation: updatedObservation }
+            data: { observation: mappedObservation }
         });
     } catch (err) {
         next(err);

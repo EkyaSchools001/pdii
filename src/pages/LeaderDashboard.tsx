@@ -186,8 +186,13 @@ export default function LeaderDashboard() {
     });
 
     socket.on('observation:updated', (updatedObs: Observation) => {
-      setObservations(prev => prev.map(obs => obs.id === updatedObs.id ? updatedObs : obs));
-      toast.info(`Observation updated for ${updatedObs.teacher}`);
+      // Map teacher if it's an object to maintain UI consistency
+      const mappedObs = {
+        ...updatedObs,
+        teacher: (updatedObs.teacher as any)?.fullName || updatedObs.teacher || updatedObs.teacherEmail || 'Unknown Teacher'
+      };
+      setObservations(prev => prev.map(obs => obs.id === mappedObs.id ? mappedObs : obs));
+      toast.info(`Observation updated for ${mappedObs.teacher}`);
     });
 
     return () => {

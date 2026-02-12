@@ -1815,9 +1815,14 @@ export default function TeacherDashboard() {
     });
 
     socket.on('observation:updated', (updatedObs: Observation) => {
-      if (updatedObs.teacherId === user?.id || updatedObs.teacherEmail === userEmail || updatedObs.teacher === userName) {
-        setObservations(prev => prev.map(obs => obs.id === updatedObs.id ? updatedObs : obs));
-        toast.info(`Observation report updated by ${updatedObs.observerName}`);
+      if (updatedObs.teacherId === user?.id || updatedObs.teacherEmail === userEmail || (updatedObs.teacher as any)?.fullName === userName || updatedObs.teacher === userName) {
+        // Map teacher if it's an object
+        const mappedObs = {
+          ...updatedObs,
+          teacher: (updatedObs.teacher as any)?.fullName || updatedObs.teacher || updatedObs.teacherEmail || userName
+        };
+        setObservations(prev => prev.map(obs => obs.id === mappedObs.id ? mappedObs : obs));
+        toast.info(`Observation report updated by ${updatedObs.observerName || 'School Leader'}`);
         window.dispatchEvent(new Event('observations-updated'));
       }
     });

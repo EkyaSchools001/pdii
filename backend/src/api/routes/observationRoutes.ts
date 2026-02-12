@@ -8,6 +8,6 @@ router.use(protect); // Protect all observation routes
 
 router.get('/', getAllObservations);
 router.post('/', restrictTo('ADMIN', 'LEADER', 'SUPERADMIN'), createObservation);
-router.patch('/:id', restrictTo('ADMIN', 'LEADER', 'SUPERADMIN'), updateObservation);
+router.patch('/:id', restrictTo('ADMIN', 'LEADER', 'SUPERADMIN', 'TEACHER'), updateObservation);
 
 export default router;
