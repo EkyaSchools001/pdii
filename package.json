@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run db:migrate && vite build",
+    "build": "vite build",
     "build:dev": "vite build --mode development",
     "db:migrate": "npx prisma generate --schema=./backend/prisma/schema.prisma && npx prisma migrate deploy --schema=./backend/prisma/schema.prisma",
     "lint": "eslint .",
