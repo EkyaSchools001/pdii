@@ -229,14 +229,16 @@ model Task {
   id String @id @default(uuid())
 }
 
-model _ProjectMembers {
+model ProjectMembers {
   A String
   B String
   @@unique([A, B])
+  @@map("_ProjectMembers")
 }
 
-model _TaskAssignees {
+model TaskAssignees {
   A String
   B String
   @@unique([A, B])
+  @@map("_TaskAssignees")
 }
