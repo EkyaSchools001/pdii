@@ -44,6 +44,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             .single();
 
         if (error) {
+            // PGRST116: JSON object requested, but no rows returned
+            if (error.code === 'PGRST116') {
+                return new Response(JSON.stringify({
+                    status: 'fail',
+                    message: "User not found"
+                }), {
+                    status: 401,
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
             return new Response(JSON.stringify({
                 status: 'fail',
                 message: "Login query error",
