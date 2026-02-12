@@ -1,5 +1,12 @@
-import prisma from './infrastructure/database/prisma';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Prisma Client (will automatically use DATABASE_URL from .env)
+const prisma = new PrismaClient();
 
 async function main() {
     // Clear existing users and related data to ensure absolute fresh state with ONLY these users

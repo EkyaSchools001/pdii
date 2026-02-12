@@ -70,7 +70,7 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
         const data = req.body;
 
         const updatedObservation = await prisma.observation.update({
-            where: { id },
+            where: { id: String(id) },
             data: { ...data, updatedAt: new Date().toISOString() }
         });
 
