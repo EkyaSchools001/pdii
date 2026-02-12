@@ -7,6 +7,7 @@ interface Env {
     JWT_SECRET: string;
     VITE_SUPABASE_URL: string;
     VITE_SUPABASE_PUBLISHABLE_KEY: string;
+    SUPABASE_SERVICE_ROLE_KEY?: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -27,7 +28,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         // Initialize Supabase client
         // Note: In Cloudflare Functions, these might be in env
         const supabaseUrl = env.VITE_SUPABASE_URL;
-        const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        // Use Service Role Key if available (bypasses RLS), otherwise fall back to Anon key
+        const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
             throw new Error("Supabase configuration missing in environment");

@@ -1,0 +1,32 @@
+services:
+  # Backend Service
+  - type: web
+    name: school-growth-hub-backend
+    runtime: node
+    root: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run db:migrate && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        fromService:
+          type: static
+          name: school-growth-hub-frontend
+          property: url
+
+  # Frontend Service
+  - type: static
+    name: school-growth-hub-frontend
+    runtime: static
+    root: .
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: school-growth-hub-backend
+          envVarKey: RENDER_EXTERNAL_URL
