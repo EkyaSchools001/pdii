@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -22,93 +22,170 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/StatCard";
+import api from "@/lib/api";
 
-const initialUsers = [
-    { id: "1", name: "Sarah Johnson", email: "sarah.j@school.edu", role: "Admin", campus: "Main Campus", status: "Active", lastActive: "2 hours ago" },
-    { id: "2", name: "Michael Chen", email: "m.chen@school.edu", role: "Teacher", campus: "North Campus", status: "Active", lastActive: "5 hours ago" },
-    { id: "3", name: "Elena Rodriguez", email: "elena.r@school.edu", role: "Teacher", campus: "Main Campus", status: "Inactive", lastActive: "2 days ago" },
-    { id: "4", name: "David Wilson", email: "d.wilson@school.edu", role: "Leader", campus: "South Campus", status: "Active", lastActive: "1 hour ago" },
-    { id: "5", name: "Priya Sharma", email: "p.sharma@school.edu", role: "Teacher", campus: "Main Campus", status: "Active", lastActive: "3 hours ago" },
+
+interface User {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+    campusId: string | null;
+    department: string | null;
+    status: string;
+    lastActive: string | null;
+}
+
+const initialUsers: User[] = [
+    { id: "1", fullName: "Sarah Johnson", email: "sarah.j@school.edu", role: "ADMIN", campusId: "Main Campus", department: null, status: "Active", lastActive: "2 hours ago" },
+    { id: "2", fullName: "Michael Chen", email: "m.chen@school.edu", role: "TEACHER", campusId: "North Campus", department: null, status: "Active", lastActive: "5 hours ago" },
+    { id: "3", fullName: "Elena Rodriguez", email: "elena.r@school.edu", role: "TEACHER", campusId: "Main Campus", department: null, status: "Inactive", lastActive: "2 days ago" },
+    { id: "4", fullName: "David Wilson", email: "d.wilson@school.edu", role: "LEADER", campusId: "South Campus", department: null, status: "Active", lastActive: "1 hour ago" },
+    { id: "5", fullName: "Priya Sharma", email: "p.sharma@school.edu", role: "TEACHER", campusId: "Main Campus", department: null, status: "Active", lastActive: "3 hours ago" },
 ];
 
 export function UserManagementView() {
     const navigate = useNavigate();
-    const [users, setUsers] = useState(initialUsers);
+    const [users, setUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isChangeRoleDialogOpen, setIsChangeRoleDialogOpen] = useState(false);
     const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ name: "", email: "", role: "Teacher", campus: "" });
-    const [editingUser, setEditingUser] = useState<typeof initialUsers[0] | null>(null);
-    const [selectedUser, setSelectedUser] = useState<typeof initialUsers[0] | null>(null);
+    const [newUser, setNewUser] = useState({ fullName: "", email: "", role: "TEACHER", campusId: "" });
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [activeTab, setActiveTab] = useState("all");
     const [campusFilter, setCampusFilter] = useState("all");
 
-    const uniqueCampuses = Array.from(new Set(users.map(user => user.campus)));
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
-    const teacherCount = users.filter(u => u.role === "Teacher").length;
-    const leaderCount = users.filter(u => u.role === "Leader").length;
+    const fetchUsers = async () => {
+        try {
+            setIsLoading(true);
+            const response = await api.get('/users');
+
+            console.log("User fetch response:", response.data);
+
+            if (response.data.status === "success") {
+                console.log("Setting users:", response.data.data.users);
+                setUsers(response.data.data.users);
+            } else {
+                console.warn("User fetch returned status:", response.data.status);
+            }
+        } catch (error: any) {
+            console.error("Error fetching users:", error);
+            if (error.response) {
+                console.error("Error response data:", error.response.data);
+                console.error("Error response status:", error.response.status);
+            }
+            toast.error("Failed to load users: " + (error.response?.data?.message || error.message));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const uniqueCampuses = Array.from(new Set(users.map(user => user.campusId).filter(Boolean)));
+
+    const teacherCount = users.filter(u => u.role === "TEACHER").length;
+    const leaderCount = users.filter(u => u.role === "LEADER").length;
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        const matchesSearch = user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.role.toLowerCase().includes(searchQuery.toLowerCase());
 
         let matchesTab = true;
-        if (activeTab === "leader") matchesTab = user.role === "Leader";
-        if (activeTab === "teacher") matchesTab = user.role === "Teacher";
+        if (activeTab === "leader") matchesTab = user.role === "LEADER";
+        if (activeTab === "teacher") matchesTab = user.role === "TEACHER";
 
         let matchesCampus = true;
-        if (campusFilter !== "all") matchesCampus = user.campus === campusFilter;
+        if (campusFilter !== "all") matchesCampus = user.campusId === campusFilter;
 
         return matchesSearch && matchesTab && matchesCampus;
     });
 
-    const handleAddUser = () => {
-        if (!newUser.name || !newUser.email || !newUser.campus) {
+    const handleAddUser = async () => {
+        if (!newUser.fullName || !newUser.email || !newUser.campusId) {
             toast.error("Please fill in all fields");
             return;
         }
 
-        const user = {
-            id: (users.length + 1).toString(),
-            ...newUser,
-            status: "Active",
-            lastActive: "Just now"
-        };
+        try {
+            const response = await api.post('/users', newUser);
 
-        setUsers([user, ...users]);
-        setIsAddDialogOpen(false);
-        setNewUser({ name: "", email: "", role: "Teacher", campus: "" });
-        toast.success("User added successfully");
+            if (response.data.status === "success") {
+                toast.success("User added successfully");
+                setIsAddDialogOpen(false);
+                setNewUser({ fullName: "", email: "", role: "TEACHER", campusId: "" });
+                fetchUsers();
+            }
+        } catch (error) {
+            toast.error("Failed to add user");
+        }
     };
 
-    const handleEditUser = () => {
+    const handleEditUser = async () => {
         if (!editingUser) return;
-        setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
-        setIsEditDialogOpen(false);
-        setEditingUser(null);
-        toast.success("User updated successfully");
+        try {
+            const response = await api.patch(`/users/${editingUser.id}`, {
+                fullName: editingUser.fullName,
+                role: editingUser.role,
+                campusId: editingUser.campusId,
+            });
+
+            if (response.data.status === "success") {
+                toast.success("User updated successfully");
+                setIsEditDialogOpen(false);
+                setEditingUser(null);
+                fetchUsers();
+            }
+        } catch (error) {
+            toast.error("Failed to update user");
+        }
     };
 
-    const handleChangeRole = () => {
+    const handleChangeRole = async () => {
         if (!selectedUser) return;
-        setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
-        setIsChangeRoleDialogOpen(false);
-        toast.success(`Role updated to ${selectedUser.role} for ${selectedUser.name}`);
-        setSelectedUser(null);
+        try {
+            const response = await api.patch(`/users/${selectedUser.id}`, {
+                role: selectedUser.role
+            });
+
+            if (response.data.status === "success") {
+                toast.success(`Role updated to ${selectedUser.role} for ${selectedUser.fullName}`);
+                setIsChangeRoleDialogOpen(false);
+                setSelectedUser(null);
+                fetchUsers();
+            }
+        } catch (error) {
+            toast.error("Failed to update role");
+        }
     };
 
-    const handleDeactivate = () => {
+    const handleDeactivate = async () => {
         if (!selectedUser) return;
         const newStatus = selectedUser.status === "Active" ? "Inactive" : "Active";
-        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: newStatus } : u));
-        toast.success(`User ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
-        setIsDeactivateDialogOpen(false);
+        try {
+            const response = await api.patch(`/users/${selectedUser.id}`, {
+                status: newStatus
+            });
+
+            if (response.data.status === "success") {
+                toast.success(`User ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
+                setIsDeactivateDialogOpen(false);
+                setSelectedUser(null);
+                fetchUsers();
+            }
+        } catch (error) {
+            toast.error("Failed to update status");
+        }
     };
 
-    const handleAction = (action: string, user: typeof initialUsers[0]) => {
+    const handleAction = (action: string, user: User) => {
         if (action === "Edit Details") {
             setEditingUser(user);
             setIsEditDialogOpen(true);
@@ -145,7 +222,7 @@ export function UserManagementView() {
                                 <div className="grid gap-4 py-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="name">Full Name</Label>
-                                        <Input id="name" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+                                        <Input id="name" value={newUser.fullName} onChange={e => setNewUser({ ...newUser, fullName: e.target.value })} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="email">Email Address</Label>
@@ -159,15 +236,15 @@ export function UserManagementView() {
                                                     <SelectValue placeholder="Select role" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="Teacher">Teacher</SelectItem>
-                                                    <SelectItem value="Leader">Leader</SelectItem>
-                                                    <SelectItem value="Admin">Admin</SelectItem>
+                                                    <SelectItem value="TEACHER">Teacher</SelectItem>
+                                                    <SelectItem value="LEADER">Leader</SelectItem>
+                                                    <SelectItem value="ADMIN">Admin</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="campus">Campus</Label>
-                                            <Select value={newUser.campus} onValueChange={v => setNewUser({ ...newUser, campus: v })}>
+                                            <Select value={newUser.campusId} onValueChange={v => setNewUser({ ...newUser, campusId: v })}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select campus" />
                                                 </SelectTrigger>
@@ -196,11 +273,11 @@ export function UserManagementView() {
                                     <div className="grid gap-4 py-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="edit-name">Full Name</Label>
-                                            <Input id="edit-name" value={editingUser.name} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} />
+                                            <Input id="edit-name" value={editingUser.fullName} onChange={e => setEditingUser({ ...editingUser, fullName: e.target.value })} />
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="edit-email">Email Address</Label>
-                                            <Input id="edit-email" type="email" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} />
+                                            <Input id="edit-email" type="email" value={editingUser.email} disabled />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
@@ -210,15 +287,15 @@ export function UserManagementView() {
                                                         <SelectValue placeholder="Select role" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="Teacher">Teacher</SelectItem>
-                                                        <SelectItem value="Leader">Leader</SelectItem>
-                                                        <SelectItem value="Admin">Admin</SelectItem>
+                                                        <SelectItem value="TEACHER">Teacher</SelectItem>
+                                                        <SelectItem value="LEADER">Leader</SelectItem>
+                                                        <SelectItem value="ADMIN">Admin</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label htmlFor="edit-campus">Campus</Label>
-                                                <Select value={editingUser.campus} onValueChange={v => setEditingUser({ ...editingUser, campus: v })}>
+                                                <Select value={editingUser.campusId || ""} onValueChange={v => setEditingUser({ ...editingUser, campusId: v })}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select campus" />
                                                     </SelectTrigger>
@@ -251,7 +328,7 @@ export function UserManagementView() {
                                         <div className="grid gap-2">
                                             <Label>User</Label>
                                             <div className="flex flex-col gap-1 p-3 bg-muted rounded-md">
-                                                <span className="font-medium">{selectedUser.name}</span>
+                                                <span className="font-medium">{selectedUser.fullName}</span>
                                                 <span className="text-sm text-muted-foreground">{selectedUser.email}</span>
                                             </div>
                                         </div>
@@ -262,9 +339,9 @@ export function UserManagementView() {
                                                     <SelectValue placeholder="Select role" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="Teacher">Teacher</SelectItem>
-                                                    <SelectItem value="Leader">Leader</SelectItem>
-                                                    <SelectItem value="Admin">Admin</SelectItem>
+                                                    <SelectItem value="TEACHER">Teacher</SelectItem>
+                                                    <SelectItem value="LEADER">Leader</SelectItem>
+                                                    <SelectItem value="ADMIN">Admin</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -293,7 +370,7 @@ export function UserManagementView() {
                                 {selectedUser && (
                                     <div className="grid gap-4 py-4">
                                         <div className="flex flex-col gap-1 p-3 bg-muted rounded-md">
-                                            <span className="font-medium">{selectedUser.name}</span>
+                                            <span className="font-medium">{selectedUser.fullName}</span>
                                             <span className="text-sm text-muted-foreground">{selectedUser.email}</span>
                                             <div className="flex items-center gap-2 mt-2">
                                                 <Badge variant="outline" className="w-fit">
@@ -405,7 +482,7 @@ export function UserManagementView() {
                                     <TableRow key={user.id} className="hover:bg-muted/30 transition-colors">
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-sm">{user.name}</span>
+                                                <span className="font-medium text-sm">{user.fullName}</span>
                                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <Mail className="w-3 h-3" /> {user.email}
                                                 </span>
@@ -417,14 +494,14 @@ export function UserManagementView() {
                                                 {user.role}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">{user.campus}</TableCell>
+                                        <TableCell className="text-muted-foreground">{user.campusId || "N/A"}</TableCell>
                                         <TableCell>
                                             <Badge variant={user.status === "Active" ? "default" : "secondary"} className={user.status === "Active" ? "bg-green-600 hover:bg-green-700 font-normal" : "font-normal"}>
                                                 {user.status === "Active" ? <UserCheck className="w-3 h-3 mr-1" /> : <UserX className="w-3 h-3 mr-1" />}
                                                 {user.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground text-sm">{user.lastActive}</TableCell>
+                                        <TableCell className="text-muted-foreground text-sm">{user.lastActive || "Never"}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -434,7 +511,7 @@ export function UserManagementView() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    {user.role === "Teacher" && (
+                                                    {user.role === "TEACHER" && (
                                                         <DropdownMenuItem onClick={() => handleAction("View Profile", user)}>
                                                             <Users className="w-4 h-4 mr-2" /> View Performance Profile
                                                         </DropdownMenuItem>
