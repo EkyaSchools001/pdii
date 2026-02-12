@@ -44,14 +44,19 @@ enum TrainingStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  password      String?   @default("") // Made optional to allow migration with existing data
+  passwordHash  String?   @default("") // Renamed to match existing DB
   fullName      String
-  avatarUrl     String?
+  profilePicture String?   // Renamed to match existing DB
   role          Role      @default(TEACHER)
   campusId      String?
   department    String?
   status        String    @default("Active")
   lastActive    DateTime?
+  lastSeen      DateTime? // Added to match existing DB
+  isVerified    Boolean   @default(false) // Added to match existing DB
+  campusAccess  String?   // Added to match existing DB
+  dateOfBirth   String?   // Added to match existing DB
+  managerId     String?   // Added to match existing DB
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -197,5 +202,41 @@ model DocumentAcknowledgement {
   document        Document             @relation(fields: [documentId], references: [id], onDelete: Cascade)
   teacher         User                 @relation(fields: [teacherId], references: [id])
 
-  @@unique([documentId, teacherId])
+}
+
+// Placeholder models to prevent Prisma from dropping existing tables
+model Chat {
+  id String @id @default(uuid())
+}
+
+model ChatParticipant {
+  id String @id @default(uuid())
+}
+
+model MeetingRoom {
+  id String @id @default(uuid())
+}
+
+model Message {
+  id String @id @default(uuid())
+}
+
+model Project {
+  id String @id @default(uuid())
+}
+
+model Task {
+  id String @id @default(uuid())
+}
+
+model _ProjectMembers {
+  A String
+  B String
+  @@unique([A, B])
+}
+
+model _TaskAssignees {
+  A String
+  B String
+  @@unique([A, B])
 }

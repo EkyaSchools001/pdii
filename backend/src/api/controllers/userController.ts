@@ -40,7 +40,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
                 role: role ? (role as Role) : undefined,
                 campusId,
                 department,
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 status: 'Active'
             }
         });

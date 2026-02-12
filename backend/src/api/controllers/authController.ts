@@ -23,7 +23,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         // 1) Find user
         const user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user || !(await bcrypt.compare(password, user.password || ''))) {
+        if (!user || !(await bcrypt.compare(password, user.passwordHash || ''))) {
             return next(new AppError('Incorrect email or password', 401));
         }
 
