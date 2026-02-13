@@ -23,8 +23,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
-
 node_modules.bak
-=======
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
