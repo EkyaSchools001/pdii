@@ -84,6 +84,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getActiveTemplateByType } from "@/lib/template-utils";
 import { DynamicForm } from "@/components/DynamicForm";
+<<<<<<< HEAD
+import { trainingService } from "@/services/trainingService";
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -456,6 +460,11 @@ const DashboardOverview = ({
   );
 }
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 function ObservationsView({
   observations,
   onReflect,
@@ -1796,8 +1805,56 @@ export default function TeacherDashboard() {
       }
     };
 
+<<<<<<< HEAD
+    const fetchMoocsAndPdHours = async () => {
+      try {
+        const response = await api.get('/mooc');
+        if (response.data?.status === 'success') {
+          const submissions = response.data.data.submissions;
+          // Filter for current user and approved status for total hours
+          const userSubmissions = submissions.filter((s: any) => s.userId === user?.id);
+          const approvedSubmissions = userSubmissions.filter((s: any) => s.status === 'APPROVED');
+
+          const totalHours = approvedSubmissions.reduce((acc: number, sub: any) => acc + Number(sub.hours || 0), 0);
+          const historyFromSubmissions = userSubmissions.map((sub: any, idx: number) => ({
+            id: sub.id,
+            activity: sub.courseName || "MOOC Evidence Submission",
+            category: "Online Course",
+            date: sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A",
+            hours: Number(sub.hours || 0),
+            status: sub.status || "Pending"
+          }));
+
+          setPdHours({
+            ...mockPDHours,
+            total: mockPDHours.total + totalHours,
+            history: [...mockPDHours.history, ...historyFromSubmissions]
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch MOOCs:", error);
+      }
+    };
+
+    const fetchTraining = async () => {
+      try {
+        const trainingEvents = await trainingService.getAllEvents();
+        if (trainingEvents && trainingEvents.length > 0) {
+          setEvents(trainingEvents);
+        }
+      } catch (error) {
+        console.error("Failed to fetch training events:", error);
+      }
+    };
+
     fetchObservations();
     fetchGoals();
+    fetchMoocsAndPdHours();
+    fetchTraining();
+=======
+    fetchObservations();
+    fetchGoals();
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
     // Socket.io Real-time Sync
     const socket = getSocket();
@@ -1836,11 +1893,32 @@ export default function TeacherDashboard() {
       setGoals(prev => prev.map(g => g.id === updatedGoal.id ? updatedGoal : g));
     });
 
+<<<<<<< HEAD
+    socket.on('mooc:created', () => {
+      fetchMoocsAndPdHours();
+    });
+
+    socket.on('mooc:updated', (updatedSub: any) => {
+      fetchMoocsAndPdHours();
+      if (updatedSub.status === 'APPROVED') {
+        toast.success(`Your MOOC submission "${updatedSub.courseName}" has been approved! PD hours updated.`);
+      } else if (updatedSub.status === 'REJECTED') {
+        toast.error(`Your MOOC submission "${updatedSub.courseName}" was not approved.`);
+      }
+    });
+
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     return () => {
       socket.off('observation:created');
       socket.off('observation:updated');
       socket.off('goal:created');
       socket.off('goal:updated');
+<<<<<<< HEAD
+      socket.off('mooc:created');
+      socket.off('mooc:updated');
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
       socket.emit('leave_room', user?.id || userName);
     };
   }, [userName, userEmail, user?.id]);
@@ -1890,6 +1968,13 @@ export default function TeacherDashboard() {
   // Sync training events to localStorage when changed (e.g., registration)
   useEffect(() => {
     localStorage.setItem('training_events_data', JSON.stringify(events));
+<<<<<<< HEAD
+  }, [events]);
+
+  // Placeholder for any other side effects if needed
+  useEffect(() => {
+    // Legacy localStorage MOOC sync removed in favor of API and Sockets
+=======
     window.dispatchEvent(new Event('training-events-updated'));
   }, [events]);
 
@@ -1924,6 +2009,7 @@ export default function TeacherDashboard() {
     return () => {
       window.removeEventListener('mooc-submission-updated', handleMoocUpdate);
     };
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   }, []);
 
 
@@ -1943,6 +2029,24 @@ export default function TeacherDashboard() {
     }
   };
 
+<<<<<<< HEAD
+  const handleRegister = async (id: string) => {
+    try {
+      await trainingService.registerForEvent(id);
+      setEvents(prev => prev.map(event =>
+        event.id === id
+          ? {
+            ...event,
+            isRegistered: true,
+            registered: (event.registered || 0) + 1,
+            spotsLeft: (event.spotsLeft || 1) - 1
+          }
+          : event
+      ));
+      toast.success("Successfully registered for the training session!");
+    } catch (error) {
+      console.error("Failed to register:", error);
+=======
   const handleRegister = async (eventId: string) => {
     try {
       // In a real app, this would be an API call: await api.post(`/training/${eventId}/register`);
@@ -1973,6 +2077,7 @@ export default function TeacherDashboard() {
       }));
     } catch (error) {
       console.error(error);
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
       toast.error("Failed to register for event");
     }
   };

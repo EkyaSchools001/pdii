@@ -29,12 +29,43 @@ export const getAllObservations = async (req: Request, res: Response, next: Next
             }
         });
 
+<<<<<<< HEAD
+        // Map domainRatings to domains for frontend consistency and parse JSON fields
+        const mappedObservations = observations.map(obs => {
+            const { domainRatings, detailedReflection, ...rest } = obs;
+
+            // Parse detailedReflection if it's a string (SQLite workaround)
+            let parsedReflection = detailedReflection;
+            if (typeof detailedReflection === 'string' && detailedReflection) {
+                try {
+                    parsedReflection = JSON.parse(detailedReflection as string);
+                } catch (e) {
+                    console.error("Failed to parse detailedReflection:", e);
+                    // Keep as string or set to null if parsing fails
+                }
+            }
+
+            return {
+                ...rest,
+                detailedReflection: parsedReflection,
+                domains: domainRatings.map(dr => ({
+                    ...dr,
+                    indicators: (() => {
+                        try {
+                            return JSON.parse(dr.rating);
+                        } catch (e) {
+                            return [];
+                        }
+                    })()
+                }))
+=======
         // Map domainRatings to domains for frontend consistency
         const mappedObservations = observations.map(obs => {
             const { domainRatings, ...rest } = obs;
             return {
                 ...rest,
                 domains: domainRatings
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             };
         });
 
@@ -89,8 +120,20 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             status: 'SUBMITTED' as const,
             actionStep: String(data.actionStep || ''),
             teacherReflection: String(data.teacherReflection || ''),
+<<<<<<< HEAD
+            // Ensure detailedReflection is stringified for SQLite if it's an object
+            detailedReflection: typeof data.detailedReflection === 'object' ? JSON.stringify(data.detailedReflection) : String(data.detailedReflection || ''),
             discussionMet: !!data.discussionMet,
             hasReflection: !!data.hasReflection,
+            campus: String(data.campus || ''),
+            block: String(data.block || data.classroom?.block || ''),
+            grade: String(data.grade || data.classroom?.grade || ''),
+            section: String(data.section || data.classroom?.section || ''),
+            learningArea: String(data.learningArea || data.classroom?.learningArea || ''),
+=======
+            discussionMet: !!data.discussionMet,
+            hasReflection: !!data.hasReflection,
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             createdAt: new Date()
         };
 
@@ -98,8 +141,24 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             return next(new AppError('A valid teacher and authenticated observer are required', 400));
         }
 
+<<<<<<< HEAD
+        // Create the observation
+        const createdObservation = await prisma.observation.create({
+            data: {
+                ...newObservationData,
+                domainRatings: {
+                    create: (data.domains || []).map((d: any) => ({
+                        domainId: String(d.domainId),
+                        title: d.title,
+                        rating: JSON.stringify(d.indicators || []), // Store indicators as JSON in rating for now
+                        evidence: d.evidence
+                    }))
+                }
+            },
+=======
         const createdObservation = await prisma.observation.create({
             data: newObservationData,
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             include: {
                 teacher: {
                     select: {
@@ -113,10 +172,35 @@ export const createObservation = async (req: Request, res: Response, next: NextF
         });
 
         // Map for frontend
+<<<<<<< HEAD
+        const { domainRatings, detailedReflection, ...rest } = createdObservation;
+
+        let parsedReflection = detailedReflection;
+        if (typeof detailedReflection === 'string' && detailedReflection) {
+            try {
+                parsedReflection = JSON.parse(detailedReflection);
+            } catch (e) { }
+        }
+
+        const mappedObservation = {
+            ...rest,
+            detailedReflection: parsedReflection,
+            domains: domainRatings.map(dr => ({
+                ...dr,
+                indicators: (() => {
+                    try {
+                        return JSON.parse(dr.rating);
+                    } catch (e) {
+                        return [];
+                    }
+                })()
+            }))
+=======
         const { domainRatings, ...rest } = createdObservation;
         const mappedObservation = {
             ...rest,
             domains: domainRatings
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         };
 
         // Real-time update
@@ -174,7 +258,11 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
 
         const allowedFields = userRole === 'TEACHER'
             ? ['teacherReflection', 'detailedReflection', 'hasReflection', 'status']
+<<<<<<< HEAD
+            : ['teacherReflection', 'detailedReflection', 'hasReflection', 'notes', 'actionStep', 'discussionMet', 'score', 'domain', 'status', 'campus', 'block', 'grade', 'section', 'learningArea'];
+=======
             : ['teacherReflection', 'detailedReflection', 'hasReflection', 'notes', 'actionStep', 'discussionMet', 'score', 'domain', 'status'];
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
         allowedFields.forEach(field => {
             if (data[field] !== undefined) {
@@ -193,7 +281,15 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
                 } else if (['hasReflection', 'discussionMet'].includes(field)) {
                     updateData[field] = !!data[field];
                 } else {
+<<<<<<< HEAD
+                    if (field === 'detailedReflection' && typeof data[field] === 'object') {
+                        updateData[field] = JSON.stringify(data[field]);
+                    } else {
+                        updateData[field] = String(data[field]);
+                    }
+=======
                     updateData[field] = field === 'detailedReflection' ? data[field] : String(data[field]);
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 }
             }
         });
@@ -214,10 +310,38 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
         });
 
         // Map for frontend
+<<<<<<< HEAD
+        const { domainRatings, detailedReflection, ...rest } = updatedObservation;
+
+        // Parse back for response
+        let parsedReflection = detailedReflection;
+        if (typeof detailedReflection === 'string' && detailedReflection) {
+            try {
+                parsedReflection = JSON.parse(detailedReflection);
+            } catch (e) {
+                console.error("Error parsing detailedReflection in update response", e);
+            }
+        }
+
+        const mappedObservation = {
+            ...rest,
+            detailedReflection: parsedReflection,
+            domains: domainRatings.map(dr => ({
+                ...dr,
+                indicators: (() => {
+                    try {
+                        return JSON.parse(dr.rating);
+                    } catch (e) {
+                        return [];
+                    }
+                })()
+            }))
+=======
         const { domainRatings, ...rest } = updatedObservation;
         const mappedObservation = {
             ...rest,
             domains: domainRatings
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         };
 
         getIO().emit('observation:updated', mappedObservation);

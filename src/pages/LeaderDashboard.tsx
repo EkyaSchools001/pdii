@@ -38,6 +38,12 @@ import { DynamicForm } from "@/components/DynamicForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UnifiedObservationForm } from "@/components/UnifiedObservationForm";
 import { TeacherProfileView } from "@/components/TeacherProfileView";
+<<<<<<< HEAD
+import { moocService } from "@/services/moocService";
+import { trainingService } from "@/services/trainingService";
+import { userService } from "@/services/userService";
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
 const teamMembers = [
   { id: "1", name: "Teacher One", email: "teacher1.btmlayout@pdi.com", role: "Math Teacher", observations: 8, lastObserved: "Jan 15", avgScore: 4.2, pdHours: 32, completionRate: 85 },
@@ -137,6 +143,102 @@ export default function LeaderDashboard() {
     }
   });
 
+<<<<<<< HEAD
+  const fetchObservations = async () => {
+    try {
+      const response = await api.get('/observations');
+      if (response.data?.status === 'success') {
+        const apiObservations = (response.data?.data?.observations || []).map((obs: any) => ({
+          ...obs,
+          teacher: obs.teacher?.fullName || obs.teacherEmail || 'Unknown Teacher'
+        }));
+
+        if (apiObservations.length > 0) {
+          setObservations(apiObservations);
+        } else {
+          setObservations(recentObservations);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch observations:", error);
+      setObservations(recentObservations);
+    }
+  };
+
+  const fetchGoals = async () => {
+    try {
+      const response = await api.get('/goals');
+      if (response.data?.status === 'success') {
+        const apiGoals = response.data?.data?.goals || [];
+        if (apiGoals.length > 0) {
+          setGoals(apiGoals);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch goals:", error);
+    }
+  };
+
+  const fetchTraining = async () => {
+    try {
+      const events = await trainingService.getAllEvents();
+      if (events && events.length > 0) {
+        setTraining(events);
+      }
+    } catch (error) {
+      console.error("Failed to fetch training events:", error);
+    }
+  };
+
+  const fetchTeam = async () => {
+    try {
+      const [apiTeachers, allMoocs] = await Promise.all([
+        userService.getTeachers(),
+        moocService.getAllSubmissions()
+      ]);
+
+      if (apiTeachers && apiTeachers.length > 0) {
+        const mappedTeam = apiTeachers.map((teacher: any) => {
+          const userMoocs = allMoocs.filter((m: any) => m.userId === teacher.id && m.status === 'APPROVED');
+          const moocHours = userMoocs.reduce((sum: number, m: any) => sum + Number(m.hours || 0), 0);
+
+          const mockData = teamMembers.find(t => t.email === teacher.email);
+
+          return {
+            id: teacher.id,
+            name: teacher.fullName,
+            email: teacher.email,
+            role: teacher.role || mockData?.role || 'Teacher',
+            observations: mockData?.observations || 0,
+            lastObserved: mockData?.lastObserved || 'Never',
+            avgScore: mockData?.avgScore || 0,
+            pdHours: (mockData?.pdHours || 0) + moocHours,
+            completionRate: Math.min(100, Math.round(((mockData?.pdHours || 0) + moocHours) / 40 * 100))
+          };
+        });
+        setTeam(mappedTeam);
+      }
+    } catch (error) {
+      console.error("Failed to fetch team data:", error);
+    }
+  };
+
+  // Fetch initial data via API
+  useEffect(() => {
+
+
+
+
+
+    // Find existing mock data for additional fields (observations, lastObserved, etc)
+
+
+
+    fetchObservations();
+    fetchGoals();
+    fetchTraining();
+    fetchTeam();
+=======
   // Fetch initial data via API
   useEffect(() => {
     const fetchObservations = async () => {
@@ -176,10 +278,17 @@ export default function LeaderDashboard() {
 
     fetchObservations();
     fetchGoals();
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
     // Socket.io Real-time Sync
     const socket = getSocket();
 
+<<<<<<< HEAD
+    // Join room for leaders to get MOOC submissions
+    socket.emit('join_room', 'leaders');
+
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     socket.on('observation:created', (newObs: Observation) => {
       setObservations(prev => [newObs, ...prev]);
       toast.info(`New observation received for ${newObs.teacher}`);
@@ -195,9 +304,33 @@ export default function LeaderDashboard() {
       toast.info(`Observation updated for ${mappedObs.teacher}`);
     });
 
+<<<<<<< HEAD
+    socket.on('mooc:created', (newSub: any) => {
+      toast.info(`New MOOC submission received from ${newSub.user?.fullName || 'a teacher'}`);
+      // If we are on MOOC view, it will be refreshed by the child component if we pass a refresh trigger,
+      // but here we just need to know we might need to refresh team data if we want PD hours to be instant.
+      // Actually, PD hours only change on APPROVAL, so mooc:created just needs to notify.
+    });
+
+    socket.on('mooc:updated', (updatedSub: any) => {
+      // If a MOOC is approved/rejected, we definitely need to refresh team data to update PD hours
+      fetchTeam();
+      if (updatedSub.status === 'APPROVED') {
+        toast.success(`MOOC for ${updatedSub.user?.fullName} has been approved.`);
+      }
+    });
+
     return () => {
       socket.off('observation:created');
       socket.off('observation:updated');
+      socket.off('mooc:created');
+      socket.off('mooc:updated');
+      socket.emit('leave_room', 'leaders');
+=======
+    return () => {
+      socket.off('observation:created');
+      socket.off('observation:updated');
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     };
   }, []);
 
@@ -267,7 +400,11 @@ export default function LeaderDashboard() {
         <Route path="performance" element={<LeaderPerformanceAnalytics team={team} observations={observations} />} />
         <Route path="calendar" element={<PDCalendarView training={training} setTraining={setTraining} />} />
         <Route path="calendar/propose" element={<ProposeCourseView setTraining={setTraining} />} />
+<<<<<<< HEAD
+        <Route path="calendar/responses" element={<MoocResponsesView refreshTeam={fetchTeam} />} />
+=======
         <Route path="calendar/responses" element={<MoocResponsesView />} />
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         <Route path="calendar/events/:eventId" element={<PlaceholderView title="PD Event Details" icon={Book} />} />
         <Route path="participation" element={<PDParticipationView team={team} />} />
         <Route path="observe" element={<ObserveView setObservations={setObservations} setTeam={setTeam} team={team} observations={observations} />} />
@@ -905,6 +1042,46 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
   // Get dates that have events for highlighting
   const eventDates = safeTraining.map(e => parseEventDate(e.date));
 
+<<<<<<< HEAD
+  const handleSaveEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+
+    try {
+      // For now, we only have updateStatus in trainingService
+      // If we need to update more fields, we'd need a fuller update API
+      await trainingService.updateStatus(editingEvent.id, editingEvent.status);
+
+      setTraining(prev => prev.map(ev => ev.id === editingEvent.id ? editingEvent : ev));
+      setEditingEvent(null);
+      toast.success("Event details updated successfully");
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      toast.error("Failed to update event.");
+    }
+  };
+
+  const handleRegister = async (eventId: string) => {
+    try {
+      await trainingService.registerForEvent(eventId);
+
+      setTraining(prev => prev.map(event => {
+        if (event.id === eventId) {
+          toast.success(`Successfully registered for ${event.title}`);
+          return {
+            ...event,
+            isRegistered: true,
+            registered: (event.registered || 0) + 1,
+            spotsLeft: (event.spotsLeft || 1) - 1,
+          };
+        }
+        return event;
+      }));
+    } catch (error) {
+      console.error("Failed to register:", error);
+      toast.error("Failed to register for the event.");
+    }
+=======
   const handleSaveEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingEvent) return;
@@ -939,6 +1116,7 @@ function PDCalendarView({ training, setTraining }: { training: typeof initialTra
       }
       return event;
     }));
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   };
 
   return (
@@ -1303,13 +1481,34 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
     objectives: ""
   });
 
+<<<<<<< HEAD
+  const handleSubmit = async (e: React.FormEvent) => {
+=======
   const handleSubmit = (e: React.FormEvent) => {
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     e.preventDefault();
     if (!formData.title || !formData.date || !formData.type) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
+<<<<<<< HEAD
+    try {
+      const newSession = await trainingService.createEvent({
+        ...formData,
+        date: format(new Date(formData.date), "MMM d, yyyy"),
+        status: "Pending",
+        topic: formData.type
+      });
+
+      setTraining(prev => [...prev, newSession]);
+      toast.success("Course proposal submitted for admin approval!");
+      navigate("/leader/calendar");
+    } catch (error) {
+      console.error("Failed to propose course:", error);
+      toast.error("Failed to submit course proposal.");
+    }
+=======
     const newSession = {
       id: Math.random().toString(36).substr(2, 9),
       ...formData,
@@ -1325,6 +1524,7 @@ function ProposeCourseView({ setTraining }: { setTraining: React.Dispatch<React.
     setTraining(prev => [...prev, newSession]);
     toast.success("Course proposal submitted for admin approval!");
     navigate("/leader/calendar");
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   };
 
   return (
@@ -2626,6 +2826,21 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
               // Update teacher stats locally immediately for UX
               setTeam(prev => {
                 const teacherName = newObs.teacher;
+<<<<<<< HEAD
+                if (!teacherName || typeof teacherName !== 'string') return prev;
+
+                const existing = prev.find(t => t?.name?.toLowerCase() === teacherName.toLowerCase());
+                if (existing) {
+                  return prev.map(t => (t?.name?.toLowerCase() === teacherName.toLowerCase()) ? {
+                    ...t,
+                    observations: (t.observations || 0) + 1,
+                    lastObserved: newObs.date,
+                    avgScore: Number((((t.avgScore || 0) * (t.observations || 0) + newObs.score) / ((t.observations || 0) + 1)).toFixed(1))
+                  } : t);
+                } else {
+                  return [...prev, {
+                    id: Math.random().toString(36).substr(2, 9),
+=======
                 if (!teacherName) return prev;
 
                 const existing = prev.find(t => t.name.toLowerCase() === teacherName.toLowerCase());
@@ -2639,6 +2854,7 @@ function ObserveView({ setObservations, setTeam, team, observations }: {
                 } else {
                   return [...prev, {
                     id: (prev.length + 1).toString(),
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                     name: teacherName,
                     email: newObs.teacherEmail || "",
                     role: "Subject Teacher",
@@ -2700,7 +2916,11 @@ function AssignGoalView({ setGoals, team }: { setGoals: React.Dispatch<React.Set
                   category: data.g12 || "General",
                   progress: 0,
                   status: "Assigned",
+<<<<<<< HEAD
+                  dueDate: data.g_end_date ? format(new Date(data.g_end_date), "MMM dd, yyyy") : "Jun 28, 2026",
+=======
                   dueDate: data.g_end_date ? format(new Date(data.g_end_date as string), "MMM dd, yyyy") : "Jun 28, 2026",
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                   assignedBy: data.g2 || "Admin",
                   description: data.g10 || "",
                   actionStep: data.g11 || "",
@@ -2784,6 +3004,56 @@ function PlaceholderView({ title, icon: Icon }: { title: string; icon: React.Com
   );
 }
 
+<<<<<<< HEAD
+function MoocResponsesView({ refreshTeam }: { refreshTeam: () => Promise<void> }) {
+  const navigate = useNavigate();
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    const loadSubmissions = async () => {
+      try {
+        setLoading(true);
+        const data = await moocService.getAllSubmissions();
+        setSubmissions(data);
+      } catch (error) {
+        console.error("Failed to load MOOC submissions", error);
+        toast.error("Failed to load submissions");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSubmissions();
+  }, []);
+
+  async function handleUpdateStatus(status: string) {
+    if (!selectedSubmission) return;
+    try {
+      setIsUpdating(true);
+      await moocService.updateStatus(selectedSubmission.id, status);
+      toast.success(`Submission ${status.toLowerCase()} successfully`);
+
+      // Update local state
+      setSubmissions(prev => prev.map(s => s.id === selectedSubmission.id ? { ...s, status } : s));
+      setSelectedSubmission(null);
+
+      // Refresh team data to update PD hours
+      await refreshTeam();
+    } catch (error) {
+      console.error("Failed to update status", error);
+      toast.error("Failed to update submission status");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  const filteredSubmissions = submissions.filter(s =>
+    (s.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.courseName || "").toLowerCase().includes(searchQuery.toLowerCase())
+=======
 function MoocResponsesView() {
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -2805,6 +3075,7 @@ function MoocResponsesView() {
   const filteredSubmissions = submissions.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.courseName.toLowerCase().includes(searchQuery.toLowerCase())
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   );
 
   return (
@@ -2842,6 +3113,10 @@ function MoocResponsesView() {
                   <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Platform</th>
                   <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Completion Date</th>
                   <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Evidence</th>
+<<<<<<< HEAD
+                  <th className="text-left p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                   <th className="text-right p-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -2872,6 +3147,14 @@ function MoocResponsesView() {
                         <Badge variant="secondary">Reflection</Badge>
                       )}
                     </td>
+<<<<<<< HEAD
+                    <td className="p-6">
+                      <Badge variant={sub.status === 'APPROVED' ? 'default' : sub.status === 'REJECTED' ? 'destructive' : 'outline'} className={sub.status === 'APPROVED' ? 'bg-green-600' : ''}>
+                        {sub.status || 'PENDING'}
+                      </Badge>
+                    </td>
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                     <td className="p-6 text-right">
                       <Button variant="outline" size="sm" onClick={() => setSelectedSubmission(sub)}>
                         <Eye className="w-4 h-4 mr-2" />
@@ -3006,10 +3289,17 @@ function MoocResponsesView() {
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex gap-1">
                     {Array.from({ length: 10 }).map((_, i) => (
+<<<<<<< HEAD
+                      <div key={i} className={cn("w-2 h-2 rounded-full", i < (Array.isArray(selectedSubmission.effectivenessRating) ? selectedSubmission.effectivenessRating[0] : selectedSubmission.effectivenessRating) ? "bg-primary" : "bg-muted")} />
+                    ))}
+                  </div>
+                  <span className="font-bold">{(Array.isArray(selectedSubmission.effectivenessRating) ? selectedSubmission.effectivenessRating[0] : selectedSubmission.effectivenessRating)}/10</span>
+=======
                       <div key={i} className={cn("w-2 h-2 rounded-full", i < selectedSubmission.effectivenessRating[0] ? "bg-primary" : "bg-muted")} />
                     ))}
                   </div>
                   <span className="font-bold">{selectedSubmission.effectivenessRating[0]}/10</span>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 </div>
               </div>
 
@@ -3019,6 +3309,29 @@ function MoocResponsesView() {
                   <p className="mt-1 text-sm italic">{selectedSubmission.additionalFeedback}</p>
                 </div>
               )}
+<<<<<<< HEAD
+
+              {selectedSubmission.status !== 'APPROVED' && selectedSubmission.status !== 'REJECTED' && (
+                <div className="flex gap-3 pt-6 border-t mt-6">
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-destructive hover:bg-destructive/10"
+                    onClick={() => handleUpdateStatus('REJECTED')}
+                    disabled={isUpdating}
+                  >
+                    Reject Submission
+                  </Button>
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleUpdateStatus('APPROVED')}
+                    disabled={isUpdating}
+                  >
+                    Approve Submission
+                  </Button>
+                </div>
+              )}
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             </div>
           )}
         </DialogContent>

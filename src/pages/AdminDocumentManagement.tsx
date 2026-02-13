@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import { useState, useEffect } from "react";
+=======
 import { useState } from "react";
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+<<<<<<< HEAD
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+=======
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -18,6 +26,32 @@ import {
     Clock,
     Eye,
     PenTool,
+<<<<<<< HEAD
+    Trash2,
+    Send,
+    Search,
+    TrendingUp,
+    BarChart3,
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { documentService, Document } from "@/services/documentService";
+import { userService, User } from "@/services/userService";
+
+export default function AdminDocumentManagement() {
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+    const [showUploadDialog, setShowUploadDialog] = useState(false);
+    const [showAssignDialog, setShowAssignDialog] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [teachers, setTeachers] = useState<User[]>([]);
+    const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState("documents");
+    const [selectedSchool, setSelectedSchool] = useState<string>("");
+    const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
+=======
     Download,
     Trash2,
     Edit,
@@ -166,6 +200,7 @@ export default function AdminDocumentManagement() {
     const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState("documents");
     const [selectedSchool, setSelectedSchool] = useState<string>("");
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
     // New document form state
     const [newDocument, setNewDocument] = useState({
@@ -174,10 +209,45 @@ export default function AdminDocumentManagement() {
         version: "1.0",
         requiresSignature: false,
         file: null as File | null,
+<<<<<<< HEAD
+    });
+
+    useEffect(() => {
+        fetchDocuments();
+        fetchTeachers();
+    }, []);
+
+    const fetchDocuments = async () => {
+        try {
+            setLoading(true);
+            const docs = await documentService.getAllDocuments();
+            setDocuments(docs);
+        } catch (error) {
+            console.error("Error fetching documents:", error);
+            toast.error("Failed to load documents");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const data = await userService.getTeachers(); // Uses the new filtered endpoint
+            setTeachers(data);
+        } catch (error) {
+            console.error("Error fetching teachers:", error);
+            toast.error("Failed to load teachers");
+        }
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (!bytes) return "0 B";
+=======
         assignedTeachers: [] as string[],
     });
 
     const formatFileSize = (bytes: number) => {
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         if (bytes < 1024) return bytes + " B";
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
         return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -207,12 +277,44 @@ export default function AdminDocumentManagement() {
         );
     };
 
+<<<<<<< HEAD
+    const handleUploadDocument = async () => {
+=======
     const handleUploadDocument = () => {
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         if (!newDocument.title || !newDocument.file) {
             toast.error("Please provide title and file");
             return;
         }
 
+<<<<<<< HEAD
+        try {
+            await documentService.uploadDocument({
+                title: newDocument.title,
+                description: newDocument.description,
+                version: newDocument.version,
+                requiresSignature: newDocument.requiresSignature,
+                file: newDocument.file
+            });
+
+            toast.success("Document uploaded successfully!");
+            setShowUploadDialog(false);
+            setNewDocument({
+                title: "",
+                description: "",
+                version: "1.0",
+                requiresSignature: false,
+                file: null,
+            });
+            fetchDocuments(); // Refresh list
+        } catch (error) {
+            console.error("Error uploading document:", error);
+            toast.error("Failed to upload document");
+        }
+    };
+
+    const handleAssignDocument = async () => {
+=======
         const doc = {
             id: String(documents.length + 1),
             title: newDocument.title,
@@ -244,11 +346,37 @@ export default function AdminDocumentManagement() {
     };
 
     const handleAssignDocument = () => {
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         if (!selectedDocument || selectedTeachers.length === 0) {
             toast.error("Please select teachers");
             return;
         }
 
+<<<<<<< HEAD
+        try {
+            await documentService.assignDocument(selectedDocument.id, selectedTeachers);
+            toast.success(`Document assigned to ${selectedTeachers.length} teachers`);
+            setShowAssignDialog(false);
+            setSelectedTeachers([]);
+            fetchDocuments(); // Refresh stats
+        } catch (error) {
+            console.error("Error assigning document:", error);
+            toast.error("Failed to assign document");
+        }
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        if (confirm("Are you sure you want to delete this document?")) {
+            try {
+                await documentService.deleteDocument(id);
+                toast.success("Document deleted successfully");
+                fetchDocuments();
+            } catch (error) {
+                console.error("Error deleting document:", error);
+                toast.error("Failed to delete document");
+            }
+        }
+=======
         const updatedDocs = documents.map(doc =>
             doc.id === selectedDocument.id
                 ? {
@@ -269,6 +397,7 @@ export default function AdminDocumentManagement() {
     const handleDeleteDocument = (id: string) => {
         setDocuments(documents.filter(doc => doc.id !== id));
         toast.success("Document deleted successfully");
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     };
 
     const toggleTeacherSelection = (teacherId: string) => {
@@ -279,18 +408,44 @@ export default function AdminDocumentManagement() {
         );
     };
 
+<<<<<<< HEAD
+    // Group teachers by campus/school logic (using campusId or creating fake groups if needed)
+    // For now, let's group by 'department' or 'campusId' if available, defaulting to 'General'
+    const teachersByGroup = teachers.reduce((acc, teacher) => {
+        const group = teacher.campusId || teacher.department || 'General';
+        if (!acc[group]) {
+            acc[group] = [];
+        }
+        acc[group].push(teacher);
+        return acc;
+    }, {} as Record<string, User[]>);
+
+    const schools = Object.keys(teachersByGroup).sort();
+
+    const filteredDocuments = documents.filter(doc =>
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
+=======
     const filteredDocuments = documents.filter(doc =>
         doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.description.toLowerCase().includes(searchQuery.toLowerCase())
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     );
 
     const stats = {
         totalDocuments: documents.length,
         activeDocuments: documents.filter(d => d.status === "Active").length,
+<<<<<<< HEAD
+        totalAssignments: documents.reduce((sum, doc) => sum + (doc.assignedTo || 0), 0),
+        pendingAcknowledgements: documents.reduce((sum, doc) => sum + (doc.pending || 0), 0),
+        completionRate: documents.reduce((sum, doc) => sum + (doc.assignedTo || 0), 0) > 0
+            ? Math.round((documents.reduce((sum, doc) => sum + (doc.acknowledged || 0), 0) / documents.reduce((sum, doc) => sum + (doc.assignedTo || 0), 0)) * 100)
+=======
         totalAssignments: documents.reduce((sum, doc) => sum + doc.assignedTo, 0),
         pendingAcknowledgements: documents.reduce((sum, doc) => sum + doc.pending, 0),
         completionRate: documents.reduce((sum, doc) => sum + doc.assignedTo, 0) > 0
             ? Math.round((documents.reduce((sum, doc) => sum + doc.acknowledged, 0) / documents.reduce((sum, doc) => sum + doc.assignedTo, 0)) * 100)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             : 0,
     };
 
@@ -370,8 +525,13 @@ export default function AdminDocumentManagement() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="documents">Documents</TabsTrigger>
+<<<<<<< HEAD
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                    <TabsTrigger value="tracking" disabled>Tracking (Coming Soon)</TabsTrigger>
+=======
                     <TabsTrigger value="tracking">Tracking</TabsTrigger>
                     <TabsTrigger value="analytics">Analytics</TabsTrigger>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 </TabsList>
 
                 {/* Documents Tab */}
@@ -398,6 +558,111 @@ export default function AdminDocumentManagement() {
                             <CardDescription>Manage and track all uploaded documents</CardDescription>
                         </CardHeader>
                         <CardContent>
+<<<<<<< HEAD
+                            {loading ? (
+                                <div className="text-center py-4">Loading documents...</div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Document</TableHead>
+                                            <TableHead>Version</TableHead>
+                                            <TableHead>Created</TableHead>
+                                            <TableHead>Assigned</TableHead>
+                                            <TableHead>Progress</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredDocuments.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                                                    No documents found. Upload one to get started.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            filteredDocuments.map((doc) => {
+                                                const assigned = doc.assignedTo || 0;
+                                                const acknowledged = doc.acknowledged || 0;
+                                                const progress = assigned > 0 ? (acknowledged / assigned) * 100 : 0;
+
+                                                return (
+                                                    <TableRow key={doc.id}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 rounded-lg bg-primary/10">
+                                                                    <FileText className="w-4 h-4 text-primary" />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-medium">{doc.title}</div>
+                                                                    <div className="text-sm text-muted-foreground">
+                                                                        {doc.fileName} • {formatFileSize(doc.fileSize)}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline">v{doc.version}</Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {formatDate(doc.createdAt)}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <Users className="w-4 h-4 text-muted-foreground" />
+                                                                <span className="font-medium">{assigned}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <span className="text-muted-foreground">
+                                                                        {acknowledged}/{assigned}
+                                                                    </span>
+                                                                    <span className="font-medium">{Math.round(progress)}%</span>
+                                                                </div>
+                                                                <Progress value={progress} className="h-2" />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant="default"
+                                                                className="bg-green-600"
+                                                            >
+                                                                Active
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setSelectedDocument(doc);
+                                                                        setShowAssignDialog(true);
+                                                                    }}
+                                                                >
+                                                                    <Send className="w-4 h-4 mr-1" />
+                                                                    Assign
+                                                                </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleDeleteDocument(doc.id)}
+                                                                >
+                                                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+=======
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -486,6 +751,7 @@ export default function AdminDocumentManagement() {
                                     })}
                                 </TableBody>
                             </Table>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -498,6 +764,11 @@ export default function AdminDocumentManagement() {
                             <CardDescription>Monitor teacher acknowledgements in real-time</CardDescription>
                         </CardHeader>
                         <CardContent>
+<<<<<<< HEAD
+                            <div className="text-center py-8 text-muted-foreground">
+                                Tracking features are coming soon!
+                            </div>
+=======
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -528,6 +799,7 @@ export default function AdminDocumentManagement() {
                                     ))}
                                 </TableBody>
                             </Table>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -543,13 +815,23 @@ export default function AdminDocumentManagement() {
                             <CardContent>
                                 <div className="space-y-4">
                                     {documents.map((doc) => {
+<<<<<<< HEAD
+                                        const assigned = doc.assignedTo || 0;
+                                        const acknowledged = doc.acknowledged || 0;
+                                        const progress = assigned > 0 ? (acknowledged / assigned) * 100 : 0;
+=======
                                         const progress = doc.assignedTo > 0 ? (doc.acknowledged / doc.assignedTo) * 100 : 0;
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                         return (
                                             <div key={doc.id} className="space-y-2">
                                                 <div className="flex items-center justify-between text-sm">
                                                     <span className="font-medium">{doc.title}</span>
                                                     <span className="text-muted-foreground">
+<<<<<<< HEAD
+                                                        {acknowledged}/{assigned}
+=======
                                                         {doc.acknowledged}/{doc.assignedTo}
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                                     </span>
                                                 </div>
                                                 <Progress value={progress} />
@@ -582,7 +864,11 @@ export default function AdminDocumentManagement() {
                                             <span className="font-medium">Acknowledged</span>
                                         </div>
                                         <span className="text-2xl font-bold text-green-600">
+<<<<<<< HEAD
+                                            {documents.reduce((sum, doc) => sum + (doc.acknowledged || 0), 0)}
+=======
                                             {documents.reduce((sum, doc) => sum + doc.acknowledged, 0)}
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between p-4 rounded-lg bg-blue-50 border border-blue-200">
@@ -665,6 +951,8 @@ export default function AdminDocumentManagement() {
                             />
                             <p className="text-xs text-muted-foreground">PDF files only, max 10MB</p>
                         </div>
+<<<<<<< HEAD
+=======
 
                         {/* School Selection and Teacher Assignment */}
                         <div className="space-y-4 pt-4 border-t">
@@ -765,6 +1053,7 @@ export default function AdminDocumentManagement() {
                                 </div>
                             )}
                         </div>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
@@ -788,6 +1077,76 @@ export default function AdminDocumentManagement() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
+<<<<<<< HEAD
+                        <div className="space-y-2">
+                            <Label htmlFor="school">Filter by Group/School</Label>
+                            <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+                                <SelectTrigger id="school">
+                                    <SelectValue placeholder="All Teachers" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Groups</SelectItem>
+                                    {schools.map((school) => (
+                                        <SelectItem key={school} value={school}>
+                                            {school} ({teachersByGroup[school].length} teachers)
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search teacher by name..."
+                                className="pl-8"
+                                value={teacherSearchQuery}
+                                onChange={(e) => setTeacherSearchQuery(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-muted/20">
+                            <div className="space-y-2">
+                                {(selectedSchool && selectedSchool !== "all" ? teachersByGroup[selectedSchool] : teachers)
+                                    .filter(t => t.fullName.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
+                                    .map((teacher) => (
+                                        <div
+                                            key={teacher.id}
+                                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-background cursor-pointer transition-colors"
+                                            onClick={() => toggleTeacherSelection(teacher.id)}
+                                        >
+                                            <Checkbox
+                                                checked={selectedTeachers.includes(teacher.id)}
+                                                onCheckedChange={() => toggleTeacherSelection(teacher.id)}
+                                            />
+                                            <div className="flex-1">
+                                                <div className="font-medium text-sm">{teacher.fullName}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {teacher.email} • {teacher.department || 'N/A'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                {(selectedSchool && selectedSchool !== "all" ? teachersByGroup[selectedSchool] : teachers)
+                                    .filter(t => t.fullName.toLowerCase().includes(teacherSearchQuery.toLowerCase())).length === 0 && (
+                                        <div className="text-center py-8 text-muted-foreground">
+                                            No teachers found matching "{teacherSearchQuery}"
+                                        </div>
+                                    )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>{selectedTeachers.length} teachers selected</span>
+                            <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedTeachers([])}>Clear</Button>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                    const ts = (selectedSchool && selectedSchool !== "all" ? teachersByGroup[selectedSchool] : teachers)
+                                        .filter(t => t.fullName.toLowerCase().includes(teacherSearchQuery.toLowerCase()));
+                                    setSelectedTeachers([...new Set([...selectedTeachers, ...ts.map(t => t.id)])]);
+                                }}>Select All Visible</Button>
+                            </div>
+=======
                         <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
                             <div className="space-y-2">
                                 {mockTeachers.map((teacher) => (
@@ -813,6 +1172,7 @@ export default function AdminDocumentManagement() {
                         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <span className="text-sm font-medium">Selected Teachers:</span>
                             <Badge variant="secondary">{selectedTeachers.length}</Badge>
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                         </div>
                     </div>
                     <DialogFooter>

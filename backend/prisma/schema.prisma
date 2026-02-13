@@ -6,6 +6,19 @@ generator client {
 }
 
 datasource db {
+<<<<<<< HEAD
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+
+
+
+
+=======
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -40,6 +53,7 @@ enum TrainingStatus {
   COMPLETED
   CANCELLED
 }
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
 model User {
   id            String    @id @default(uuid())
@@ -47,7 +61,11 @@ model User {
   passwordHash  String?   @default("") // Renamed to match existing DB
   fullName      String
   profilePicture String?   // Renamed to match existing DB
+<<<<<<< HEAD
+  role          String      @default("TEACHER")
+=======
   role          Role      @default(TEACHER)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   campusId      String?
   department    String?
   status        String    @default("Active")
@@ -63,11 +81,19 @@ model User {
   // Relations
   sentObservations     Observation[] @relation("Observer")
   receivedObservations Observation[] @relation("Teacher")
+<<<<<<< HEAD
+  proposedEvents       TrainingEvent[] @relation("ProposedEvents")
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   goals                Goal[]
   registrations        Registration[]
   pdHours              PDHour[]
   createdDocuments     Document[]
   acknowledgements     DocumentAcknowledgement[]
+<<<<<<< HEAD
+  moocSubmissions      MoocSubmission[]
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 }
 
 model Observation {
@@ -77,6 +103,20 @@ model Observation {
   date              String            // Or DateTime
   domain            String
   score             Float
+<<<<<<< HEAD
+  notes             String?           
+  status            String            @default("SUBMITTED")
+  actionStep        String?           
+  teacherReflection String?           
+  detailedReflection String?             
+  discussionMet     Boolean           @default(false)
+  hasReflection     Boolean           @default(false)
+  campus            String?
+  block             String?
+  grade             String?
+  section           String?
+  learningArea      String?
+=======
   notes             String?           @db.Text
   status            ObservationStatus @default(SUBMITTED)
   actionStep        String?           @db.Text
@@ -84,6 +124,7 @@ model Observation {
   detailedReflection Json?             @db.JsonB
   discussionMet     Boolean           @default(false)
   hasReflection     Boolean           @default(false)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -96,10 +137,17 @@ model Observation {
 model ObservationDomain {
   id             String      @id @default(uuid())
   observationId  String
+<<<<<<< HEAD
+  domainId       String
+  title          String
+  rating         String
+  evidence       String?     
+=======
   domainId       Int
   title          String
   rating         String
   evidence       String?     @db.Text
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   
   observation    Observation @relation(fields: [observationId], references: [id], onDelete: Cascade)
 }
@@ -108,10 +156,17 @@ model Goal {
   id                String     @id @default(uuid())
   teacherId         String
   title             String
+<<<<<<< HEAD
+  description       String?    
+  progress          Int        @default(0)
+  dueDate           String
+  status            String     @default("IN_PROGRESS")
+=======
   description       String?    @db.Text
   progress          Int        @default(0)
   dueDate           String
   status            GoalStatus @default(IN_PROGRESS)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   isSchoolAligned   Boolean    @default(false)
   category          String?
   createdAt         DateTime   @default(now())
@@ -128,11 +183,20 @@ model TrainingEvent {
   date          String
   location      String
   capacity      Int
+<<<<<<< HEAD
+  status        String         @default("PLANNED")
+=======
   status        TrainingStatus @default(PLANNED)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   registrations Registration[]
+<<<<<<< HEAD
+  proposedById  String?
+  proposedBy    User?          @relation("ProposedEvents", fields: [proposedById], references: [id])
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 }
 
 model Registration {
@@ -159,6 +223,42 @@ model PDHour {
   user        User     @relation(fields: [userId], references: [id])
 }
 
+<<<<<<< HEAD
+model MoocSubmission {
+  id                  String   @id @default(uuid())
+  userId              String
+  courseName          String
+  platform            String
+  otherPlatform       String?
+  hours               Float
+  startDate           DateTime
+  endDate             DateTime
+  hasCertificate      String   // "yes" or "no"
+  certificateType     String?  // "link" or "file"
+  proofLink           String?
+  certificateFile     String?  // Base64 or path
+  certificateFileName String?
+  keyTakeaways        String?
+  unansweredQuestions String?
+  enjoyedMost         String?
+  effectivenessRating Int
+  additionalFeedback  String?
+  teacherName         String?
+  teacherEmail        String?
+  status              String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  submittedAt         DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id])
+}
+
+
+
+model Document {
+  id                String   @id @default(uuid())
+  title             String
+  description       String?  
+=======
 enum AcknowledgementStatus {
   PENDING
   VIEWED
@@ -170,6 +270,7 @@ model Document {
   id                String   @id @default(uuid())
   title             String
   description       String?  @db.Text
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   fileUrl           String
   fileName          String
   fileSize          Int?
@@ -188,12 +289,20 @@ model DocumentAcknowledgement {
   id              String                @id @default(uuid())
   documentId      String
   teacherId       String
+<<<<<<< HEAD
+  status          String                @default("PENDING")
+=======
   status          AcknowledgementStatus @default(PENDING)
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   viewedAt        DateTime?
   acknowledgedAt  DateTime?
   signatureUrl    String?
   ipAddress       String?
+<<<<<<< HEAD
+  userAgent       String?              
+=======
   userAgent       String?              @db.Text
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   receiptUrl      String?
   documentHash    String?              // SHA256 at time of acknowledgement
   createdAt       DateTime             @default(now())

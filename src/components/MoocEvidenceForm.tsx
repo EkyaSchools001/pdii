@@ -4,6 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { CalendarIcon, Upload, CheckCircle2, User, BookOpen, Link as LinkIcon, Star, MessageSquare, Brain, FileText, Paperclip } from "lucide-react";
 import { format } from "date-fns";
+<<<<<<< HEAD
+import { moocService } from "@/services/moocService";
+=======
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
 import { Button } from "@/components/ui/button";
 import {
@@ -223,6 +227,24 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
         }
     };
 
+<<<<<<< HEAD
+    async function handleSubmit(values: z.infer<typeof formSchema>) {
+        try {
+            await moocService.submitEvidence({
+                ...values,
+                startDate: values.startDate.toISOString(),
+                endDate: values.endDate.toISOString()
+            });
+
+            toast.success("MOOC Evidence Submitted Successfully!", {
+                description: "Your professional development record has been updated.",
+            });
+            onSubmitSuccess();
+        } catch (error) {
+            console.error("Failed to submit MOOC evidence", error);
+            toast.error("Failed to submit evidence. Please try again.");
+        }
+=======
     function handleSubmit(values: z.infer<typeof formSchema>) {
         console.log("Form Data:", values);
 
@@ -252,6 +274,7 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             description: "Your professional development record has been updated.",
         });
         onSubmitSuccess();
+>>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     }
 
     function onInvalid(errors: any) {
