@@ -15,11 +15,8 @@ const app: Application = express();
 // Middlewares
 app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP to avoid potential issues with frontend assets
-<<<<<<< HEAD
     crossOriginEmbedderPolicy: false, // Allow iframes
     xFrameOptions: { action: "sameorigin" }, // Allow same-origin iframes
-=======
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 }));
 app.use(cors({
     origin: [
@@ -47,12 +44,8 @@ app.use(express.urlencoded({ extended: true }));
 const distPath = path.join(__dirname, '../../dist');
 app.use(express.static(distPath));
 
-<<<<<<< HEAD
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-
-=======
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 // Swagger Documentation
 const swaggerOptions = {
     definition: {

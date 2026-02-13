@@ -26,13 +26,9 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     useEffect(() => {
-<<<<<<< HEAD
         if (teacherId) {
             fetchAcknowledgements();
         }
-=======
-        fetchAcknowledgements();
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     }, [teacherId]);
 
     const fetchAcknowledgements = async () => {
@@ -52,23 +48,15 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
         setSelectedAck(ack);
         if (ack.document) {
             try {
-<<<<<<< HEAD
                 // Use fileUrl instead of file_path
                 const url = await documentService.getDocumentPublicUrl(ack.document.fileUrl);
-=======
-                const url = await documentService.getDocumentPublicUrl(ack.document.file_path);
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 setPdfUrl(url);
 
                 if (ack.status === 'PENDING') {
                     await documentService.markAsViewed(ack.id);
                     // Update local state
                     setAcknowledgements(prev => prev.map(a =>
-<<<<<<< HEAD
                         a.id === ack.id ? { ...a, status: 'VIEWED' as const, viewedAt: new Date().toISOString() } : a
-=======
-                        a.id === ack.id ? { ...a, status: 'VIEWED' as const, viewed_at: new Date().toISOString() } : a
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                     ));
                 }
             } catch (error) {
@@ -82,12 +70,8 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
         if (!selectedAck || !selectedAck.document) return;
 
         try {
-<<<<<<< HEAD
             // Use document.hash if available, or a computed one
             await documentService.acknowledgeDocument(selectedAck.id, selectedAck.document.hash || 'manual-hash');
-=======
-            await documentService.acknowledgeDocument(selectedAck.id, selectedAck.document.hash);
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             toast.success("Document acknowledged successfully");
 
             // Update local state
@@ -95,13 +79,8 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
                 a.id === selectedAck.id ? {
                     ...a,
                     status: 'ACKNOWLEDGED' as const,
-<<<<<<< HEAD
                     acknowledgedAt: new Date().toISOString(),
                     documentHash: selectedAck.document?.hash
-=======
-                    acknowledged_at: new Date().toISOString(),
-                    document_hash: selectedAck.document?.hash
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 } : a
             ));
 
@@ -109,11 +88,7 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
             setSelectedAck(prev => prev ? {
                 ...prev,
                 status: 'ACKNOWLEDGED' as const,
-<<<<<<< HEAD
                 acknowledgedAt: new Date().toISOString()
-=======
-                acknowledged_at: new Date().toISOString()
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             } : null);
 
         } catch (error) {
@@ -183,11 +158,7 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
                                                 <div className="flex items-center gap-2 mt-1">
                                                     {getStatusBadge(ack.status)}
                                                     <span className="text-xs text-muted-foreground">
-<<<<<<< HEAD
                                                         {new Date(ack.createdAt).toLocaleDateString()}
-=======
-                                                        {new Date(ack.created_at).toLocaleDateString()}
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                                     </span>
                                                 </div>
                                             </div>
@@ -221,11 +192,7 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
                                         )}
                                     </CardTitle>
                                     <CardDescription>
-<<<<<<< HEAD
                                         Assigned on {new Date(selectedAck.createdAt).toLocaleDateString()}
-=======
-                                        Assigned on {new Date(selectedAck.created_at).toLocaleDateString()}
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                     </CardDescription>
                                 </div>
                                 <div className="flex gap-2">
@@ -234,38 +201,22 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
                                         Open in New Tab
                                     </Button>
                                     {pdfUrl && (
-<<<<<<< HEAD
                                         <a href={pdfUrl} download={selectedAck.document?.title} target="_blank" rel="noopener noreferrer">
                                             <Button variant="outline" size="sm">
                                                 <Download className="w-4 h-4 mr-2" />
                                                 Download
                                             </Button>
                                         </a>
-=======
-                                        <Button variant="outline" size="sm" asChild>
-                                            <a href={pdfUrl} download={selectedAck.document?.title}>
-                                                <Download className="w-4 h-4 mr-2" />
-                                                Download
-                                            </a>
-                                        </Button>
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                     )}
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-1 flex flex-col gap-4 p-0 overflow-hidden">
                                 <div className="flex-1 bg-muted relative rounded-md mx-6 border overflow-hidden">
                                     {pdfUrl ? (
-<<<<<<< HEAD
                                         <iframe
                                             src={pdfUrl}
                                             className="w-full h-full border-none"
                                             title="Document Preview"
-=======
-                                        <embed
-                                            src={`${pdfUrl}#toolbar=0&navpanes=0`}
-                                            type="application/pdf"
-                                            className="w-full h-full border-none"
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
@@ -282,17 +233,10 @@ export function AcknowledgementsView({ teacherId }: { teacherId: string }) {
                                             <div>
                                                 <div className="font-semibold text-green-900">Document Acknowledged</div>
                                                 <div className="text-sm text-green-700">
-<<<<<<< HEAD
                                                     Acknowledged on {selectedAck.acknowledgedAt ? new Date(selectedAck.acknowledgedAt).toLocaleString() : 'N/A'} from IP {selectedAck.ipAddress || 'unknown'}
                                                 </div>
                                                 <div className="text-[10px] text-green-600 font-mono mt-1 opacity-60">
                                                     Digital Hash: {selectedAck.documentHash}
-=======
-                                                    Acknowledged on {new Date(selectedAck.acknowledged_at!).toLocaleString()} from IP {selectedAck.ip_address}
-                                                </div>
-                                                <div className="text-[10px] text-green-600 font-mono mt-1 opacity-60">
-                                                    Digital Hash: {selectedAck.document_hash}
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                                                 </div>
                                             </div>
                                         </div>

@@ -65,11 +65,7 @@ export default function Auth() {
                 <Alert className="bg-primary/5 border-primary/20">
                     <AlertCircle className="h-4 w-4 text-primary" />
                     <AlertDescription className="text-xs text-primary/80">
-<<<<<<< HEAD
-                        <strong>Test Credentials:</strong> teacher@pms.com, schoolleader@pms.com, admin@pms.com, management@pms.com, or superadmin@pms.com with password123
-=======
                         <strong>Test Credentials:</strong> rohit.schoolleader@pdi.com (Leader), avani.admin@pdi.com (Admin), teacher1.btmlayout@pdi.com (Teacher 1), teacher2.jpnagar@pdi.com (Teacher 2), teacher3.itpl@pdi.com (Teacher 3) with passwords: Rohit@123, Avani@123, Teacher1@123, Teacher2@123, Teacher3@123
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                     </AlertDescription>
                 </Alert>
 

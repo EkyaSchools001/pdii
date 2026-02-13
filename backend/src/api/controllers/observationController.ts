@@ -29,7 +29,6 @@ export const getAllObservations = async (req: Request, res: Response, next: Next
             }
         });
 
-<<<<<<< HEAD
         // Map domainRatings to domains for frontend consistency and parse JSON fields
         const mappedObservations = observations.map(obs => {
             const { domainRatings, detailedReflection, ...rest } = obs;
@@ -58,14 +57,6 @@ export const getAllObservations = async (req: Request, res: Response, next: Next
                         }
                     })()
                 }))
-=======
-        // Map domainRatings to domains for frontend consistency
-        const mappedObservations = observations.map(obs => {
-            const { domainRatings, ...rest } = obs;
-            return {
-                ...rest,
-                domains: domainRatings
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             };
         });
 
@@ -120,7 +111,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             status: 'SUBMITTED' as const,
             actionStep: String(data.actionStep || ''),
             teacherReflection: String(data.teacherReflection || ''),
-<<<<<<< HEAD
             // Ensure detailedReflection is stringified for SQLite if it's an object
             detailedReflection: typeof data.detailedReflection === 'object' ? JSON.stringify(data.detailedReflection) : String(data.detailedReflection || ''),
             discussionMet: !!data.discussionMet,
@@ -130,10 +120,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             grade: String(data.grade || data.classroom?.grade || ''),
             section: String(data.section || data.classroom?.section || ''),
             learningArea: String(data.learningArea || data.classroom?.learningArea || ''),
-=======
-            discussionMet: !!data.discussionMet,
-            hasReflection: !!data.hasReflection,
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             createdAt: new Date()
         };
 
@@ -141,7 +127,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
             return next(new AppError('A valid teacher and authenticated observer are required', 400));
         }
 
-<<<<<<< HEAD
         // Create the observation
         const createdObservation = await prisma.observation.create({
             data: {
@@ -155,10 +140,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
                     }))
                 }
             },
-=======
-        const createdObservation = await prisma.observation.create({
-            data: newObservationData,
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             include: {
                 teacher: {
                     select: {
@@ -172,7 +153,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
         });
 
         // Map for frontend
-<<<<<<< HEAD
         const { domainRatings, detailedReflection, ...rest } = createdObservation;
 
         let parsedReflection = detailedReflection;
@@ -195,12 +175,6 @@ export const createObservation = async (req: Request, res: Response, next: NextF
                     }
                 })()
             }))
-=======
-        const { domainRatings, ...rest } = createdObservation;
-        const mappedObservation = {
-            ...rest,
-            domains: domainRatings
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         };
 
         // Real-time update
@@ -258,11 +232,7 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
 
         const allowedFields = userRole === 'TEACHER'
             ? ['teacherReflection', 'detailedReflection', 'hasReflection', 'status']
-<<<<<<< HEAD
             : ['teacherReflection', 'detailedReflection', 'hasReflection', 'notes', 'actionStep', 'discussionMet', 'score', 'domain', 'status', 'campus', 'block', 'grade', 'section', 'learningArea'];
-=======
-            : ['teacherReflection', 'detailedReflection', 'hasReflection', 'notes', 'actionStep', 'discussionMet', 'score', 'domain', 'status'];
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
         allowedFields.forEach(field => {
             if (data[field] !== undefined) {
@@ -281,15 +251,11 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
                 } else if (['hasReflection', 'discussionMet'].includes(field)) {
                     updateData[field] = !!data[field];
                 } else {
-<<<<<<< HEAD
                     if (field === 'detailedReflection' && typeof data[field] === 'object') {
                         updateData[field] = JSON.stringify(data[field]);
                     } else {
                         updateData[field] = String(data[field]);
                     }
-=======
-                    updateData[field] = field === 'detailedReflection' ? data[field] : String(data[field]);
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 }
             }
         });
@@ -310,7 +276,6 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
         });
 
         // Map for frontend
-<<<<<<< HEAD
         const { domainRatings, detailedReflection, ...rest } = updatedObservation;
 
         // Parse back for response
@@ -336,12 +301,6 @@ export const updateObservation = async (req: Request, res: Response, next: NextF
                     }
                 })()
             }))
-=======
-        const { domainRatings, ...rest } = updatedObservation;
-        const mappedObservation = {
-            ...rest,
-            domains: domainRatings
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         };
 
         getIO().emit('observation:updated', mappedObservation);

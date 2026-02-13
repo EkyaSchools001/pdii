@@ -4,10 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { CalendarIcon, Upload, CheckCircle2, User, BookOpen, Link as LinkIcon, Star, MessageSquare, Brain, FileText, Paperclip } from "lucide-react";
 import { format } from "date-fns";
-<<<<<<< HEAD
 import { moocService } from "@/services/moocService";
-=======
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 
 import { Button } from "@/components/ui/button";
 import {
@@ -227,7 +224,6 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
         }
     };
 
-<<<<<<< HEAD
     async function handleSubmit(values: z.infer<typeof formSchema>) {
         try {
             await moocService.submitEvidence({
@@ -244,37 +240,6 @@ export function MoocEvidenceForm({ onCancel, onSubmitSuccess, userEmail = "", us
             console.error("Failed to submit MOOC evidence", error);
             toast.error("Failed to submit evidence. Please try again.");
         }
-=======
-    function handleSubmit(values: z.infer<typeof formSchema>) {
-        console.log("Form Data:", values);
-
-        // Save to localStorage
-        try {
-            const existingData = localStorage.getItem("mooc_submissions");
-            const submissions = existingData ? JSON.parse(existingData) : [];
-            const newSubmission = {
-                id: Math.random().toString(36).substr(2, 9),
-                submittedAt: new Date().toISOString(),
-                ...values,
-                // Ensure dates are strings for JSON storage
-                startDate: values.startDate.toISOString(),
-                endDate: values.endDate.toISOString()
-            };
-
-            submissions.push(newSubmission);
-            localStorage.setItem("mooc_submissions", JSON.stringify(submissions));
-
-            // Dispatch storage event for other components to listen
-            window.dispatchEvent(new Event("mooc-submission-updated"));
-        } catch (error) {
-            console.error("Failed to save MOOC submission", error);
-        }
-
-        toast.success("MOOC Evidence Submitted Successfully!", {
-            description: "Your professional development record has been updated.",
-        });
-        onSubmitSuccess();
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     }
 
     function onInvalid(errors: any) {

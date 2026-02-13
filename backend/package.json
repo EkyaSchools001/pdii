@@ -16,7 +16,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-<<<<<<< HEAD
     "@prisma/client": "^6.2.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
@@ -28,9 +27,6 @@
     "@types/socket.io": "^3.0.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-=======
-    "@types/socket.io": "^3.0.1",
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
@@ -39,7 +35,6 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
-<<<<<<< HEAD
     "multer": "^2.0.2",
     "prisma": "^6.2.1",
     "socket.io": "^4.8.3",
@@ -47,33 +42,12 @@
     "swagger-ui-express": "^5.0.1",
     "typescript": "^5.9.3",
     "zod": "^4.3.6"
-=======
-    "socket.io": "^4.8.3",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "zod": "^4.3.6",
-    "typescript": "^5.9.3",
-    "@prisma/client": "^6.2.1",
-    "@types/node": "^25.2.3",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/cors": "^2.8.19",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/morgan": "^1.9.10",
-    "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8",
-    "prisma": "^6.2.1"
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2"
   },
   "prisma": {
-    "seed": "node dist/seed.js"
+    "seed": "ts-node src/seed.ts"
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a

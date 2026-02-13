@@ -1,15 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-<<<<<<< HEAD
-=======
-import { Role } from '@prisma/client';
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
 import prisma from '../../infrastructure/database/prisma';
 import { AppError } from '../../infrastructure/utils/AppError';
 import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-<<<<<<< HEAD
         const { role } = req.query;
 
         const whereClause: any = {};
@@ -19,9 +14,6 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 
         const users = await prisma.user.findMany({
             where: whereClause,
-=======
-        const users = await prisma.user.findMany({
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
             orderBy: { createdAt: 'desc' }
         });
 
@@ -52,11 +44,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
             data: {
                 fullName,
                 email,
-<<<<<<< HEAD
                 role: role ? role : undefined,
-=======
-                role: role ? (role as Role) : undefined,
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
                 campusId,
                 department,
                 passwordHash: hashedPassword,
@@ -84,11 +72,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 
         const updateData: any = {};
         if (fullName !== undefined) updateData.fullName = fullName;
-<<<<<<< HEAD
         if (role !== undefined) updateData.role = role;
-=======
-        if (role !== undefined) updateData.role = role as Role;
->>>>>>> 6a9198745ad4aeaac08f094cc2d989de31863c9a
         if (campusId !== undefined) updateData.campusId = campusId;
         if (department !== undefined) updateData.department = department;
         if (status !== undefined) updateData.status = status;
